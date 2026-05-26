@@ -56,6 +56,30 @@ import (
 	gclip "golang.design/x/clipboard"
 )
 
+func shouldSkip() bool {
+	if isPaused.Load() {
+		return true
+	}
+	if isForegroundProcessIgnored() {
+		return true
+	}
+	return false
+}
+
+func fireChange() {
+	now := time.Now()
+	clipboardMutex.Lock()
+	if now.Sub(lastClipboardChange) > 150*time.Millisecond {
+		lastClipboardChange = now
+		clipboardMutex.Unlock()
+		if onChangeCallback != nil {
+			onChangeCallback()
+		}
+	} else {
+		clipboardMutex.Unlock()
+	}
+}
+
 //export linuxHotkeyFired
 func linuxHotkeyFired() {
 	capturePreviousAppLinux()

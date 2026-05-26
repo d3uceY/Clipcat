@@ -1,6 +1,3 @@
-// +build ignore
-// (This file is compiled directly by cgo via the package, not by the Go tool.)
-
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/keysym.h>

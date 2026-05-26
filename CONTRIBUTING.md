@@ -27,9 +27,14 @@ Thanks for your interest in contributing! Below is everything you need to get th
 | Node.js | ≥ 18 | https://nodejs.org |
 | npm | bundled with Node | — |
 | Wails CLI | v2.12.0 | `go install github.com/wailsapp/wails/v2/cmd/wails@v2.12.0` |
-| NSIS (installer only) | latest | https://nsis.sourceforge.io |
+| NSIS (Windows installer only) | latest | https://nsis.sourceforge.io |
 
-> Clipcat targets **Windows 10/11 (64-bit)** only. The clipboard listener, focus tracker, hotkey, and single-instance mutex all use Windows-only APIs. You must build and test on Windows.
+**Linux runtime deps (required for the app to fully work on Linux):**
+```bash
+sudo apt install xdotool wmctrl
+```
+
+**macOS:** Xcode Command Line Tools (`xcode-select --install`) are required for CGo.
 
 ---
 
@@ -38,7 +43,10 @@ Thanks for your interest in contributing! Below is everything you need to get th
 ```
 Clipcat/
 ├── app.go            # Wails App struct — startup, all frontend-exposed methods
-├── tray.go           # Embed shim — holds the .ico asset, thin App receiver
+├── tray_windows.go   # Windows tray shim — embeds .ico, wires show/quit callbacks
+├── tray_other.go     # macOS + Linux tray shim — same interface, different icon embed
+├── launch_darwin.go  # Relaunch shim: ensures the app always runs inside .app bundle
+├── launch_other.go   # No-op on Windows/Linux
 ├── main.go           # Wails runtime entry point
 ├── go.mod / go.sum   # Go module definition
 ├── wails.json        # Wails configuration (name, output filename, frontend scripts)
@@ -51,12 +59,30 @@ Clipcat/
 │   │   ├── settings.go   Ghost/Quick Paste mode flag
 │   │   └── ignore.go     Blocked-app process list
 │   ├── tray/         # package tray — systray logic
-│   │   └── tray.go       tray.Start(icon, onShow, onQuit)
+│   │   ├── tray_windows.go          systray setup for Windows
+│   │   ├── tray_linux.go            systray setup for Linux (ayatana-appindicator3)
+│   │   ├── tray_darwin.go           CGo bridge to Objective-C tray
+│   │   ├── tray_darwin.m            Native NSStatusItem menu bar icon
+│   │   └── tray_other_activation.go No-op Activate() for Windows/Linux
 │   ├── platform/     # package platform — OS-level utilities
-│   │   └── single_instance_windows.go   Mutex-based single-instance guard
+│   │   ├── single_instance_windows.go  Named-mutex single-instance guard
+│   │   ├── single_instance_linux.go    PID lock file guard
+│   │   └── single_instance_darwin.go   PID lock file guard
 │   └── lib/          # Shared low-level packages
-│       ├── clipboard/    Windows clipboard listener + focus tracker + paste sim
-│       └── startup/      Windows startup shortcut management
+│       ├── clipboard/
+│       │   ├── shared.go                Shared state (debounce, pause, ignore list)
+│       │   ├── listener_windows.go      WM_CLIPBOARDUPDATE + WM_HOTKEY message window
+│       │   ├── listener_linux.go        golang.design/x/clipboard watcher + X11 hotkey
+│       │   ├── x11_hotkey_linux.c       X11 XGrabKey implementation (compiled by CGo)
+│       │   ├── listener_darwin.go       Carbon hotkey + clipboard watcher
+│       │   ├── clipboard_darwin.c       Carbon hotkey + CGEvent paste implementation
+│       │   ├── window_utils_windows.go  Win32 focus tracker, SimulatePaste (keybd_event)
+│       │   ├── window_utils_linux.go    xdotool focus tracker and paste simulation
+│       │   └── window_utils_darwin.go   osascript focus tracker + CGEvent paste
+│       └── startup/
+│           ├── startup_windows.go   WScript.Shell shortcut in Startup folder
+│           ├── startup_linux.go     ~/.config/autostart/clipcat.desktop
+│           └── startup_darwin.go    ~/Library/LaunchAgents plist + launchctl
 │
 └── frontend/
     ├── src/
@@ -90,8 +116,8 @@ Clipcat/
 |  | (Bridge) |  | clips  db  encrypt |           |
 |  +----------+  | settings  ignore   |           |
 |  +----------+  +--------------------+           |
-|  |  tray.go |  +----------+  +--------------+   |
-|  | (Shim)   |  |  backend/|  |   backend/   |   |
+|  | tray_*.go|  +----------+  +--------------+   |
+|  | (Shims)  |  |  backend/|  |   backend/   |   |
 |  +----------+  |  tray/   |  |  platform/   |   |
 |                +----------+  +--------------+   |
 +---------------------+----------------------------+
@@ -99,29 +125,33 @@ Clipcat/
           +-----------+-----------+
           |                       |
     +-----+------+       +--------+--------+
-    |  SQLite    |       |   Windows API   |
-    | Database   |       | (Clipboard +    |
-    +------------+       |  Hotkey + Focus)|
+    |  SQLite    |       | Platform APIs   |
+    | Database   |       | Win32 / Carbon  |
+    +------------+       | CGEvents / X11  |
                          +-----------------+
 ```
 
 ### Data Flow
 
-1. **Clipboard Monitoring** — A hidden `HWND_MESSAGE` window receives `WM_CLIPBOARDUPDATE` from Windows. A 150 ms debounce prevents duplicate saves. The ignore list filters blocked processes before anything is saved.
+1. **Clipboard Monitoring** — Each platform registers its own listener. Windows uses a hidden `HWND_MESSAGE` window with `WM_CLIPBOARDUPDATE`. macOS and Linux use `golang.design/x/clipboard` watchers. A 150 ms debounce prevents duplicate saves. The ignore list filters blocked processes before anything is saved.
 
-2. **Focus Tracking** — A background goroutine polls `GetForegroundWindow` every 150 ms, always keeping the last non-Clipcat window on hand so the paste button has a valid target.
+2. **Focus Tracking** — A background goroutine continuously tracks the last non-Clipcat window/app. On Windows this polls `GetForegroundWindow`; on Linux it polls `xdotool getactivewindow`; on macOS it polls the frontmost app bundle ID via osascript. This gives the paste button a valid target.
 
 3. **Data Storage** — Clips are saved to SQLite with HMAC-based duplicate detection. Automatic cleanup keeps only the most recent N clips, always preserving pinned ones.
 
 4. **Frontend Updates** — The backend emits `clipboard:changed` events; React context re-fetches and re-renders.
 
-5. **User Actions** — Copy (browser clipboard API), paste to window (focus prev window + simulate Ctrl+V), pin/delete (DB update + re-render), search (client-side filter).
+5. **User Actions** — Copy (browser clipboard API), paste to window (focus prev window + simulate platform-native paste keystroke), pin/delete (DB update + re-render), search (client-side filter).
 
 ---
 
 ## How It Works
 
-### Clipboard Listener (`backend/lib/clipboard/listener_window.go`)
+### Clipboard Listener
+
+Each platform has its own `listener_<os>.go` file compiled via Go build tags.
+
+**Windows** (`backend/lib/clipboard/listener_windows.go`)
 
 A hidden `HWND_MESSAGE` window is registered with `AddClipboardFormatListener`. Windows delivers `WM_CLIPBOARDUPDATE` when any app writes to the clipboard. The same window handles `WM_HOTKEY` for the global `Ctrl+Shift+V` shortcut via `RegisterHotKey`.
 
@@ -136,19 +166,17 @@ case WM_HOTKEY:
     go onHotkeyCallback()
 ```
 
-### Focus Tracker (`backend/lib/clipboard/window_utils.go`)
+**macOS** (`backend/lib/clipboard/listener_darwin.go` + `clipboard_darwin.c`)
 
-```go
-func StartFocusTracker() {
-    go func() {
-        for {
-            time.Sleep(150 * time.Millisecond)
-            hwnd, _, _ := procGetForegroundWindow.Call()
-            // skip our own PID, store prevHWND
-        }
-    }()
-}
-```
+A Carbon `EventHotKeyRef` handles `Ctrl+Shift+V` globally. Clipboard change events come from `golang.design/x/clipboard` watchers for both text and image formats.
+
+**Linux** (`backend/lib/clipboard/listener_linux.go` + `x11_hotkey_linux.c`)
+
+The hotkey is registered with `XGrabKey` on the root X11 window (C implementation in `x11_hotkey_linux.c` — kept in a separate file to avoid CGo multiple-definition linker errors). Clipboard events come from the same `golang.design/x/clipboard` watchers.
+
+### Focus Tracker (`backend/lib/clipboard/window_utils_<os>.go`)
+
+Each platform implements the same interface: `StartFocusTracker`, `FocusPreviousWindow`, `SimulatePaste`, `HasPreviousWindow`, and `isForegroundProcessIgnored`. The platform-specific implementations live in `window_utils_windows.go`, `window_utils_linux.go`, and `window_utils_darwin.go`.
 
 ### Database Schema (`backend/store/db.go`)
 
@@ -181,10 +209,13 @@ All clip content is encrypted at rest with AES-256-GCM using a per-installation 
 | `GetClips()` | All clips, ordered pinned-first then newest |
 | `AddClip()` / `AddImageClip()` | Insert + enforce storage limit |
 | `AddManualClip()` | User-created clip with optional pin |
+| `GetClipImage(id)` | Full-resolution base64 image for detail view |
 | `UpdateClipContent()` | Edit existing clip content |
 | `TogglePinClip()` | Toggle pinned flag |
 | `DeleteClip()` | Remove by ID |
 | `DeleteAllClips()` / `DeletePinnedClips()` / `DeleteUnpinnedClips()` | Bulk delete with confirmation dialog |
+| `SeedTestClips(n)` | Insert n test text clips (perf testing only) |
+| `SeedTestImageClips(n)` | Duplicate the latest image clip n times (perf testing only) |
 
 ### Frontend State (`ClipContext.tsx`)
 
@@ -232,32 +263,50 @@ This launches the app with:
 
 ### Performance Testing
 
-`backend/store/clips.go` has a `SeedTestClips(n int)` function for inserting large batches of test clips. To use it, uncomment the call in `app.go`:
+`backend/store/clips.go` has two seeding functions for inserting large batches of test clips. To use them, uncomment the relevant call in `app.go`:
 
 ```go
 // app.go — inside startup(), after MigrateEncryptOldClips()
-// store.SeedTestClips(500) // PERF TEST: uncomment to insert 500 test clips
+// store.SeedTestClips(500)      // PERF TEST: uncomment to insert 500 test text clips
+// store.SeedTestImageClips(500) // PERF TEST: duplicate the last image clip 500 times
 ```
 
-> **Always recomment this before committing.** It inserts into the live database on every startup.
+> **Always recomment these before committing.** They insert into the live database on every startup.
 
 ---
 
 ## Building a Release Binary
 
-**Portable `.exe`**
+**Windows — Portable `.exe`**
 ```bash
 wails build -clean -o Clipcat-windows-amd64
 # Output: build/bin/Clipcat-windows-amd64.exe
 ```
 
-**NSIS installer** (requires NSIS installed and `makensis` on PATH)
+**Windows — NSIS installer** (requires NSIS installed and `makensis` on PATH)
 ```bash
 wails build -clean -nsis -o Clipcat-windows-amd64
 # Output: build/bin/Clipcat-windows-amd64-installer.exe
 ```
 
-The CI release pipeline (`.github/workflows/release.yml`) runs the installer build automatically on any tag matching `v*.*.*`.
+**macOS — ARM64 (Apple Silicon)**
+```bash
+wails build -clean -platform darwin/arm64 -o Clipcat-macos-arm64
+# Output: build/bin/Clipcat.app  (package into DMG with hdiutil)
+```
+
+**macOS — AMD64 (Intel)**
+```bash
+wails build -clean -platform darwin/amd64 -o Clipcat-macos-amd64
+```
+
+**Linux — amd64** (requires `libgtk-3-dev`, `libwebkit2gtk-4.1-dev`, `libayatana-appindicator3-dev`)
+```bash
+wails build -clean -tags webkit2gtk_4_1 -o Clipcat-linux-amd64
+# Output: build/bin/Clipcat-linux-amd64
+```
+
+The CI release pipeline (`.github/workflows/release.yml`) runs all four builds automatically on any tag matching `v*.*.*`.
 
 ---
 
@@ -295,7 +344,8 @@ The CI release pipeline (`.github/workflows/release.yml`) runs the installer bui
 - Does `go build ./...` pass cleanly?
 - Are new backend functions placed in the right package (`store`, `platform`, `lib/clipboard`, etc.)?
 - Are there no direct SQL calls in `app.go`?
-- Does the UI still look and feel correct on Windows?
+- If the change is platform-specific, is it behind the correct build tag and in the right `_<os>.go` file?
+- Does the UI still look and feel correct?
 
 ---
 
@@ -304,7 +354,7 @@ The CI release pipeline (`.github/workflows/release.yml`) runs the installer bui
 Open an issue at https://github.com/d3uceY/Clipcat/issues with:
 
 - Clipcat version (visible in the About dialog)
-- Windows version (`winver`)
+- OS and version (e.g. Windows 11 23H2, macOS 15.2, Ubuntu 24.04)
 - Steps to reproduce
 - Expected vs actual behaviour
 - Any error output from the console (open DevTools with `F12` in dev mode, or check the Wails log)

@@ -15,12 +15,14 @@ A stylish clipboard manager that automatically saves everything you copy — tex
 ![Clipcat Banner](https://img.shields.io/badge/Made%20with-Wails-00ADD8?style=for-the-badge&logo=go)
 ![License](https://img.shields.io/badge/license-MIT-blue?style=for-the-badge)
 
+**Click your platform to download the latest version:**
+
 [![Windows](https://img.shields.io/github/v/release/d3uceY/Clipcat?style=for-the-badge&logo=windows&label=Windows&color=0078D4&logoColor=white)](https://github.com/d3uceY/Clipcat/releases/latest/download/Clipcat-windows-amd64-installer.exe)
 [![macOS Apple Silicon](https://img.shields.io/github/v/release/d3uceY/Clipcat?style=for-the-badge&logo=apple&label=macOS%20ARM64&color=000000)](https://github.com/d3uceY/Clipcat/releases/latest/download/Clipcat-macos-arm64.dmg)
 [![macOS Intel](https://img.shields.io/github/v/release/d3uceY/Clipcat?style=for-the-badge&logo=apple&label=macOS%20AMD64&color=000000)](https://github.com/d3uceY/Clipcat/releases/latest/download/Clipcat-macos-amd64.dmg)
 [![Linux x86-64](https://img.shields.io/github/v/release/d3uceY/Clipcat?style=for-the-badge&logo=linux&label=Linux%20x86__64&color=FCC624&logoColor=black)](https://github.com/d3uceY/Clipcat/releases/latest/download/Clipcat-linux-amd64)
 
-> Windows 10/11 · macOS 12+ · Linux x86-64 (X11)
+> Windows 10/11 · macOS 12+ · Linux x86-64 (X11) — all badges link directly to the latest release
 
 ![clipcat (1)](https://github.com/user-attachments/assets/ca28ae42-2a9d-42c3-9a47-183808d59cf6)
 

@@ -15,23 +15,42 @@ A stylish clipboard manager that automatically saves everything you copy — tex
 ![Clipcat Banner](https://img.shields.io/badge/Made%20with-Wails-00ADD8?style=for-the-badge&logo=go)
 ![License](https://img.shields.io/badge/license-MIT-blue?style=for-the-badge)
 
-[![Download Clipcat v0.9.0 for Windows](https://img.shields.io/badge/Download-Windows%20Installer-0078D4?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/d3uceY/Clipcat/releases/download/v0.9.0/Clipcat-windows-amd64-installer.exe)
+[![Windows](https://img.shields.io/github/v/release/d3uceY/Clipcat?style=for-the-badge&logo=windows&label=Windows&color=0078D4&logoColor=white)](https://github.com/d3uceY/Clipcat/releases/latest/download/Clipcat-windows-amd64-installer.exe)
+[![macOS Apple Silicon](https://img.shields.io/github/v/release/d3uceY/Clipcat?style=for-the-badge&logo=apple&label=macOS%20ARM64&color=000000)](https://github.com/d3uceY/Clipcat/releases/latest/download/Clipcat-macos-arm64.dmg)
+[![macOS Intel](https://img.shields.io/github/v/release/d3uceY/Clipcat?style=for-the-badge&logo=apple&label=macOS%20AMD64&color=000000)](https://github.com/d3uceY/Clipcat/releases/latest/download/Clipcat-macos-amd64.dmg)
+[![Linux x86-64](https://img.shields.io/github/v/release/d3uceY/Clipcat?style=for-the-badge&logo=linux&label=Linux%20x86__64&color=FCC624&logoColor=black)](https://github.com/d3uceY/Clipcat/releases/latest/download/Clipcat-linux-amd64)
 
-**[Download Clipcat v0.9.0](https://github.com/d3uceY/Clipcat/releases/download/v0.9.0/Clipcat-windows-amd64-installer.exe)**
-
-> Windows 10/11 (64-bit) | Version 0.9.0
+> Windows 10/11 · macOS 12+ · Linux x86-64 (X11)
 
 ![clipcat (1)](https://github.com/user-attachments/assets/ca28ae42-2a9d-42c3-9a47-183808d59cf6)
 
-### First-Run: Windows SmartScreen Warning
+### First-Run Notes
 
-Clipcat isn't code-signed yet, so Windows SmartScreen may flag it the first time you run it. The app is safe and fully open source — you can read every line of code here.
+Clipcat is not code-signed, so each platform may warn you on first launch. The app is safe and fully open source — you can read every line of code here.
 
-**To get past the warning:**
+**Windows — SmartScreen**
 1. Click **More info**
 2. Click **Run anyway**
 
 Or right-click the `.exe` → **Properties** → check **Unblock** → **Apply**.
+
+**macOS — Gatekeeper**
+
+Right-click the `.dmg` → **Open** → click **Open** again in the dialog. Alternatively, go to System Settings → Privacy & Security and click **Open Anyway** after the first blocked attempt.
+
+Clipcat also requires **Accessibility** permission to simulate paste (Cmd+V). Grant it under System Settings → Privacy & Security → Accessibility.
+
+**Linux**
+
+Make the binary executable before running:
+```bash
+chmod +x Clipcat-linux-amd64
+./Clipcat-linux-amd64
+```
+Requires `xdotool` at runtime for window focus and paste simulation:
+```bash
+sudo apt install xdotool
+```
 
 
 ## Features
@@ -57,7 +76,7 @@ Or right-click the `.exe` → **Properties** → check **Unblock** → **Apply**
 - **Privacy Mode** — Instantly blur all clip content for screen sharing or shoulder-surfing situations; toggle with `Alt+H`
 - <img width="1223" height="244" alt="image" src="https://github.com/user-attachments/assets/0d242347-2e1d-46bf-b57f-20255d7c4fd1" />
 
-- **Blocked Apps** — Add any app's `.exe` name to a blocklist so its clipboard activity is never captured (useful for password managers)
+- **Blocked Apps** — Add any app's process name to a blocklist so its clipboard activity is never captured (useful for password managers)
 - <img width="259" height="335" alt="image" src="https://github.com/user-attachments/assets/ca3ed1ef-8a44-4aa2-a759-37d025e0682b" />
 
 - **Pause Capture** — Temporarily stop recording clipboard changes without closing the app
@@ -72,7 +91,7 @@ Or right-click the `.exe` → **Properties** → check **Unblock** → **Apply**
 - **System Tray** — Lives quietly in your tray; summon or quit it any time
 - <img width="211" height="108" alt="image" src="https://github.com/user-attachments/assets/078cf695-5af4-41f5-a357-2ac21d12fc95" />
 
-- **Startup Support** — Optionally launch Clipcat when Windows starts
+- **Startup Support** — Optionally launch Clipcat on system startup
 - <img width="293" height="335" alt="image" src="https://github.com/user-attachments/assets/2437742c-48c4-4e09-9726-19551d86eb54" />
 
 - **Clickable Links** — URLs in clips are automatically detected and open in your browser with a click
@@ -99,16 +118,18 @@ Or right-click the `.exe` → **Properties** → check **Unblock** → **Apply**
 
 ## Your Clips Are Stored Here
 
-```
-%APPDATA%\clipussy\db\gyatt.db
-```
+| Platform | Path |
+|---|---|
+| Windows | `%APPDATA%\clipussy\db\gyatt.db` |
+| macOS | `~/Library/Application Support/clipussy/db/gyatt.db` |
+| Linux | `~/.config/clipussy/db/gyatt.db` |
 
 It's a local SQLite file — no cloud, no account, no tracking.
 
 
 ## Built With
 
-**Backend:** Go · Wails v2 · SQLite · Windows API
+**Backend:** Go · Wails v2 · SQLite · Win32 API (Windows) · Carbon/CGEvents (macOS) · X11 (Linux)
 
 **Frontend:** React 18 · TypeScript · Tailwind CSS · shadcn/ui · GSAP
 

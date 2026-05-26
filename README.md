@@ -15,11 +15,11 @@ A stylish clipboard manager that automatically saves everything you copy — tex
 ![Clipcat Banner](https://img.shields.io/badge/Made%20with-Wails-00ADD8?style=for-the-badge&logo=go)
 ![License](https://img.shields.io/badge/license-MIT-blue?style=for-the-badge)
 
-[![Download Clipcat v0.8.4 for Windows](https://img.shields.io/badge/Download-Windows%20Installer-0078D4?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/d3uceY/Clipcat/releases/download/v0.8.4/Clipcat-windows-amd64-installer.exe)
+[![Download Clipcat v0.9.0 for Windows](https://img.shields.io/badge/Download-Windows%20Installer-0078D4?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/d3uceY/Clipcat/releases/download/v0.9.0/Clipcat-windows-amd64-installer.exe)
 
-**[Download Clipcat v0.8.4](https://github.com/d3uceY/Clipcat/releases/download/v0.8.4/Clipcat-windows-amd64-installer.exe)**
+**[Download Clipcat v0.9.0](https://github.com/d3uceY/Clipcat/releases/download/v0.9.0/Clipcat-windows-amd64-installer.exe)**
 
-> Windows 10/11 (64-bit) | Version 0.8.4
+> Windows 10/11 (64-bit) | Version 0.9.0
 
 ![clipcat (1)](https://github.com/user-attachments/assets/ca28ae42-2a9d-42c3-9a47-183808d59cf6)
 

@@ -13,6 +13,7 @@ import AddClipDialog from "./add-clip-dialog";
 
 function PageContent() {
     const [searchQuery, setSearchQuery] = useState("")
+    const [searchFocused, setSearchFocused] = useState(false)
     const [version, setVersion] = useState("")
     const { clips, soundOn, hideContent } = useClips()
     const searchInputRef = useRef<HTMLInputElement>(null)
@@ -118,54 +119,7 @@ function PageContent() {
         return () => window.removeEventListener('keydown', handleKeyDown)
     }, [])
 
-    const pussyCatTimeline = gsap.timeline();
 
-    useGSAP(() => {
-        if (hideContent) {
-            pussyCatTimeline.fromTo(".pussy img:first-child", {
-                y: '0%',
-                x: '0%',
-            }, {
-                y: '120%',
-                x: '-120%',
-                duration: 0.25,
-                ease: "elastic.out(1, 0.6)"
-            })
-                .fromTo(".pussy img:last-child", {
-                    y: '120%',
-                    x: '-120%',
-                },
-                    {
-                        y: '0%',
-                        x: '0%',
-                        duration: 0.25,
-                        ease: "elastic.out(1, 0.6)"
-                    })
-        } else {
-            pussyCatTimeline.fromTo(".pussy img:last-child",
-                {
-                    y: '0%',
-                    x: '0%',
-                },
-                {
-                    y: '120%',
-                    x: '-120%',
-                    duration: 0.25,
-                    ease: "elastic.out(1, 0.6)"
-                })
-                .fromTo(".pussy img:first-child",
-                    {
-                        y: '120%',
-                        x: '-120%',
-                    },
-                    {
-                        y: '0%',
-                        x: '0%',
-                        duration: 0.25,
-                        ease: "elastic.out(1, 0.6)"
-                    })
-        }
-    }, [hideContent])
 
 
 
@@ -180,7 +134,7 @@ function PageContent() {
 
             {/* // pussy cat image */}
             <div className="h-[20vh] min-h-25 max-h-50 pussy fixed bottom-0 -left-6 z-1">
-                {filteredClips.pinned.length === 0 && filteredClips.recent.length === 0 ?
+                {(searchFocused && searchQuery.length > 0) || (filteredClips.pinned.length === 0 && filteredClips.recent.length === 0) ?
                     (<img src="/pussy-nothing.png" alt="pussy" className="block h-full pussy-nothing" />)
                     :
                     !hideContent ?
@@ -211,6 +165,8 @@ function PageContent() {
                             placeholder="Search (Ctrl+F)"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
+                            onFocus={() => setSearchFocused(true)}
+                            onBlur={() => setSearchFocused(false)}
                             className="w-full text-base sm:text-xl px-4 pt-2 text-foreground placeholder-gray-500 focus:outline-none shadow-xl"
                         />
                         <Search className="absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-[#c0bdbd]" />

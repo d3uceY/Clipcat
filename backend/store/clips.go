@@ -501,6 +501,59 @@ func DeleteUnpinnedClips(ctx context.Context) error {
 	return nil
 }
 
+// SeedTestImageClips finds the most recent image clip in the DB and inserts n
+// duplicates of it directly, bypassing duplicate checks and storage-limit
+// pruning. Intended for performance testing only.
+func SeedTestImageClips(n int) error {
+	var (
+		imgData   []byte
+		thumb     []byte
+		encrypted bool
+	)
+	err := DB.QueryRow(
+		`SELECT image, thumbnail, encrypted FROM clips WHERE type = 'image' ORDER BY created_at DESC LIMIT 1`,
+	).Scan(&imgData, &thumb, &encrypted)
+	if err != nil {
+		return fmt.Errorf("seedTestImageClips: no image clip found: %w", err)
+	}
+
+	tx, err := DB.Begin()
+	if err != nil {
+		return fmt.Errorf("seedTestImageClips: begin tx: %w", err)
+	}
+	defer tx.Rollback()
+
+	stmt, err := tx.Prepare(`INSERT INTO clips (image, thumbnail, content_hash, type, encrypted, created_at)
+		VALUES (?, ?, ?, 'image', ?, datetime('now', ?))`)
+	if err != nil {
+		return fmt.Errorf("seedTestImageClips: prepare: %w", err)
+	}
+	defer stmt.Close()
+
+	for i := 0; i < n; i++ {
+		// Re-encrypt a fresh copy so each row gets a unique hash.
+		rawImg := imgData
+		if encrypted {
+			if dec, err := decryptData(imgData); err == nil {
+				rawImg = dec
+			}
+		}
+		// Append a dummy byte sequence to make the content distinct each iteration.
+		unique := append(rawImg, byte(i), byte(i>>8), byte(i>>16))
+		enc, err := encryptData(unique)
+		if err != nil {
+			return fmt.Errorf("seedTestImageClips: encrypt %d: %w", i+1, err)
+		}
+		hash := hashContent(unique)
+		offset := fmt.Sprintf("-%d seconds", i)
+		if _, err := stmt.Exec(enc, thumb, hash, encrypted, offset); err != nil {
+			return fmt.Errorf("seedTestImageClips: insert %d: %w", i+1, err)
+		}
+	}
+
+	return tx.Commit()
+}
+
 // SeedTestClips inserts n test clips directly into the DB, bypassing duplicate
 // checks and storage-limit pruning. Intended for performance testing only.
 func SeedTestClips(n int) error {
@@ -541,3 +594,5 @@ func SeedTestClips(n int) error {
 
 	return tx.Commit()
 }
+
+

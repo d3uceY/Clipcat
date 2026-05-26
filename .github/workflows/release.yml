@@ -23,6 +23,124 @@ jobs:
             echo "Skipping release workflow for pre-release/non-stable tag: $TAG"
           fi
 
+  build-linux-amd64:
+    runs-on: ubuntu-24.04
+    needs: validate-tag
+    if: needs.validate-tag.outputs.is_stable == 'true'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Linux dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y build-essential pkg-config libgtk-3-dev libwebkit2gtk-4.1-dev
+
+      - name: Create webkit2gtk-4.0 pkg-config compatibility shim
+        run: |
+          sudo mkdir -p /usr/local/lib/pkgconfig
+          printf 'Name: webkit2gtk-4.0\nDescription: WebKit2 GTK+ (compat shim for 4.1)\nVersion: 2.44.0\nRequires: webkit2gtk-4.1\nCflags:\nLibs:\n' \
+            | sudo tee /usr/local/lib/pkgconfig/webkit2gtk-4.0.pc
+          echo "PKG_CONFIG_PATH=/usr/local/lib/pkgconfig" >> "$GITHUB_ENV"
+
+      - name: Install Wails
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@v2.12.0
+
+      - name: Install frontend dependencies
+        run: npm install
+        working-directory: frontend
+
+      - name: Build
+        run: wails build -clean -tags webkit2gtk_4_1 -o Clipcat-linux-amd64
+
+      - name: Rename Linux binary
+        run: |
+          BIN_PATH="build/bin/Clipcat-linux-amd64"
+          if [ ! -f "$BIN_PATH" ]; then
+            echo "Linux binary not found at $BIN_PATH"
+            exit 1
+          fi
+          mkdir -p build/bin/renamed
+          mv "$BIN_PATH" build/bin/renamed/Clipcat-linux-amd64
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: binaries-linux-amd64
+          path: build/bin/renamed/*
+
+  build-macos:
+    runs-on: macos-latest
+    needs: validate-tag
+    if: needs.validate-tag.outputs.is_stable == 'true'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Wails
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@v2.12.0
+
+      - name: Install frontend dependencies
+        run: npm install
+        working-directory: frontend
+
+      - name: Build macOS ARM64
+        run: wails build -clean -platform darwin/arm64 -o Clipcat-macos-arm64
+
+      - name: Package ARM64 DMG
+        run: |
+          mkdir -p artifacts
+          APP_NAME=$(node -p "const fs=require('fs');const cfg=JSON.parse(fs.readFileSync('wails.json','utf8'));cfg.outputfilename || cfg.name")
+          APP_PATH="build/bin/${APP_NAME}.app"
+          if [ ! -d "$APP_PATH" ]; then
+            echo "No .app produced by ARM64 build at $APP_PATH"
+            exit 1
+          fi
+          hdiutil create \
+            -volname "Clipcat" \
+            -srcfolder "$APP_PATH" \
+            -ov -format UDZO \
+            artifacts/Clipcat-macos-arm64.dmg
+
+      - name: Build macOS AMD64
+        run: wails build -clean -platform darwin/amd64 -o Clipcat-macos-amd64
+
+      - name: Package AMD64 DMG
+        run: |
+          APP_NAME=$(node -p "const fs=require('fs');const cfg=JSON.parse(fs.readFileSync('wails.json','utf8'));cfg.outputfilename || cfg.name")
+          APP_PATH="build/bin/${APP_NAME}.app"
+          if [ ! -d "$APP_PATH" ]; then
+            echo "No .app produced by AMD64 build at $APP_PATH"
+            exit 1
+          fi
+          hdiutil create \
+            -volname "Clipcat" \
+            -srcfolder "$APP_PATH" \
+            -ov -format UDZO \
+            artifacts/Clipcat-macos-amd64.dmg
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: binaries-macos
+          path: artifacts/*.dmg
+
   build-windows-amd64:
     runs-on: windows-latest
     needs: validate-tag
@@ -32,7 +150,7 @@ jobs:
 
       - uses: actions/setup-go@v5
         with:
-          go-version: "1.23"
+          go-version-file: go.mod
 
       - uses: actions/setup-node@v4
         with:
@@ -95,6 +213,8 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - validate-tag
+      - build-linux-amd64
+      - build-macos
       - build-windows-amd64
     if: needs.validate-tag.outputs.is_stable == 'true'
     permissions:
@@ -147,11 +267,6 @@ jobs:
 
           rm -f "$USERS_FILE"
 
-          echo "### Commits" >> commit_log.md
-          echo "" >> commit_log.md
-          git log "$RANGE" --pretty=format:"- %s ([\`%h\`](https://github.com/${{ github.repository }}/commit/%H))" --no-merges >> commit_log.md
-          echo "" >> commit_log.md
-
       - uses: actions/download-artifact@v4
         with:
           path: binaries
@@ -159,6 +274,9 @@ jobs:
 
       - name: Verify release artifacts
         run: |
+          test -f binaries/Clipcat-linux-amd64
+          test -f binaries/Clipcat-macos-arm64.dmg
+          test -f binaries/Clipcat-macos-amd64.dmg
           test -f binaries/Clipcat-windows-amd64-installer.exe
 
       - name: Generate checksums

@@ -1,3 +1,5 @@
+//go:build !windows
+
 package main
 
 import (
@@ -8,7 +10,7 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
-//go:embed build/windows/icon.ico
+//go:embed build/appicon.png
 var trayIcon []byte
 
 func (a *App) startTray() {

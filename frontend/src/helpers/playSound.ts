@@ -2,35 +2,18 @@ import { Howl } from "howler";
 
 let currentSound: Howl | null = null;
 
-// Preloaded sound cache
+// Preloaded sound cache — sounds are loaded lazily on first play.
 const soundCache = new Map<string, Howl>();
 
-// List of all sound files to preload
-const SOUND_FILES = [
-  '/sounds/crank.mp3',
-  '/sounds/paper-collect.mp3',
-  '/sounds/paper-copy.wav',
-  '/sounds/clipboard-slap.mp3',
-  '/sounds/paper-rip.mp3',
-  '/sounds/switch-on.mp3',
-  '/sounds/switch-off.mp3',
-  '/sounds/trash.mp3',
-];
-
-// Preload all sounds into memory
+// Preload a single sound into memory. Called from the App mount effect
+// so most sounds are ready before the user interacts, but each is only
+// loaded once and only when actually needed.
 export function preloadSounds() {
-  SOUND_FILES.forEach(soundSrc => {
-    if (!soundCache.has(soundSrc)) {
-      const sound = new Howl({
-        src: [soundSrc],
-        preload: true,
-      });
-      soundCache.set(soundSrc, sound);
-    }
-  });
+  // We no longer eagerly decode all sounds at startup.
+  // Instead, playSound loads on first use.
 }
 
-export function playSound(soundSrc: string, soundOn = true, volume = .1) {
+export function playSound(soundSrc: string, soundOn = true, volume = 0.1) {
   if (!soundOn) return;
 
   // Stop previous sound
@@ -40,7 +23,7 @@ export function playSound(soundSrc: string, soundOn = true, volume = .1) {
 
   // Use cached sound or create new one
   let sound = soundCache.get(soundSrc);
-  
+
   if (!sound) {
     sound = new Howl({
       src: [soundSrc],

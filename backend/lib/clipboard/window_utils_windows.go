@@ -1,8 +1,9 @@
+//go:build windows
+
 package clipboard
 
 import (
 	"strings"
-	"sync"
 	"syscall"
 	"time"
 	"unsafe"
@@ -53,7 +54,6 @@ func SetOurProcessID(pid uint32) {
 
 // StartFocusTracker polls GetForegroundWindow every 150 ms and stores the
 // most recently focused window that does NOT belong to this process.
-// Must be called after SetOurProcessID.
 func StartFocusTracker() {
 	go func() {
 		for {
@@ -108,24 +108,8 @@ func SimulatePaste() {
 }
 
 //
-// Process ignore list
+// Process ignore list – Windows implementation
 //
-
-var (
-	ignoredProcesses   []string
-	ignoredProcessesMu sync.RWMutex
-)
-
-// SetIgnoredProcesses replaces the in-memory ignore list.
-// Names are lowercased for case-insensitive matching.
-func SetIgnoredProcesses(names []string) {
-	ignoredProcessesMu.Lock()
-	defer ignoredProcessesMu.Unlock()
-	ignoredProcesses = make([]string, len(names))
-	for i, n := range names {
-		ignoredProcesses[i] = strings.ToLower(n)
-	}
-}
 
 // isForegroundProcessIgnored returns true if the process that currently has
 // focus matches any entry in the ignore list.

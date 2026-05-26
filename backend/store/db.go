@@ -16,6 +16,11 @@ func InitDB(path string) error {
 		return err
 	}
 
+	// SQLite is single-writer; a single connection avoids contention
+	// and keeps the memory footprint minimal.
+	DB.SetMaxOpenConns(1)
+	DB.SetMaxIdleConns(1)
+
 	fmt.Println("DB initialized on Bro")
 
 	return DB.Ping()
@@ -54,6 +59,34 @@ func CreateTables() {
 	}
 }
 
+// MigrateIndexes creates performance indexes on the clips table.
+// Uses IF NOT EXISTS so it is safe to call on every startup.
+func MigrateIndexes() {
+	indexes := []string{
+		// Main listing query: ORDER BY pinned DESC, created_at DESC
+		`CREATE INDEX IF NOT EXISTS idx_clips_pinned_created
+		 ON clips(pinned DESC, created_at DESC)`,
+
+		// Duplicate detection: WHERE content_hash = ?
+		`CREATE INDEX IF NOT EXISTS idx_clips_content_hash
+		 ON clips(content_hash)`,
+
+		// Delete-by-type queries (DeletePinnedClips, DeleteUnpinnedClips)
+		`CREATE INDEX IF NOT EXISTS idx_clips_pinned
+		 ON clips(pinned)`,
+
+		// Encrypted column is used in migration queries
+		`CREATE INDEX IF NOT EXISTS idx_clips_encrypted
+		 ON clips(encrypted)`,
+	}
+
+	for _, idx := range indexes {
+		if _, err := DB.Exec(idx); err != nil {
+			fmt.Printf("index warning: %v\n", err)
+		}
+	}
+}
+
 func MigrateClipsTable() {
 	_, _ = DB.Exec(`ALTER TABLE clips ADD COLUMN image BLOB`)
 }
@@ -71,6 +104,12 @@ func MigrateEncryptionColumns() {
 			machine_key TEXT NOT NULL
 		)
 	`)
+}
+
+// MigrateThumbnailColumn adds a thumbnail BLOB column for image clips
+// so GetClips never needs to transmit full-resolution images.
+func MigrateThumbnailColumn() {
+	_, _ = DB.Exec(`ALTER TABLE clips ADD COLUMN thumbnail BLOB`)
 }
 
 // MigrateEncryptOldClips re-encrypts every pre-existing unencrypted row so

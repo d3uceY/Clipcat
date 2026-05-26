@@ -1,8 +1,8 @@
+//go:build windows
+
 package clipboard
 
 import (
-	"sync"
-	"sync/atomic"
 	"syscall"
 	"time"
 	"unsafe"
@@ -21,28 +21,7 @@ const (
 	VK_V        = 0x56
 )
 
-var (
-	lastClipboardChange time.Time
-	clipboardMutex      sync.Mutex
-
-	onChangeCallback func()
-	onHotkeyCallback func()
-
-	// isPaused stops new clips from being saved without stopping the listener.
-	isPaused atomic.Bool
-)
-
-// PauseCapture stops new clipboard events from being saved.
-func PauseCapture() { isPaused.Store(true) }
-
-// ResumeCapture re-enables clipboard capture.
-func ResumeCapture() { isPaused.Store(false) }
-
-// IsPaused reports whether capture is currently paused.
-func IsPaused() bool { return isPaused.Load() }
-
 // wndProc handles messages for the hidden clipboard + hotkey window.
-// Must be a package-level function so the GC never collects the callback pointer.
 func wndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) uintptr {
 	switch msg {
 
@@ -101,10 +80,7 @@ func StartClipboardListener(onChange func(), onHotkey func()) {
 		if win.RegisterClassEx(&wc) == 0 {
 			panic("clipboard: failed to register window class")
 		}
-        // this is an invisible window. omo 
-		// on mac, i have to use a different approach
-		// to listen for clipboard changes since there are no
-		// window addresses in registry 😭😭
+
 		hwnd := win.CreateWindowEx(
 			0, className, nil, 0,
 			0, 0, 0, 0,

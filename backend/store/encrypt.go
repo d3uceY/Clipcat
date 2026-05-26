@@ -13,6 +13,7 @@ import (
 )
 
 var encKey []byte
+var encBlock cipher.Block // cached AES cipher – created once, reused forever
 
 // InitEncryption loads (or generates on first run) the per-installation
 // encryption key from the encryption_meta table.
@@ -23,6 +24,11 @@ func InitEncryption() error {
 		return fmt.Errorf("encryption init: %w", err)
 	}
 	encKey = key
+	block, err := aes.NewCipher(encKey)
+	if err != nil {
+		return fmt.Errorf("encryption init cipher: %w", err)
+	}
+	encBlock = block
 	return nil
 }
 
@@ -52,11 +58,7 @@ func getOrCreateEncryptionKey() ([]byte, error) {
 }
 
 func encryptData(plaintext []byte) ([]byte, error) {
-	block, err := aes.NewCipher(encKey)
-	if err != nil {
-		return nil, err
-	}
-	gcm, err := cipher.NewGCM(block)
+	gcm, err := cipher.NewGCM(encBlock)
 	if err != nil {
 		return nil, err
 	}
@@ -68,11 +70,7 @@ func encryptData(plaintext []byte) ([]byte, error) {
 }
 
 func decryptData(data []byte) ([]byte, error) {
-	block, err := aes.NewCipher(encKey)
-	if err != nil {
-		return nil, err
-	}
-	gcm, err := cipher.NewGCM(block)
+	gcm, err := cipher.NewGCM(encBlock)
 	if err != nil {
 		return nil, err
 	}

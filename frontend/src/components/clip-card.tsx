@@ -1,7 +1,7 @@
 import { Copy, Pin, Trash2, Pencil, ClipboardPaste } from "lucide-react"
 import { useState, useRef, useMemo, memo, useEffect } from "react"
 import type { Clip } from '../../types/clip'
-import { TogglePin, Delete, PasteToWindow } from "../../wailsjs/go/main/App"
+import { TogglePin, Delete, PasteToWindow, GetClipImage } from "../../wailsjs/go/main/App"
 import { useClips } from "@/context/ClipContext"
 import { playSound } from "@/helpers/playSound"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
@@ -28,11 +28,19 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
     const [dialogOpen, setDialogOpen] = useState(false)
     const [isDeleted, setIsDeleted] = useState(false)
     const [isVisible, setIsVisible] = useState(initialVisible)
+    const [fullImage, setFullImage] = useState<string | null>(null)
     const cachedRowSpanRef = useRef(10) // matches CSS default span
     const cardRef = useRef<HTMLDivElement>(null)
     const { getClips, soundOn, hideContent, isMiniClip } = useClips()
     const relativeTime = useRelativeTime(clip.createdAt)
     const linkedContent = useMemo(() => insertLinks(clip.content), [clip.content])
+
+    // Fetch full-resolution image when the detail dialog opens.
+    useEffect(() => {
+        if (!dialogOpen || clip.type !== "image") return
+        const id = Number(clip.id.replace('clip_', ''))
+        GetClipImage(id).then(setFullImage).catch(() => {})
+    }, [dialogOpen, clip.id, clip.type])
 
     useCardRowSpan(cardRef, isMiniClip, isVisible)
 
@@ -67,7 +75,9 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
         playSound("/sounds/paper-copy.wav", soundOn, 1)
         try {
             if (clip.type === "image") {
-                copyBase64ImageToClipboard(`data:image/png;base64,${clip.image}`)
+                const clipId = Number(clip.id.replace('clip_', ''))
+                const imageData = await GetClipImage(clipId)
+                copyBase64ImageToClipboard(`data:image/png;base64,${imageData}`)
                 return
             }
             if (clip.content === undefined) return
@@ -232,7 +242,7 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
                                 {/* clip image */}
                                 <ScrollArea className=" overflow-auto ">
                                     <img
-                                        src={`data:image/png;base64,${clip.image}`}
+                                        src={`data:image/png;base64,${fullImage ?? clip.image}`}
                                         alt="Clip image"
                                         className={`w-full h-auto object-contain rounded ${hideContent ? "hard-to-read" : ""}`}
                                     />

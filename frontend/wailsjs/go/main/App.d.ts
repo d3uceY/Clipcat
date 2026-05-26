@@ -18,11 +18,15 @@ export function DisableStartup():Promise<void>;
 
 export function EnableStartup():Promise<void>;
 
+export function GetClipImage(arg1:number):Promise<string>;
+
 export function GetClips():Promise<Array<store.Clip>>;
 
 export function GetGhostMode():Promise<boolean>;
 
 export function GetIgnoreList():Promise<Array<string>>;
+
+export function GetPlatform():Promise<string>;
 
 export function GetStorageLimit():Promise<number>;
 

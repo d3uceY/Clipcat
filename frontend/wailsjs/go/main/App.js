@@ -34,6 +34,10 @@ export function EnableStartup() {
   return window['go']['main']['App']['EnableStartup']();
 }
 
+export function GetClipImage(arg1) {
+  return window['go']['main']['App']['GetClipImage'](arg1);
+}
+
 export function GetClips() {
   return window['go']['main']['App']['GetClips']();
 }
@@ -44,6 +48,10 @@ export function GetGhostMode() {
 
 export function GetIgnoreList() {
   return window['go']['main']['App']['GetIgnoreList']();
+}
+
+export function GetPlatform() {
+  return window['go']['main']['App']['GetPlatform']();
 }
 
 export function GetStorageLimit() {

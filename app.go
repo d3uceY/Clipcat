@@ -72,7 +72,7 @@ func (a *App) startup(ctx context.Context) {
 	store.MigrateEncryptOldClips()
 
 	// store.SeedTestClips(500)      // PERF TEST: uncomment to insert n test text clips on startup
-	store.SeedTestImageClips(1000) // PERF TEST: uncomment to duplicate the last image clip n times on startup
+	// store.SeedTestImageClips(1000) // PERF TEST: uncomment to duplicate the last image clip n times on startup
 
 	// Sync the ignore list from the DB into the in-memory clipboard filter.
 	if ignoreList, err := store.GetIgnoreList(); err == nil {

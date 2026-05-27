@@ -51,6 +51,11 @@ func main() {
 		Bind: []interface{}{
 			app,
 		},
+		// Disable the DevTools inspector in production builds.
+		// In dev mode (wails dev) the inspector is always available regardless.
+		Debug: options.Debug{
+			OpenInspectorOnStartup: false,
+		},
 	})
 
 	if err != nil {

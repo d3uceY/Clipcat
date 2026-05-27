@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from "react"
+import { useState, useRef, useEffect, useMemo, lazy, Suspense } from "react"
 import { startTour, hasSeenTour } from "@/helpers/onboarding"
 import { Search } from "lucide-react"
 import ClipCard from "./clip-card"
@@ -6,10 +6,11 @@ import { useClips } from "../context/ClipContext"
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { playSound } from "@/helpers/playSound";
-import AboutDialog from "./about-dialog";
 import WindowControls from "./window-controls";
 import { GetVersion } from "../../wailsjs/go/main/App";
-import AddClipDialog from "./add-clip-dialog";
+
+const AboutDialog = lazy(() => import("./about-dialog"))
+const AddClipDialog = lazy(() => import("./add-clip-dialog"))
 
 function PageContent() {
     const [searchQuery, setSearchQuery] = useState("")
@@ -167,7 +168,9 @@ function PageContent() {
                         <h1 className="font-serif text-xl font-bold italic text-foreground sm:block hidden">About</h1>
                         {
                             version &&
-                            < AboutDialog version={version} />
+                            <Suspense fallback={null}>
+                                <AboutDialog version={version} />
+                            </Suspense>
                         }
                     </div>
 
@@ -198,14 +201,16 @@ function PageContent() {
                                 <span className="italic">Pinned <span className="text-xl"> ({filteredClips.pinned.length}) </span></span>
                             </h2>
                             <div id="tour-add-clip" className="sm:m-0 mx-auto mb-2">
-                                <AddClipDialog>
-                                    <button className="hover:scale-95 sm:p-2 p-4 rounded-lg! h-auto bg-amber-100 transition-transform hand-drawn-btn dashed thin" title="Add new clip">
-                                        <div className="flex items-center sm:gap-2 gap-1 font-bold">
-                                            <span className="text-xs leading-0.5">Add Clip</span>
-                                            <span className="text-base leading-0.5">+</span>
-                                        </div>
-                                    </button>
-                                </AddClipDialog>
+                                <Suspense fallback={null}>
+                                    <AddClipDialog>
+                                        <button className="hover:scale-95 sm:p-2 p-4 rounded-lg! h-auto bg-amber-100 transition-transform hand-drawn-btn dashed thin" title="Add new clip">
+                                            <div className="flex items-center sm:gap-2 gap-1 font-bold">
+                                                <span className="text-xs leading-0.5">Add Clip</span>
+                                                <span className="text-base leading-0.5">+</span>
+                                            </div>
+                                        </button>
+                                    </AddClipDialog>
+                                </Suspense>
                             </div>
                         </div>
                         <div className="free-form-grid-container">
@@ -225,14 +230,16 @@ function PageContent() {
                                 <span className="italic">Recent <span className="text-xl"> ({filteredClips.recent.length}) </span></span>
                             </h2>
                             <div>
-                                <AddClipDialog triggerClassName="sm:block hidden">
-                                    <button className="hover:scale-95 p-2 rounded-lg! h-auto bg-amber-100 transition-transform hand-drawn-btn dashed thin" title="Add new clip">
-                                        <div className="flex items-center sm:gap-2 gap-1 font-bold">
-                                            <span className="text-xs leading-0.5">Add Clip</span>
-                                            <span className="text-base leading-0.5">+</span>
-                                        </div>
-                                    </button>
-                                </AddClipDialog>
+                                <Suspense fallback={null}>
+                                    <AddClipDialog triggerClassName="sm:block hidden">
+                                        <button className="hover:scale-95 p-2 rounded-lg! h-auto bg-amber-100 transition-transform hand-drawn-btn dashed thin" title="Add new clip">
+                                            <div className="flex items-center sm:gap-2 gap-1 font-bold">
+                                                <span className="text-xs leading-0.5">Add Clip</span>
+                                                <span className="text-base leading-0.5">+</span>
+                                            </div>
+                                        </button>
+                                    </AddClipDialog>
+                                </Suspense>
                             </div>
                         </div>
                         <div className="free-form-grid-container">
@@ -252,14 +259,16 @@ function PageContent() {
 
                         <div className="text-lg text-black text-center">OR</div>
                         <div className="w-full flex justify-center">
-                            <AddClipDialog>
-                                <button className="hover:scale-95 p-1 bg-amber-100 transition-transform cursor-pointer hand-drawn-btn dashed thin" title="Add new clip">
-                                    <div className="flex items-center sm:gap-2 gap-1">
-                                        <span className="sm:text-xl text-lg">Add Clip</span>
-                                        <span className="sm:text-4xl text-2xl">+</span>
-                                    </div>
-                                </button>
-                            </AddClipDialog>
+                            <Suspense fallback={null}>
+                                <AddClipDialog>
+                                    <button className="hover:scale-95 p-1 bg-amber-100 transition-transform cursor-pointer hand-drawn-btn dashed thin" title="Add new clip">
+                                        <div className="flex items-center sm:gap-2 gap-1">
+                                            <span className="sm:text-xl text-lg">Add Clip</span>
+                                            <span className="sm:text-4xl text-2xl">+</span>
+                                        </div>
+                                    </button>
+                                </AddClipDialog>
+                            </Suspense>
                         </div>
                     </div>
                 )}

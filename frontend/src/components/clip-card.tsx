@@ -1,5 +1,5 @@
 import { Copy, Pin, Trash2, Pencil, ClipboardPaste } from "lucide-react"
-import { useState, useRef, useMemo, memo, useEffect } from "react"
+import { useState, useRef, useMemo, memo, useEffect, lazy, Suspense } from "react"
 import type { Clip } from '../../types/clip'
 import { TogglePin, Delete, PasteToWindow, GetClipImage } from "../../wailsjs/go/main/App"
 import { useClips } from "@/context/ClipContext"
@@ -10,8 +10,8 @@ import { ScrollArea } from "./ui/scroll-area-white"
 import { ScrollArea as ScrollAreaPencil } from "./ui/scroll-area-pencil"
 import { copyBase64ImageToClipboard } from "@/helpers/copyBase64Image"
 import { useCardRowSpan } from "@/hooks/use-card-row-span"
-import EditClipDialog from "./edit-clip-dialog"
-import ImageLightbox from "./image-lightbox"
+const EditClipDialog = lazy(() => import("./edit-clip-dialog"))
+const ImageLightbox = lazy(() => import("./image-lightbox"))
 import { insertLinks } from "@/helpers/insertLinks"
 import { BrowserOpenURL } from "../../wailsjs/runtime/runtime"
 import { LogPrint } from "../../wailsjs/runtime/runtime"
@@ -216,14 +216,16 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
                         </button>
                     )}
                     {clip.type !== "image" && (
-                        <EditClipDialog clip={clip}>
-                            <button
-                                className="rounded p-1.5 bg-foreground/5 text-foreground transition-colors hover:bg-blue-100 hover:text-blue-700"
-                                title="Edit clip"
-                            >
-                                <Pencil className="h-4 w-4" />
-                            </button>
-                        </EditClipDialog>
+                        <Suspense fallback={null}>
+                            <EditClipDialog clip={clip}>
+                                <button
+                                    className="rounded p-1.5 bg-foreground/5 text-foreground transition-colors hover:bg-blue-100 hover:text-blue-700"
+                                    title="Edit clip"
+                                >
+                                    <Pencil className="h-4 w-4" />
+                                </button>
+                            </EditClipDialog>
+                        </Suspense>
                     )}
                     <button
                         onClick={handlePin}
@@ -259,12 +261,14 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
                                         className={`w-full h-auto object-contain rounded cursor-zoom-in ${hideContent ? "hard-to-read" : ""}`}
                                     />
                                 </ScrollArea>
-                                <ImageLightbox
-                                    src={`data:image/png;base64,${fullImage ?? clip.image}`}
-                                    open={lightboxOpen}
-                                    hideContent={hideContent}
-                                    onClose={() => setLightboxOpen(false)}
-                                />
+                                <Suspense fallback={null}>
+                                    <ImageLightbox
+                                        src={`data:image/png;base64,${fullImage ?? clip.image}`}
+                                        open={lightboxOpen}
+                                        hideContent={hideContent}
+                                        onClose={() => setLightboxOpen(false)}
+                                    />
+                                </Suspense>
                             </DialogContent>
 
                         )

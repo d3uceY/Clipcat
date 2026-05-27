@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, lazy, Suspense } from "react";
 import { WindowIsMaximised, WindowMinimise, WindowUnmaximise, WindowMaximise, Quit, WindowHide } from "../../wailsjs/runtime/runtime";
 import { useClips } from "@/context/ClipContext";
 import gsap from "gsap";
@@ -8,7 +8,7 @@ import { UpdateStorageLimit, GetStorageLimit, GetPlatform } from "../../wailsjs/
 import { GetClips } from "../../wailsjs/go/main/App";
 import { ScrollArea } from "./ui/scroll-area";
 import DeleteButton from "./delete-button";
-import DeleteClipsDialog from "./delete-clips-dialog";
+const DeleteClipsDialog = lazy(() => import("./delete-clips-dialog"));
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 export default function WindowControls() {
@@ -312,9 +312,11 @@ export default function WindowControls() {
                                 )}
                             </div>
                             <Separator />
-                            <DeleteClipsDialog>
-                                <DeleteButton />
-                            </DeleteClipsDialog>
+                            <Suspense fallback={null}>
+                                <DeleteClipsDialog>
+                                    <DeleteButton />
+                                </DeleteClipsDialog>
+                            </Suspense>
                         </ScrollArea>
                         <img src="/menu-clean.png" alt="" className="settings-bg" />
                     </div>

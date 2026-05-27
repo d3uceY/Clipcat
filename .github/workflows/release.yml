@@ -280,10 +280,11 @@ jobs:
             echo ''
           } > commit_log.md
 
-          # ── Contributors ─────────────────────────────────────────────────────
+          # ── Commits + Contributors ───────────────────────────────────────
+          COMMITS_FILE=$(mktemp)
           USERS_FILE=$(mktemp)
 
-          while IFS= read -r HASH; do
+          while IFS=$'\t' read -r HASH MSG; do
             [ -z "$HASH" ] && continue
             GH_LOGIN=$(curl -sf \
               -H "Authorization: Bearer ${GH_TOKEN}" \
@@ -291,9 +292,19 @@ jobs:
               "https://api.github.com/repos/${{ github.repository }}/commits/${HASH}" \
               | jq -r '.author.login // empty' 2>/dev/null || echo "")
             if [ -n "$GH_LOGIN" ]; then
+              echo "- ${MSG} — @${GH_LOGIN}" >> "$COMMITS_FILE"
               echo "$GH_LOGIN" >> "$USERS_FILE"
+            else
+              echo "- ${MSG}" >> "$COMMITS_FILE"
             fi
-          done < <(git log "$RANGE" --pretty=format:"%H" --no-merges)
+          done < <(git log "$RANGE" --pretty=format:"%H%x09%s" --no-merges)
+
+          if [ -s "$COMMITS_FILE" ]; then
+            echo "## What's Changed" >> commit_log.md
+            echo "" >> commit_log.md
+            cat "$COMMITS_FILE" >> commit_log.md
+            echo "" >> commit_log.md
+          fi
 
           if [ -s "$USERS_FILE" ]; then
             echo "### Contributors" >> commit_log.md
@@ -307,7 +318,7 @@ jobs:
             echo "" >> commit_log.md
           fi
 
-          rm -f "$USERS_FILE"
+          rm -f "$COMMITS_FILE" "$USERS_FILE"
 
       - uses: actions/download-artifact@v4
         with:

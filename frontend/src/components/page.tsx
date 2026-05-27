@@ -15,11 +15,12 @@ function PageContent() {
     const [searchQuery, setSearchQuery] = useState("")
     const [searchFocused, setSearchFocused] = useState(false)
     const [version, setVersion] = useState("")
-    const { clips, soundOn, hideContent } = useClips()
+    const { clips, soundOn, hideContent, clipsLoaded } = useClips()
     const searchInputRef = useRef<HTMLInputElement>(null)
     const tl = gsap.timeline();
 
     useGSAP(() => {
+        if (!clipsLoaded) return;
         tl.to('.paper-curtain-1', {
             left: "-53vw",
             duration: 1.5,
@@ -70,7 +71,7 @@ function PageContent() {
                 duration: 0.3,
                 ease: "power2.out"
             })
-    })
+    }, [clipsLoaded])
 
     useEffect(() => {
         GetVersion().then(setVersion).catch(err => console.error("Failed to get version:", err))

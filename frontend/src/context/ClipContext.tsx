@@ -22,6 +22,7 @@ import type { Clip } from "../../types/clip";
 
 interface ClipContextType {
   clips: { pinned: Clip[]; recent: Clip[] };
+  clipsLoaded: boolean;
   getClips: () => Promise<void>;
   addClip: (content: string, pinned: boolean) => Promise<void>;
   soundOn: boolean;
@@ -62,6 +63,7 @@ export function ClipProvider({ children }: { children: ReactNode }) {
   const [isPaused, setIsPaused] = useState(false);
   const [ignoreList, setIgnoreList] = useState<string[]>([]);
   const [isGhostMode, setIsGhostMode] = useState(false);
+  const [clipsLoaded, setClipsLoaded] = useState(false);
 
   /* ===============================
         GHOST MODE FUNCTIONS
@@ -156,6 +158,7 @@ export function ClipProvider({ children }: { children: ReactNode }) {
       } else {
         setClips({ pinned: [], recent: [] });
       }
+      setClipsLoaded(true);
     });
   };
 
@@ -297,6 +300,7 @@ export function ClipProvider({ children }: { children: ReactNode }) {
       value={{
         // CLIP OPERATIONS
         clips,
+        clipsLoaded,
         getClips,
         addClip,
         // SOUND OPERATIONS

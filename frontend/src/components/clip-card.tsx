@@ -30,6 +30,7 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
     const [isVisible, setIsVisible] = useState(initialVisible)
     const [fullImage, setFullImage] = useState<string | null>(null)
     const cachedRowSpanRef = useRef(10) // matches CSS default span
+    const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
     const cardRef = useRef<HTMLDivElement>(null)
     const { soundOn, hideContent, isMiniClip } = useClips()
     const relativeTime = useRelativeTime(clip.createdAt)
@@ -37,12 +38,21 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
 
     // Fetch full-resolution image when the detail dialog opens.
     useEffect(() => {
-        if (!dialogOpen || clip.type !== "image") return
+        if (!dialogOpen || clip.type !== "image") {
+            setFullImage(null)
+            return
+        }
         const id = Number(clip.id.replace('clip_', ''))
         GetClipImage(id).then(setFullImage).catch(() => {})
     }, [dialogOpen, clip.id, clip.type])
 
     useCardRowSpan(cardRef, isMiniClip, isVisible)
+
+    useEffect(() => {
+        return () => {
+            if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current)
+        }
+    }, [])
 
     useEffect(() => {
         const el = cardRef.current
@@ -83,7 +93,8 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
             if (clip.content === undefined) return
             await navigator.clipboard.writeText(clip.content)
             setCopied(true)
-            setTimeout(() => setCopied(false), 2000)
+            if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current)
+            copiedTimerRef.current = setTimeout(() => setCopied(false), 2000)
         } catch (err) {
             console.error("Failed to copy:", err)
         }

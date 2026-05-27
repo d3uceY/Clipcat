@@ -14,8 +14,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 export default function WindowControls() {
     const [fullScreen, setFullScreen] = useState<boolean>(false);
     const [newIgnoreEntry, setNewIgnoreEntry] = useState("");
-    const { soundOn, toggleSound, isMiniClip, toggleMiniClip, toggleStartup, isStartup } = useClips();
-    const { hideContent, toggleHideContent, clips, isPaused, togglePause, ignoreList, addIgnoreEntry, removeIgnoreEntry, isGhostMode, toggleGhostMode } = useClips();
+    const { soundOn, toggleSound, isMiniClip, toggleMiniClip, toggleStartup, isStartup, hideContent, toggleHideContent, clips, isPaused, togglePause, ignoreList, addIgnoreEntry, removeIgnoreEntry, isGhostMode, toggleGhostMode } = useClips();
     const settingBtnRef = useRef<HTMLButtonElement>(null);
     const settingDialogRef = useRef<HTMLDivElement>(null);
     const settingDialogInnerRef = useRef<HTMLDivElement>(null);

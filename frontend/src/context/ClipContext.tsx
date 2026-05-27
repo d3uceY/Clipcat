@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import type { ReactNode } from "react";
 import {
   GetClips,
@@ -134,7 +134,7 @@ export function ClipProvider({ children }: { children: ReactNode }) {
         MINI CLIP FUNCTIONS     
        ===============================
     */
-  const toggleMiniClip = async () => {
+  const toggleMiniClip = useCallback(async () => {
     await MakeMiniClip(!isMiniClip).then(() => {
       setIsMiniClip((prev) => !prev);
     });
@@ -142,7 +142,7 @@ export function ClipProvider({ children }: { children: ReactNode }) {
     await IsMiniClip().then((res) => {
       setIsMiniClip(res);
     });
-  };
+  }, [isMiniClip]);
 
   /* ===============================
         CLIP OPS FUNCTIONS     
@@ -171,23 +171,23 @@ export function ClipProvider({ children }: { children: ReactNode }) {
        HIDE CONTENT OPS FUNCTIONS
       ===============================
    */
-  const toggleHideContent = () => {
+  const toggleHideContent = useCallback(() => {
     setHideContent((prev) => {
       localStorage.setItem("hideContent", (!prev).toString());
       return !prev;
     });
-  };
+  }, []);
 
   /* ===============================
        SOUND OPS FUNCTIONS
       ===============================
    */
-  const toggleSound = () => {
+  const toggleSound = useCallback(() => {
     setSoundOn((prev) => {
       localStorage.setItem("soundOn", (!prev).toString());
       return !prev;
     });
-  };
+  }, []);
 
   /* ===============================
         RUN FUNCTIONS ON APP LOAD 

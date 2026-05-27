@@ -17,10 +17,10 @@ function PageContent() {
     const [version, setVersion] = useState("")
     const { clips, soundOn, hideContent, clipsLoaded } = useClips()
     const searchInputRef = useRef<HTMLInputElement>(null)
-    const tl = gsap.timeline();
 
     useGSAP(() => {
         if (!clipsLoaded) return;
+        const tl = gsap.timeline();
         tl.to('.paper-curtain-1', {
             left: "-53vw",
             duration: 1.5,

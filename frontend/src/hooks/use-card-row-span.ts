@@ -66,6 +66,8 @@ export function useCardRowSpan(ref: RefObject<HTMLElement | null>, isMiniClip: b
         return () => {
             sharedObserver.unobserve(el)
             pendingElements.delete(el)
+            const idx = initialQueue.indexOf(el)
+            if (idx !== -1) initialQueue.splice(idx, 1)
         }
     }, [isMiniClip, enabled]) // eslint-disable-line react-hooks/exhaustive-deps
 }

@@ -265,12 +265,14 @@ body:before {
 .free-form-grid-container>* {
   grid-row: span var(--row-span, 10);
   /* Each item can span multiple rows based on content */
+  /* Isolate each card's layout and style recalculation so the browser
+     can skip repainting unchanged cards during scroll and resize. */
+  contain: layout style;
 }
 
 
 /* this is for the handdraw style boxes */
 .hand-drawn {
-  transition: box-shadow 0.5s ease;
   color: #41403e;
   font-size: 1.4rem;
   letter-spacing: 1px;
@@ -312,7 +314,6 @@ body:before {
 }
 
 .hand-drawn-btn {
-  transition: box-shadow 0.5s ease;
   color: black;
   font-size: 1.4rem;
   letter-spacing: 1px;

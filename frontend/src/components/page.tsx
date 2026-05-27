@@ -15,12 +15,23 @@ function PageContent() {
     const [searchQuery, setSearchQuery] = useState("")
     const [searchFocused, setSearchFocused] = useState(false)
     const [version, setVersion] = useState("")
+    const [curtainsDone, setCurtainsDone] = useState(false)
     const { clips, soundOn, hideContent, clipsLoaded } = useClips()
     const searchInputRef = useRef<HTMLInputElement>(null)
 
     useGSAP(() => {
         if (!clipsLoaded) return;
-        const tl = gsap.timeline();
+        const tl = gsap.timeline({
+            onComplete: () => {
+                // Remove compositor layers: clear GSAP inline transforms from all
+                // animated elements so the browser can de-promote them, and remove
+                // the paper curtain images from the DOM entirely — they are full-
+                // viewport fixed layers that inflate GPU memory for the app's lifetime.
+                gsap.set('.pussy', { clearProps: 'transform' })
+                gsap.set('h1, .torn-input', { clearProps: 'all' })
+                setCurtainsDone(true)
+            }
+        });
         tl.to('.paper-curtain-1', {
             left: "-53vw",
             duration: 1.5,
@@ -130,8 +141,12 @@ function PageContent() {
             {/* Draggable title bar */}
             <div className="fixed z-10 top-1 left-0 right-0 h-10 cursor-grab" style={{ '--wails-draggable': 'drag' } as React.CSSProperties}></div>
             <WindowControls />
-            <img src="/paper-curtain.png" className="paper-curtain-1 h-screen fixed w-[53vw] left-0 top-0 bottom-0 z-10 " />
-            <img src="/paper-curtain.png" className="paper-curtain-2 h-screen fixed w-[53vw] -right-8 top-0 bottom-0 z-10 " />
+            {!curtainsDone && (
+                <>
+                    <img src="/paper-curtain.png" className="paper-curtain-1 h-screen fixed w-[53vw] left-0 top-0 bottom-0 z-10 " />
+                    <img src="/paper-curtain.png" className="paper-curtain-2 h-screen fixed w-[53vw] -right-8 top-0 bottom-0 z-10 " />
+                </>
+            )}
 
             {/* // pussy cat image */}
             <div className="h-[20vh] min-h-25 max-h-50 pussy fixed bottom-0 -left-6 z-1">

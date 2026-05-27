@@ -265,7 +265,7 @@ func generateThumbnail(img []byte) ([]byte, error) {
 	if w <= maxWidth {
 		// Already small enough — just re-encode as JPEG (usually smaller).
 		var buf bytes.Buffer
-		if err := jpeg.Encode(&buf, src, &jpeg.Options{Quality: 75}); err != nil {
+		if err := jpeg.Encode(&buf, src, &jpeg.Options{Quality: 55}); err != nil {
 			return nil, fmt.Errorf("thumbnail encode: %w", err)
 		}
 		return buf.Bytes(), nil
@@ -276,7 +276,7 @@ func generateThumbnail(img []byte) ([]byte, error) {
 	draw.ApproxBiLinear.Scale(dst, dst.Bounds(), src, bounds, draw.Src, nil)
 
 	var buf bytes.Buffer
-	if err := jpeg.Encode(&buf, dst, &jpeg.Options{Quality: 75}); err != nil {
+	if err := jpeg.Encode(&buf, dst, &jpeg.Options{Quality: 55}); err != nil {
 		return nil, fmt.Errorf("thumbnail encode: %w", err)
 	}
 	return buf.Bytes(), nil

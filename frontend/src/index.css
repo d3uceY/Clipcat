@@ -466,7 +466,7 @@ body:before {
 }
 
 .hard-to-read {
-  filter: blur(3px)
+  filter: blur(5px)
     /* Adjust the pixel value for desired blur level */
 }
 

@@ -233,9 +233,9 @@ export default function WindowControls() {
                     <div ref={settingDialogInnerRef} className="setting-dialog relative z-10 w-[90vw] max-w-lg rounded-sm border-0 h-screen! sm:h-[90vh]! max-h-100">
                         <button
                             onClick={handleSettingsClick}
-                            className="absolute top-3 right-3 z-10 w-7 h-7 flex items-center justify-center hand-drawn-btn lined thin text-sm font-bold hover:opacity-70"
+                            className="absolute top-3 bg-[#F8F5F0] right-3 z-10 w-7 h-7 flex items-center justify-center hand-drawn-btn lined thin text-sm font-bold hover:opacity-70"
                         >
-                            ✕
+                            ✕ 
                         </button>
                         <ScrollArea className="relative z-[1] h-full pt-6 px-6">
                             <h2 className="text-lg text-center">Settings</h2>
@@ -316,14 +316,6 @@ export default function WindowControls() {
                             <DeleteClipsDialog>
                                 <DeleteButton />
                             </DeleteClipsDialog>
-                            <div className="flex justify-end py-3">
-                                <button
-                                    onClick={handleSettingsClick}
-                                    className="px-4 py-1.5 text-sm hand-drawn-btn lined thin hover:opacity-70 transition-opacity"
-                                >
-                                    Cancel
-                                </button>
-                            </div>
                         </ScrollArea>
                         <img src="/menu-clean.png" alt="" className="settings-bg" />
                     </div>

@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./build/appicon.png" alt="icon" width="90">
+  <img src="./build/windows/icon.ico" alt="icon" width="90">
 </p>
 <div align="center">
 <h1>Clipcat</h1>

@@ -199,7 +199,7 @@ export default function WindowControls() {
     const Separator = () => {
         return (
             <div>
-                <img src="/seperator.png" alt="" className="w-125" />
+                <img src="/seperator.png" alt="" className="w-125 mx-auto" />
             </div>
         );
     };
@@ -230,14 +230,14 @@ export default function WindowControls() {
                 </button>
                 <div ref={settingDialogRef} className="fixed inset-0 z-50 flex items-center justify-center">
                     <div className="absolute inset-0 bg-black/30" onClick={handleSettingsClick} />
-                    <div ref={settingDialogInnerRef} className="setting-dialog relative z-10 w-[90vw] max-w-sm hand-drawn lined thin bg-[#F9F5E6]">
+                    <div ref={settingDialogInnerRef} className="setting-dialog relative z-10 w-[90vw] max-w-2xl rounded-sm border-0 h-screen! sm:h-[90vh]! max-h-125">
                         <button
                             onClick={handleSettingsClick}
                             className="absolute top-3 right-3 z-10 w-7 h-7 flex items-center justify-center hand-drawn-btn lined thin text-sm font-bold hover:opacity-70"
                         >
                             ✕
                         </button>
-                        <ScrollArea className="h-[calc(100vh-160px)] max-h-[72vh] min-h-60 pt-4 px-4">
+                        <ScrollArea className="relative z-[1] h-full pt-6 px-6">
                             <h2 className="text-lg text-center">Settings</h2>
                             <Separator />
                             <div className="flex items-center gap-3 justify-between py-2" title="alt + m to toggle">

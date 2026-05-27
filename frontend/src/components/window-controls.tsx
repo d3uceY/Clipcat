@@ -18,6 +18,7 @@ export default function WindowControls() {
     const { hideContent, toggleHideContent, clips, isPaused, togglePause, ignoreList, addIgnoreEntry, removeIgnoreEntry, isGhostMode, toggleGhostMode } = useClips();
     const settingBtnRef = useRef<HTMLButtonElement>(null);
     const settingDialogRef = useRef<HTMLDivElement>(null);
+    const settingDialogInnerRef = useRef<HTMLDivElement>(null);
     const [dialogOpen, setDialogOpen] = useState<boolean>(false);
     const [limit, setLimit] = useState(100)
     const [showQuickPasteConfirm, setShowQuickPasteConfirm] = useState(false)
@@ -150,16 +151,16 @@ export default function WindowControls() {
                 onStart: () => playSound('/sounds/crank.mp3', soundOn, 1)
             }).set(
                 settingDialogRef.current, {
-                display: "block"
+                display: "flex"
             }).fromTo(
-                settingDialogRef.current, {
+                settingDialogInnerRef.current, {
                 opacity: 0,
-                y: -15,
-                rotation: -3,
-                scale: 0.92,
+                y: -20,
+                rotation: -2,
+                scale: 0.88,
             }, {
                 opacity: 1,
-                y: 5,
+                y: 0,
                 rotation: 0,
                 scale: 1,
                 duration: 0.5,
@@ -169,26 +170,26 @@ export default function WindowControls() {
         } else {
             setDialogOpen(false)
             tl.to(
-                settingDialogRef.current, {
+                settingDialogInnerRef.current, {
                 opacity: 0,
-                y: -10,
+                y: 10,
                 rotation: 2,
                 scale: 0.95,
                 duration: 0.35,
                 ease: "power2.in",
                 onStart: () => playSound('/sounds/paper-collect.mp3', soundOn, 1)
-            }
-            )
+            })
                 .to(settingBtnRef.current, {
                     y: 0,
                     rotation: 0,
                     duration: .3,
                     ease: "elastic.out(1, 0.5)",
                     onStart: () => playSound('/sounds/crank.mp3', soundOn, 1)
-
                 }).set(
                     settingDialogRef.current, {
                     display: "none",
+                }).set(
+                    settingDialogInnerRef.current, {
                     rotation: 0,
                     scale: 1,
                 })
@@ -227,88 +228,105 @@ export default function WindowControls() {
                 <button id="tour-settings" onClick={handleSettingsClick} ref={settingBtnRef} className="relative z-10">
                     <img src="/settings.png" alt="close" className="h-5 shadow-md/30" />
                 </button>
-                <div ref={settingDialogRef} className="setting-dialog absolute min-w-56  -right-1 top-5">
-                    <ScrollArea className="h-[calc(100vh-100px)] max-h-70 min-h-60 pt-4 px-4">
-                        <h2 className="text-lg text-center">Settings</h2>
-                        <Separator />
-                        <div className="flex items-center gap-3 justify-between py-2" title="alt + m to toggle">
-                            <p className="sm:text-base text-sm p-0!">Mini Clip</p>
-                            {MenuSwitch(isMiniClip, toggleMiniClip)}
-                        </div>
-                        <Separator />
-                        <div className="flex items-center gap-3 justify-between py-2" title="alt + h to toggle">
-                            <p className="sm:text-base text-sm p-0!">Hide                                                    Content</p>
-                            {MenuSwitch(hideContent, toggleHideContent, !hasClips())}
-                        </div>
-                        <Separator />
-                        <div className="flex items-center gap-3 justify-between py-2" title="Limits the number of clipboard items stored">
-                            <p className="sm:text-base text-sm p-0!">Clipboard Limit</p>
-                            <ClipStorageLimitSwitch />
-                        </div>
-                        <Separator />
-                        <div className="flex items-center gap-3 justify-between py-2" title="alt + s to toggle">
-                            <p className="sm:text-base text-sm p-0!">Sound</p>
-                            {MenuSwitch(soundOn, toggleSound)}
-                        </div>
-                        <Separator />
-                        <div className="flex items-center gap-3 justify-between py-2" title="Pause clipboard capture temporarily">
-                            <p className="sm:text-base text-sm p-0!">Pause Capture</p>
-                            {MenuSwitch(isPaused, togglePause)}
-                        </div>
-                        <Separator />
-                        <div className="flex items-center gap-3 justify-between py-2" title="Quick Paste: hides to the tray, Ctrl+Shift+V summons it, paste any clip into the last window you used">
-                            <p className="sm:text-base text-sm p-0!">Quick Paste</p>
-                            {MenuSwitch(isGhostMode, handleQuickPasteToggle)}
-                        </div>
-                        <Separator />
-                        <div className="flex items-center gap-3 justify-between py-2" title="Enables or disables loading the app on system startup">
-                            <p className="sm:text-base text-sm p-0!">Load on Startup</p>
-                            {MenuSwitch(isStartup, toggleStartup)}
-                        </div>
-                        <Separator />
-                        {/* Ignore List */}
-                        <div className="py-2">
-                            <p className="sm:text-base text-sm mb-2">Blocked Apps</p>
-                            <div className="flex gap-1 mb-2">
-                                <input
-                                    type="text"
-                                    value={newIgnoreEntry}
-                                    onChange={(e) => setNewIgnoreEntry(e.target.value)}
-                                    onKeyDown={(e) => e.key === "Enter" && handleAddIgnoreEntry()}
-                                    placeholder="e.g. 1password.exe"
-                                    className="flex-1 text-xs px-2 py-1 border-b border-current bg-transparent focus:outline-none placeholder-gray-400"
-                                />
+                <div ref={settingDialogRef} className="fixed inset-0 z-50 flex items-center justify-center">
+                    <div className="absolute inset-0 bg-black/30" onClick={handleSettingsClick} />
+                    <div ref={settingDialogInnerRef} className="setting-dialog relative z-10 w-[90vw] max-w-sm hand-drawn lined thin bg-[#F9F5E6]">
+                        <button
+                            onClick={handleSettingsClick}
+                            className="absolute top-3 right-3 z-10 w-7 h-7 flex items-center justify-center hand-drawn-btn lined thin text-sm font-bold hover:opacity-70"
+                        >
+                            ✕
+                        </button>
+                        <ScrollArea className="h-[calc(100vh-160px)] max-h-[72vh] min-h-60 pt-4 px-4">
+                            <h2 className="text-lg text-center">Settings</h2>
+                            <Separator />
+                            <div className="flex items-center gap-3 justify-between py-2" title="alt + m to toggle">
+                                <p className="sm:text-base text-sm p-0!">Mini Clip</p>
+                                {MenuSwitch(isMiniClip, toggleMiniClip)}
+                            </div>
+                            <Separator />
+                            <div className="flex items-center gap-3 justify-between py-2" title="alt + h to toggle">
+                                <p className="sm:text-base text-sm p-0!">Hide Content</p>
+                                {MenuSwitch(hideContent, toggleHideContent, !hasClips())}
+                            </div>
+                            <Separator />
+                            <div className="flex items-center gap-3 justify-between py-2" title="Limits the number of clipboard items stored">
+                                <p className="sm:text-base text-sm p-0!">Clipboard Limit</p>
+                                <ClipStorageLimitSwitch />
+                            </div>
+                            <Separator />
+                            <div className="flex items-center gap-3 justify-between py-2" title="alt + s to toggle">
+                                <p className="sm:text-base text-sm p-0!">Sound</p>
+                                {MenuSwitch(soundOn, toggleSound)}
+                            </div>
+                            <Separator />
+                            <div className="flex items-center gap-3 justify-between py-2" title="Pause clipboard capture temporarily">
+                                <p className="sm:text-base text-sm p-0!">Pause Capture</p>
+                                {MenuSwitch(isPaused, togglePause)}
+                            </div>
+                            <Separator />
+                            <div className="flex items-center gap-3 justify-between py-2" title="Quick Paste: hides to the tray, Ctrl+Shift+V summons it, paste any clip into the last window you used">
+                                <p className="sm:text-base text-sm p-0!">Quick Paste</p>
+                                {MenuSwitch(isGhostMode, handleQuickPasteToggle)}
+                            </div>
+                            <Separator />
+                            <div className="flex items-center gap-3 justify-between py-2" title="Enables or disables loading the app on system startup">
+                                <p className="sm:text-base text-sm p-0!">Load on Startup</p>
+                                {MenuSwitch(isStartup, toggleStartup)}
+                            </div>
+                            <Separator />
+                            {/* Ignore List */}
+                            <div className="py-2">
+                                <p className="sm:text-base text-sm mb-2">Blocked Apps</p>
+                                <div className="flex gap-1 mb-2">
+                                    <input
+                                        type="text"
+                                        value={newIgnoreEntry}
+                                        onChange={(e) => setNewIgnoreEntry(e.target.value)}
+                                        onKeyDown={(e) => e.key === "Enter" && handleAddIgnoreEntry()}
+                                        placeholder="e.g. 1password.exe"
+                                        className="flex-1 text-xs px-2 py-1 border-b border-current bg-transparent focus:outline-none placeholder-gray-400"
+                                    />
+                                    <button
+                                        onClick={handleAddIgnoreEntry}
+                                        className="text-xs px-2 font-bold hover:opacity-70 transition-opacity"
+                                        title="Add to block list"
+                                    >
+                                        +
+                                    </button>
+                                </div>
+                                {ignoreList.length > 0 && (
+                                    <ul className="space-y-1">
+                                        {ignoreList.map((entry) => (
+                                            <li key={entry} className="flex items-center justify-between text-xs">
+                                                <span className="truncate text-foreground/80">{entry}</span>
+                                                <button
+                                                    onClick={() => removeIgnoreEntry(entry)}
+                                                    className="ml-1 shrink-0 hover:text-red-600 transition-colors"
+                                                    title="Remove"
+                                                >
+                                                    ✕
+                                                </button>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                            </div>
+                            <Separator />
+                            <DeleteClipsDialog>
+                                <DeleteButton />
+                            </DeleteClipsDialog>
+                            <div className="flex justify-end py-3">
                                 <button
-                                    onClick={handleAddIgnoreEntry}
-                                    className="text-xs px-2 font-bold hover:opacity-70 transition-opacity"
-                                    title="Add to block list"
+                                    onClick={handleSettingsClick}
+                                    className="px-4 py-1.5 text-sm hand-drawn-btn lined thin hover:opacity-70 transition-opacity"
                                 >
-                                    +
+                                    Cancel
                                 </button>
                             </div>
-                            {ignoreList.length > 0 && (
-                                <ul className="space-y-1">
-                                    {ignoreList.map((entry) => (
-                                        <li key={entry} className="flex items-center justify-between text-xs">
-                                            <span className="truncate text-foreground/80">{entry}</span>
-                                            <button
-                                                onClick={() => removeIgnoreEntry(entry)}
-                                                className="ml-1 shrink-0 hover:text-red-600 transition-colors"
-                                                title="Remove"
-                                            >
-                                                ✕
-                                            </button>
-                                        </li>
-                                    ))}
-                                </ul>
-                            )}
-                        </div>
-                        <Separator />
-                        <DeleteClipsDialog>
-                            <DeleteButton />
-                        </DeleteClipsDialog>
-                    </ScrollArea>
-                    <img src="/menu-clean.png" alt="" className="settings-bg" />
+                        </ScrollArea>
+                        <img src="/menu-clean.png" alt="" className="settings-bg" />
+                    </div>
                 </div>
             </div>
 

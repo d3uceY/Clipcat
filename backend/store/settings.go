@@ -1,5 +1,18 @@
 package store
 
+// ClaimStartupDefault atomically marks the startup default as applied and
+// returns true only on the very first call (i.e. a fresh install / first run
+// after this migration). Subsequent calls return false, so a user who later
+// disables launch-on-startup won't have it silently re-enabled.
+func ClaimStartupDefault() bool {
+	result, err := DB.Exec(`UPDATE settings SET startup_default_set = 1 WHERE id = 0 AND startup_default_set = 0`)
+	if err != nil {
+		return false
+	}
+	n, _ := result.RowsAffected()
+	return n > 0
+}
+
 func GetGhostMode() (bool, error) {
 	var v int
 	err := DB.QueryRow(`SELECT ghost_mode FROM settings WHERE id = 0`).Scan(&v)

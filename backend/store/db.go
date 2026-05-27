@@ -95,6 +95,12 @@ func MigrateSettingsTable() {
 	_, _ = DB.Exec(`INSERT OR IGNORE INTO settings (id, ghost_mode) VALUES (0, 0)`)
 }
 
+// MigrateStartupDefaultColumn adds the startup_default_set flag used to
+// enable launch-on-startup exactly once on first run.
+func MigrateStartupDefaultColumn() {
+	_, _ = DB.Exec(`ALTER TABLE settings ADD COLUMN startup_default_set INTEGER DEFAULT 0`)
+}
+
 func MigrateEncryptionColumns() {
 	_, _ = DB.Exec(`ALTER TABLE clips ADD COLUMN encrypted INTEGER DEFAULT 0`)
 	_, _ = DB.Exec(`ALTER TABLE clips ADD COLUMN content_hash TEXT`)

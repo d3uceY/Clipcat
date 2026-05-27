@@ -63,6 +63,7 @@ func (a *App) startup(ctx context.Context) {
 	store.CreateTables()
 	store.MigrateClipsTable()
 	store.MigrateSettingsTable()
+	store.MigrateStartupDefaultColumn()
 	store.MigrateEncryptionColumns()
 	store.MigrateIndexes()
 	store.MigrateThumbnailColumn()
@@ -70,6 +71,13 @@ func (a *App) startup(ctx context.Context) {
 		panic(err)
 	}
 	store.MigrateEncryptOldClips()
+
+	// Enable launch-on-startup by default on first run.
+	// ClaimStartupDefault returns true only once — so if the user later
+	// disables startup, this won't silently re-enable it on the next launch.
+	if store.ClaimStartupDefault() {
+		_ = startup.EnableStartupWindows()
+	}
 
 	// store.SeedTestClips(500)      // PERF TEST: uncomment to insert n test text clips on startup
 	// store.SeedTestImageClips(1000) // PERF TEST: uncomment to duplicate the last image clip n times on startup

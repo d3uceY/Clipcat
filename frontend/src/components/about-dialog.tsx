@@ -92,9 +92,6 @@ export default function AboutDialog({ version }: AboutDialogProps) {
                             </button>
                             )
                         </p>
-                        <p className="text-sm text-muted-foreground pt-2">
-                            Built with Wails, React, TypeScript, and Go
-                        </p>
                         {isBirthday && (
                             <div className="mt-4 p-3 bg-fuchsia-100 border border-fuchsia-200 rounded-md">
                                 <p className="text-sm font-semibold text-fuchsia-800 mb-2">
@@ -117,24 +114,23 @@ export default function AboutDialog({ version }: AboutDialogProps) {
                             </p>
                         )}
                         {updateAvailable && (
-                            <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-md">
-                                <p className="text-sm font-semibold text-amber-800 mb-2">
-                                    🎉 Update Available!
+                            <div className="mt-2 pt-1">
+                                <img src="/seperator.png" alt="" className="w-full my-2 opacity-70" />
+                                <p className="text-sm font-bold">🎉 Update Available</p>
+                                <p className="text-sm mt-1">
+                                    Version <strong>{updateAvailable.version}</strong> is ready to download
                                 </p>
-                                <p className="text-sm text-amber-700">
-                                    Version <strong>{updateAvailable.version}</strong> is now available
-                                </p>
-                                <p className="text-xs text-amber-600 mt-1">
-                                    Released: {new Date(updateAvailable.releaseDate).toLocaleDateString()}
+                                <p className="text-xs text-muted-foreground mt-0.5">
+                                    Released {new Date(updateAvailable.releaseDate).toLocaleDateString()}
                                 </p>
                                 <button
                                     onClick={() => BrowserOpenURL(updateAvailable.releaseUrl)}
-                                    className="inline-block mt-2 px-3 py-1.5 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors cursor-pointer"
+                                    className="heartbeat hand-drawn-btn lined thin mt-3 px-3 py-1 text-base! font-bold hover:opacity-70 transition-opacity cursor-pointer"
                                 >
-                                    Download Update
+                                    ⬇︎ Download Update
                                 </button>
                             </div>
-                        )}
+                        )} 
                     </DialogDescription>
                 </DialogHeader>
             </DialogContent>

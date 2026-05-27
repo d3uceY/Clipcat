@@ -43,7 +43,7 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
             return
         }
         const id = Number(clip.id.replace('clip_', ''))
-        GetClipImage(id).then(setFullImage).catch(() => {})
+        GetClipImage(id).then(setFullImage).catch(() => { })
     }, [dialogOpen, clip.id, clip.type])
 
     useCardRowSpan(cardRef, isMiniClip, isVisible)
@@ -172,7 +172,8 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
                 <div className="h-10 -top-5 right-[40%] absolute">
                     <img src={"pin.png"} alt="pin-img" className="h-full" />
                     <div className="absolute h-6 w-5 rounded-full shadow-lg/80 top-2 right-3" />
-                </div>}
+                </div>
+            }
             <div className="mb-3 flex items-start justify-between">
                 <span className="text-xl"></span>
                 <span className="text-xs text-muted-foreground md:hidden">{relativeTime}</span>
@@ -275,8 +276,8 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
                                         <DialogDescription>Created {relativeTime}</DialogDescription>
                                         <img src="/seperator.png" alt="" className="w-full " />
                                     </DialogHeader>
-                                    <ScrollAreaPencil className=" max-h-[60vh] pr-4 overflow-x-hidden" onClick={handleLinkClick}>
-                                            <p className={`whitespace-pre-wrap wrap-break-word text-sm ${hideContent ? "hard-to-read" : ""}`} dangerouslySetInnerHTML={{ __html: linkedContent }} />
+                                    <ScrollAreaPencil className={` max-h-[60vh] pr-4 overflow-x-hidden ${hideContent ? "hard-to-read" : ""}`} onClick={handleLinkClick}>
+                                        <p className={`whitespace-pre-wrap wrap-break-word text-sm`} dangerouslySetInnerHTML={{ __html: linkedContent }} />
                                     </ScrollAreaPencil>
                                 </div>
                             </DialogContent>

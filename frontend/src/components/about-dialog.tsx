@@ -7,6 +7,7 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog";
 import { useEffect, useState } from "react";
+import { BrowserOpenURL } from "../../wailsjs/runtime/runtime";
 
 interface AboutDialogProps {
     version: string;
@@ -83,14 +84,12 @@ export default function AboutDialog({ version }: AboutDialogProps) {
                         </p>
                         <p>
                             Created with 💜 by <strong>Onyekwelu Jesse</strong> (
-                            <a
-                                href="https://github.com/d3uceY"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-600 hover:underline"
+                            <button
+                                onClick={() => BrowserOpenURL("https://github.com/d3uceY")}
+                                className="text-blue-600 hover:underline cursor-pointer"
                             >
                                 @d3uceY
-                            </a>
+                            </button>
                             )
                         </p>
                         <p className="text-sm text-muted-foreground pt-2">
@@ -104,14 +103,12 @@ export default function AboutDialog({ version }: AboutDialogProps) {
                                 <p className="text-sm text-fuchsia-700 mb-2">
                                     Today is October 24th! 🥳
                                 </p>
-                                <a
-                                    href="https://www.linkedin.com/in/jesse-onyekwelu-4a8982275/"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-block mt-1 px-3 py-1.5 bg-fuchsia-600 text-white text-sm rounded hover:bg-fuchsia-700 transition-colors"
+                                <button
+                                    onClick={() => BrowserOpenURL("https://www.linkedin.com/in/jesse-onyekwelu-4a8982275/")}
+                                    className="inline-block mt-1 px-3 py-1.5 bg-fuchsia-600 text-white text-sm rounded hover:bg-fuchsia-700 transition-colors cursor-pointer"
                                 >
                                     Visit my LinkedIn Profile
-                                </a>
+                                </button>
                             </div>
                         )}
                         {version && (
@@ -130,14 +127,12 @@ export default function AboutDialog({ version }: AboutDialogProps) {
                                 <p className="text-xs text-amber-600 mt-1">
                                     Released: {new Date(updateAvailable.releaseDate).toLocaleDateString()}
                                 </p>
-                                <a
-                                    href={updateAvailable.releaseUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-block mt-2 px-3 py-1.5 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
+                                <button
+                                    onClick={() => BrowserOpenURL(updateAvailable.releaseUrl)}
+                                    className="inline-block mt-2 px-3 py-1.5 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors cursor-pointer"
                                 >
                                     Download Update
-                                </a>
+                                </button>
                             </div>
                         )}
                     </DialogDescription>

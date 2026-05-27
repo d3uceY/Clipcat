@@ -198,9 +198,71 @@ export function ClipProvider({ children }: { children: ReactNode }) {
     GetGhostMode()
       .then((v) => setIsGhostMode(v ?? false))
       .catch(() => {});
-    EventsOn("clipboard:changed", () => {
+
+    const offAdded = EventsOn("clip:added", (clip: Clip) => {
+      setClips((prev) => {
+        if (clip.isPinned) {
+          return { ...prev, pinned: [clip, ...prev.pinned] };
+        }
+        return { ...prev, recent: [clip, ...prev.recent] };
+      });
+    });
+
+    const offDeleted = EventsOn("clip:deleted", (id: string) => {
+      setClips((prev) => ({
+        pinned: prev.pinned.filter((c) => c.id !== id),
+        recent: prev.recent.filter((c) => c.id !== id),
+      }));
+    });
+
+    const offPruned = EventsOn("clip:pruned", (ids: string[]) => {
+      setClips((prev) => ({
+        pinned: prev.pinned.filter((c) => !ids.includes(c.id)),
+        recent: prev.recent.filter((c) => !ids.includes(c.id)),
+      }));
+    });
+
+    const offUpdated = EventsOn("clip:updated", (data: { id: string; content: string; length: number }) => {
+      setClips((prev) => {
+        const update = (clips: Clip[]) =>
+          clips.map((c) =>
+            c.id === data.id ? { ...c, content: data.content, length: data.length } : c
+          );
+        return { pinned: update(prev.pinned), recent: update(prev.recent) };
+      });
+    });
+
+    const offPinToggled = EventsOn("clip:pinToggled", (data: { id: string; isPinned: boolean }) => {
+      setClips((prev) => {
+        const clip = prev.pinned.find((c) => c.id === data.id) ?? prev.recent.find((c) => c.id === data.id);
+        if (!clip) return prev;
+        const updated = { ...clip, isPinned: data.isPinned };
+        if (data.isPinned) {
+          return {
+            pinned: [updated, ...prev.pinned.filter((c) => c.id !== data.id)],
+            recent: prev.recent.filter((c) => c.id !== data.id),
+          };
+        }
+        return {
+          pinned: prev.pinned.filter((c) => c.id !== data.id),
+          recent: [updated, ...prev.recent.filter((c) => c.id !== data.id)],
+        };
+      });
+    });
+
+    // Fallback for bulk operations (delete all, etc.)
+    const offChanged = EventsOn("clipboard:changed", () => {
       getClips();
     });
+
+    return () => {
+      offAdded();
+      offDeleted();
+      offPruned();
+      offUpdated();
+      offPinToggled();
+      offChanged();
+    };
   }, []);
 
   /* ===============================

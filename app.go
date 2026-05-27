@@ -108,12 +108,21 @@ func (a *App) startup(ctx context.Context) {
 
 			// new image, save it
 			*lastImagePtr = img
-			inserted, err := store.AddImageClip(img)
+			clip, prunedIDs, inserted, err := store.AddImageClip(img)
 			if err != nil {
 				fmt.Println("failed to save image:", err)
 			}
 			if a.ctx != nil && inserted {
-				runtime.EventsEmit(a.ctx, "clipboard:changed")
+				if clip != nil {
+					runtime.EventsEmit(a.ctx, "clip:added", clip)
+				}
+				if len(prunedIDs) > 0 {
+					prunedStrs := make([]string, len(prunedIDs))
+					for i, pid := range prunedIDs {
+						prunedStrs[i] = fmt.Sprintf("clip_%03d", pid)
+					}
+					runtime.EventsEmit(a.ctx, "clip:pruned", prunedStrs)
+				}
 			}
 			return
 		}
@@ -124,14 +133,23 @@ func (a *App) startup(ctx context.Context) {
 			return
 		}
 
-		inserted, err := store.AddClip(text, "text")
+		clip, prunedIDs, inserted, err := store.AddClip(text, "text")
 		if err != nil {
 			fmt.Println("failed to save text:", err)
 			return
 		}
 
 		if a.ctx != nil && inserted {
-			runtime.EventsEmit(a.ctx, "clipboard:changed", text)
+			if clip != nil {
+				runtime.EventsEmit(a.ctx, "clip:added", clip)
+			}
+			if len(prunedIDs) > 0 {
+				prunedStrs := make([]string, len(prunedIDs))
+				for i, pid := range prunedIDs {
+					prunedStrs[i] = fmt.Sprintf("clip_%03d", pid)
+				}
+				runtime.EventsEmit(a.ctx, "clip:pruned", prunedStrs)
+			}
 		}
 	}, func() {
 		// Hotkey (Ctrl+Shift+V) fired — show Clipcat and bring it to the front.
@@ -177,15 +195,43 @@ func (a *App) GetClips() ([]store.Clip, error) {
 }
 
 func (a *App) UpdateClipContent(clipID int, newContent string) error {
-	return store.UpdateClipContent(clipID, newContent)
+	err := store.UpdateClipContent(clipID, newContent)
+	if err != nil {
+		return err
+	}
+	if a.ctx != nil {
+		runtime.EventsEmit(a.ctx, "clip:updated", map[string]interface{}{
+			"id":      fmt.Sprintf("clip_%03d", clipID),
+			"content": newContent,
+			"length":  len(newContent),
+		})
+	}
+	return nil
 }
 
 func (a *App) TogglePin(clipID int) error {
-	return store.TogglePinClip(clipID)
+	isPinned, err := store.TogglePinClip(clipID)
+	if err != nil {
+		return err
+	}
+	if a.ctx != nil {
+		runtime.EventsEmit(a.ctx, "clip:pinToggled", map[string]interface{}{
+			"id":       fmt.Sprintf("clip_%03d", clipID),
+			"isPinned": isPinned,
+		})
+	}
+	return nil
 }
 
 func (a *App) Delete(clipID int) error {
-	return store.DeleteClip(clipID)
+	err := store.DeleteClip(clipID)
+	if err != nil {
+		return err
+	}
+	if a.ctx != nil {
+		runtime.EventsEmit(a.ctx, "clip:deleted", fmt.Sprintf("clip_%03d", clipID))
+	}
+	return nil
 }
 
 func (a *App) GetClipImage(clipID int) (string, error) {
@@ -300,12 +346,21 @@ func (a *App) PasteToWindow(content string) error {
 }
 
 func (a *App) AddClip(content string, pinned bool) error {
-	inserted, err := store.AddManualClip(content, pinned)
+	clip, prunedIDs, inserted, err := store.AddManualClip(content, pinned)
 	if err != nil {
 		return err
 	}
 	if a.ctx != nil && inserted {
-		runtime.EventsEmit(a.ctx, "clipboard:changed")
+		if clip != nil {
+			runtime.EventsEmit(a.ctx, "clip:added", clip)
+		}
+		if len(prunedIDs) > 0 {
+			prunedStrs := make([]string, len(prunedIDs))
+			for i, pid := range prunedIDs {
+				prunedStrs[i] = fmt.Sprintf("clip_%03d", pid)
+			}
+			runtime.EventsEmit(a.ctx, "clip:pruned", prunedStrs)
+		}
 	}
 	return nil
 }

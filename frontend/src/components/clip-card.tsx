@@ -31,7 +31,7 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
     const [fullImage, setFullImage] = useState<string | null>(null)
     const cachedRowSpanRef = useRef(10) // matches CSS default span
     const cardRef = useRef<HTMLDivElement>(null)
-    const { getClips, soundOn, hideContent, isMiniClip } = useClips()
+    const { soundOn, hideContent, isMiniClip } = useClips()
     const relativeTime = useRelativeTime(clip.createdAt)
     const linkedContent = useMemo(() => insertLinks(clip.content), [clip.content])
 
@@ -94,8 +94,6 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
         playSound("/sounds/clipboard-slap.mp3", soundOn, 1)
         await TogglePin(clipId).catch((err) => {
             console.error("Failed to toggle pin:", err)
-        }).finally(() => {
-            getClips()
         })
     }
 
@@ -120,10 +118,9 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
 
         try {
             await Delete(clipId)
-            await getClips()
         } catch (err) {
             console.error("Failed to delete clip:", err)
-            LogPrint(`Failed to delete clip: ${err}`)   
+            LogPrint(`Failed to delete clip: ${err}`)
             setIsDeleted(false) // rollback on failure
         }
     }

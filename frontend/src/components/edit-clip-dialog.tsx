@@ -1,7 +1,6 @@
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
 import { useState } from "react"
 import { Check, X } from "lucide-react"
-import { useClips } from "../context/ClipContext"
 import { UpdateClipContent } from "../../wailsjs/go/main/App"
 // import TeaseDialog from "./tease-dialog"
 import type { Clip } from '../../types/clip'
@@ -16,7 +15,6 @@ interface EditClipDialogProps {
 export default function EditClipDialog({ children, clip, triggerClassName, className }: EditClipDialogProps) {
     const [open, setOpen] = useState(false)
     const [content, setContent] = useState(clip.content || "")
-    const { getClips } = useClips()
 
 
     const handleSave = async () => {
@@ -24,7 +22,6 @@ export default function EditClipDialog({ children, clip, triggerClassName, class
 
         const clipId = Number(clip.id.replace('clip_', ''))
         await UpdateClipContent(clipId, content)
-        await getClips()
 
         setOpen(false)
     }

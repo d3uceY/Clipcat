@@ -11,6 +11,7 @@ import { ScrollArea as ScrollAreaPencil } from "./ui/scroll-area-pencil"
 import { copyBase64ImageToClipboard } from "@/helpers/copyBase64Image"
 import { useCardRowSpan } from "@/hooks/use-card-row-span"
 import EditClipDialog from "./edit-clip-dialog"
+import ImageLightbox from "./image-lightbox"
 import { insertLinks } from "@/helpers/insertLinks"
 import { BrowserOpenURL } from "../../wailsjs/runtime/runtime"
 import { LogPrint } from "../../wailsjs/runtime/runtime"
@@ -26,6 +27,7 @@ interface ClipCardProps {
 function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) {
     const [copied, setCopied] = useState(false)
     const [dialogOpen, setDialogOpen] = useState(false)
+    const [lightboxOpen, setLightboxOpen] = useState(false)
     const [isDeleted, setIsDeleted] = useState(false)
     const [isVisible, setIsVisible] = useState(initialVisible)
     const [fullImage, setFullImage] = useState<string | null>(null)
@@ -244,7 +246,7 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
             </div>
 
             {dialogOpen && (
-                <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) setLightboxOpen(false) }}>
                     {
                         clip.type === "image" && clip.image ? (
                             <DialogContent className="px-3 border-0 rounded-sm max-w-2xl bg-[url(/board-texture.avif)] bg-cover h-screen!  sm:h-[90vh]! max-h-125">
@@ -253,9 +255,16 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
                                     <img
                                         src={`data:image/png;base64,${fullImage ?? clip.image}`}
                                         alt="Clip image"
-                                        className={`w-full h-auto object-contain rounded ${hideContent ? "hard-to-read" : ""}`}
+                                        onClick={() => setLightboxOpen(true)}
+                                        className={`w-full h-auto object-contain rounded cursor-zoom-in ${hideContent ? "hard-to-read" : ""}`}
                                     />
                                 </ScrollArea>
+                                <ImageLightbox
+                                    src={`data:image/png;base64,${fullImage ?? clip.image}`}
+                                    open={lightboxOpen}
+                                    hideContent={hideContent}
+                                    onClose={() => setLightboxOpen(false)}
+                                />
                             </DialogContent>
 
                         )

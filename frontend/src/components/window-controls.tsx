@@ -230,7 +230,7 @@ export default function WindowControls() {
                 </button>
                 <div ref={settingDialogRef} className="fixed inset-0 z-50 flex items-center justify-center">
                     <div className="absolute inset-0 bg-black/30" onClick={handleSettingsClick} />
-                    <div ref={settingDialogInnerRef} className="setting-dialog relative z-10 w-[90vw] max-w-2xl rounded-sm border-0 h-screen! sm:h-[90vh]! max-h-125">
+                    <div ref={settingDialogInnerRef} className="setting-dialog relative z-10 w-[90vw] max-w-lg rounded-sm border-0 h-screen! sm:h-[90vh]! max-h-100">
                         <button
                             onClick={handleSettingsClick}
                             className="absolute top-3 right-3 z-10 w-7 h-7 flex items-center justify-center hand-drawn-btn lined thin text-sm font-bold hover:opacity-70"

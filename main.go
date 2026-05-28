@@ -59,9 +59,9 @@ func main() {
 				OpenInspectorOnStartup: false,
 			},
 			// just disabling this for memory leak issues in webview2, testing ese
-			Windows: &windows.Options{
-				WebviewGpuIsDisabled: true,
-			},
+			// Windows: &windows.Options{
+			// 	WebviewGpuIsDisabled: true,
+			// },
 		})
 
 	if err != nil {

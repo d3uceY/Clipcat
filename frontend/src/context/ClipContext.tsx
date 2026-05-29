@@ -16,6 +16,7 @@ import {
   RemoveIgnoreEntry,
   GetGhostMode,
   SetGhostMode,
+  RenameClip,
 } from "../../wailsjs/go/main/App";
 import { EventsOn } from "../../wailsjs/runtime";
 import type { Clip } from "../../types/clip";
@@ -25,6 +26,7 @@ interface ClipContextType {
   clipsLoaded: boolean;
   getClips: () => Promise<void>;
   addClip: (content: string, pinned: boolean) => Promise<void>;
+  renameClip: (id: string, label: string) => Promise<void>;
   soundOn: boolean;
   toggleSound: () => void;
   hideContent: boolean;
@@ -167,6 +169,18 @@ export function ClipProvider({ children }: { children: ReactNode }) {
     // getClips() is triggered by the clipboard:changed event emitted from Go.
   };
 
+  const renameClip = async (id: string, label: string) => {
+    const clipId = Number(id.replace('clip_', ''));
+    await RenameClip(clipId, label);
+    setClips((prev) => {
+      const update = (clips: Clip[]) =>
+        clips.map((c) =>
+          c.id === id ? { ...c, label } : c
+        );
+      return { pinned: update(prev.pinned), recent: update(prev.recent) };
+    });
+  };
+
   /* ===============================
        HIDE CONTENT OPS FUNCTIONS
       ===============================
@@ -303,6 +317,7 @@ export function ClipProvider({ children }: { children: ReactNode }) {
         clipsLoaded,
         getClips,
         addClip,
+        renameClip,
         // SOUND OPERATIONS
         soundOn,
         toggleSound,

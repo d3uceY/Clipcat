@@ -31,10 +31,14 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
     const [isDeleted, setIsDeleted] = useState(false)
     const [isVisible, setIsVisible] = useState(initialVisible)
     const [fullImage, setFullImage] = useState<string | null>(null)
+    const [isEditingLabel, setIsEditingLabel] = useState(false)
+    const [editingLabel, setEditingLabel] = useState(clip.label || "")
+    const isSavingLabelRef = useRef(false)
     const cachedRowSpanRef = useRef(10) // matches CSS default span
     const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+    const labelInputRef = useRef<HTMLInputElement>(null)
     const cardRef = useRef<HTMLDivElement>(null)
-    const { soundOn, hideContent, isMiniClip } = useClips()
+    const { soundOn, hideContent, isMiniClip, renameClip } = useClips()
     const relativeTime = useRelativeTime(clip.createdAt)
     const linkedContent = useMemo(() => insertLinks(clip.content), [clip.content])
 
@@ -142,6 +146,44 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
         setDialogOpen(true)
     }
 
+    // Focus input when label editing starts
+    useEffect(() => {
+      if (isEditingLabel && labelInputRef.current) {
+        labelInputRef.current.focus()
+        labelInputRef.current.select()
+      }
+    }, [isEditingLabel])
+
+    const startEditingLabel = () => {
+      setEditingLabel(clip.label || "")
+      setIsEditingLabel(true)
+    }
+
+    const saveLabel = async () => {
+      if (isSavingLabelRef.current) return
+      isSavingLabelRef.current = true
+      setIsEditingLabel(false)
+      const trimmed = editingLabel.trim()
+      if (trimmed !== (clip.label || "")) {
+        await renameClip(clip.id, trimmed)
+      }
+      isSavingLabelRef.current = false
+    }
+
+    const cancelLabelEditing = () => {
+      setIsEditingLabel(false)
+      setEditingLabel(clip.label || "")
+    }
+
+    const handleLabelKeyDown = (e: React.KeyboardEvent) => {
+      if (e.key === "Enter") {
+        e.preventDefault()
+        saveLabel()
+      } else if (e.key === "Escape") {
+        cancelLabelEditing()
+      }
+    }
+
     const handleLinkClick = (e: React.MouseEvent) => {
         const target = e.target as HTMLElement
         if (target.classList.contains('inserted-link')) {
@@ -179,6 +221,37 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
             <div className="mb-3 flex items-start justify-between">
                 <span className="text-xl"></span>
                 <span className="text-xs text-muted-foreground md:hidden">{relativeTime}</span>
+            </div>
+
+            {/* Label editor */}
+            <div className="mb-1.5 min-h-[1.25rem]">
+                {isEditingLabel ? (
+                    <input
+                        ref={labelInputRef}
+                        type="text"
+                        className="w-full text-xs px-1 py-0.5 bg-transparent border-b border-dashed border-amber-600/50 outline-none text-foreground placeholder:text-muted-foreground/50"
+                        placeholder="Enter label…"
+                        value={editingLabel}
+                        onChange={(e) => setEditingLabel(e.target.value)}
+                        onBlur={saveLabel}
+                        onKeyDown={handleLabelKeyDown}
+                    />
+                ) : clip.label ? (
+                    <button
+                        onClick={startEditingLabel}
+                        className="group/label flex items-center gap-1 text-[11px] text-amber-700/70 hover:text-amber-700 transition-colors cursor-text"
+                    >
+                        <span className="truncate max-w-[200px]">{clip.label}</span>
+                        <Pencil className="h-3 w-3 opacity-0 group-hover/label:opacity-100 transition-opacity" />
+                    </button>
+                ) : (
+                    <button
+                        onClick={startEditingLabel}
+                        className="text-[11px] text-muted-foreground/40 hover:text-muted-foreground/70 opacity-0 group-hover:opacity-100 transition-all cursor-text"
+                    >
+                        Add label…
+                    </button>
+                )}
             </div>
 
             {/* Content */}
@@ -307,6 +380,7 @@ export default memo(ClipCard, (prev, next) =>
     prev.clip.content === next.clip.content &&
     prev.clip.image === next.clip.image &&
     prev.clip.isPinned === next.clip.isPinned &&
+    prev.clip.label === next.clip.label &&
     prev.type === next.type &&
     prev.tourId === next.tourId &&
     prev.initialVisible === next.initialVisible

@@ -120,6 +120,11 @@ func MigrateThumbnailColumn() {
 
 // MigrateEncryptOldClips re-encrypts every pre-existing unencrypted row so
 // that all clip data at rest is protected after the first run of a new version.
+// MigrateLabelColumn adds a label column for optional clip nicknames.
+func MigrateLabelColumn() {
+	_, _ = DB.Exec(`ALTER TABLE clips ADD COLUMN label TEXT NOT NULL DEFAULT ''`)
+}
+
 func MigrateEncryptOldClips() {
 	type legacyRow struct {
 		id       int

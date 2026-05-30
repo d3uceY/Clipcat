@@ -104,6 +104,12 @@ sudo apt install xdotool
 
 - **Configurable Storage Limit** — Choose how many clips to keep (100–500); pinned clips are always preserved
 
+- **Labels** — Tag any clip with a custom label to categorize and organize your history
+
+- **Label Filters** — Filter your clipboard history by label with one click using the filter bar above your clips
+
+- **Auto-hide Sensitive Clips** — Automatically detects and hides clips that look like passwords, API keys, tokens, JWTs, private keys, and other credentials using pattern matching and entropy analysis. Hidden clips are collapsed into a separate section and can be revealed or marked safe individually. Toggle this on or off in Settings
+
 - **Unique Paper Aesthetic** — Hand-drawn notebook-style UI with GSAP animations and a paper curtain reveal on launch
 
 

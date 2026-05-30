@@ -17,6 +17,10 @@ import {
   GetGhostMode,
   SetGhostMode,
   RenameClip,
+  GetAutoHideSensitive,
+  SetAutoHideSensitive,
+  UnhideClip,
+  HideClip,
 } from "../../wailsjs/go/main/App";
 import { EventsOn } from "../../wailsjs/runtime";
 import type { Clip } from "../../types/clip";
@@ -32,6 +36,11 @@ interface ClipContextType {
   activeLabels: string[];
   toggleLabelFilter: (label: string) => void;
   clearLabelFilters: () => void;
+  // Sensitive / hidden clips
+  autoHideSensitive: boolean;
+  toggleAutoHideSensitive: () => Promise<void>;
+  unhideClip: (id: string) => Promise<void>;
+  hideClip: (id: string) => Promise<void>;
   soundOn: boolean;
   toggleSound: () => void;
   hideContent: boolean;
@@ -71,6 +80,7 @@ export function ClipProvider({ children }: { children: ReactNode }) {
   const [ignoreList, setIgnoreList] = useState<string[]>([]);
   const [isGhostMode, setIsGhostMode] = useState(false);
   const [clipsLoaded, setClipsLoaded] = useState(false);
+  const [autoHideSensitive, setAutoHideSensitive] = useState(true);
 
   // Distinct labels derived from loaded clips — reactive, zero extra DB calls.
   const distinctLabels = useMemo(() => {
@@ -212,6 +222,33 @@ export function ClipProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  const toggleAutoHideSensitive = async () => {
+    const next = !autoHideSensitive;
+    await SetAutoHideSensitive(next);
+    setAutoHideSensitive(next);
+  };
+
+  const unhideClip = async (id: string) => {
+    const clipId = Number(id.replace('clip_', ''));
+    await UnhideClip(clipId);
+    // Optimistic update — the event also covers us.
+    setClips((prev) => {
+      const update = (clips: Clip[]) =>
+        clips.map((c) => c.id === id ? { ...c, isHidden: false } : c);
+      return { pinned: update(prev.pinned), recent: update(prev.recent) };
+    });
+  };
+
+  const hideClip = async (id: string) => {
+    const clipId = Number(id.replace('clip_', ''));
+    await HideClip(clipId);
+    setClips((prev) => {
+      const update = (clips: Clip[]) =>
+        clips.map((c) => c.id === id ? { ...c, isHidden: true } : c);
+      return { pinned: update(prev.pinned), recent: update(prev.recent) };
+    });
+  };
+
   /* ===============================
        HIDE CONTENT OPS FUNCTIONS
       ===============================
@@ -245,6 +282,9 @@ export function ClipProvider({ children }: { children: ReactNode }) {
     loadIgnoreList();
     GetGhostMode()
       .then((v) => setIsGhostMode(v ?? false))
+      .catch(() => {});
+    GetAutoHideSensitive()
+      .then((v) => setAutoHideSensitive(v ?? true))
       .catch(() => {});
 
     const offAdded = EventsOn("clip:added", (clip: Clip) => {
@@ -311,6 +351,22 @@ export function ClipProvider({ children }: { children: ReactNode }) {
       // Kept here as an extension point for future cross-window sync.
     });
 
+    const offUnhidden = EventsOn("clip:unhidden", (id: string) => {
+      setClips((prev) => {
+        const update = (clips: Clip[]) =>
+          clips.map((c) => c.id === id ? { ...c, isHidden: false } : c);
+        return { pinned: update(prev.pinned), recent: update(prev.recent) };
+      });
+    });
+
+    const offHidden = EventsOn("clip:hidden", (id: string) => {
+      setClips((prev) => {
+        const update = (clips: Clip[]) =>
+          clips.map((c) => c.id === id ? { ...c, isHidden: true } : c);
+        return { pinned: update(prev.pinned), recent: update(prev.recent) };
+      });
+    });
+
     return () => {
       offAdded();
       offDeleted();
@@ -319,6 +375,8 @@ export function ClipProvider({ children }: { children: ReactNode }) {
       offPinToggled();
       offChanged();
       offLabels();
+      offUnhidden();
+      offHidden();
     };
   }, []);
 
@@ -363,6 +421,11 @@ export function ClipProvider({ children }: { children: ReactNode }) {
         activeLabels,
         toggleLabelFilter,
         clearLabelFilters,
+        // SENSITIVE / HIDDEN CLIPS
+        autoHideSensitive,
+        toggleAutoHideSensitive,
+        unhideClip,
+        hideClip,
         // SOUND OPERATIONS
         soundOn,
         toggleSound,

@@ -1,4 +1,4 @@
-import { Copy, Pin, Trash2, Pencil, ClipboardPaste, Tag } from "lucide-react"
+import { Copy, Pin, Trash2, Pencil, ClipboardPaste, Tag, ShieldAlert, ShieldCheck } from "lucide-react"
 import { useState, useRef, useMemo, memo, useEffect, lazy, Suspense } from "react"
 import type { Clip } from '../../types/clip'
 import { TogglePin, Delete, PasteToWindow, GetClipImage } from "../../wailsjs/go/main/App"
@@ -38,7 +38,7 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
     const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
     const labelInputRef = useRef<HTMLInputElement>(null)
     const cardRef = useRef<HTMLDivElement>(null)
-    const { soundOn, hideContent, isMiniClip, renameClip, distinctLabels } = useClips()
+    const { soundOn, hideContent, isMiniClip, renameClip, distinctLabels, unhideClip, hideClip } = useClips()
     const relativeTime = useRelativeTime(clip.createdAt)
     const linkedContent = useMemo(() => insertLinks(clip.content), [clip.content])
 
@@ -220,8 +220,28 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
         <div
             id={tourId}
             ref={cardRef}
-            className={"hand-drawn lined thin p-3 bg-[#F9F5E6] relative group"}
+            className={`hand-drawn lined thin p-3 bg-[#F9F5E6] relative group${clip.isHidden ? " ring-1 ring-amber-500/30" : ""}`}
         >   {/* Header with icon and timestamp */}
+            {/* Shield button — absolute top-right. Shows as a sensitive badge when hidden,
+                or as a faint hover-only shield icon when not hidden. */}
+            {clip.isHidden ? (
+                <button
+                    onClick={() => unhideClip(clip.id)}
+                    className="absolute -top-2 -right-2 z-10 flex items-center gap-1 text-[11px] font-medium text-amber-900 bg-amber-300 border border-amber-500 rounded-full px-2 py-0.5 shadow-sm hover:bg-green-200 hover:text-green-900 hover:border-green-500 transition-colors"
+                    title="Mark as safe (unhide)"
+                >
+                    <ShieldCheck className="h-3 w-3" />
+                    <span>sensitive</span>
+                </button>
+            ) : (
+                <button
+                    onClick={() => hideClip(clip.id)}
+                    className="absolute -top-2 -right-2 z-10 p-1.5 rounded-full text-amber-800 bg-amber-200 border border-amber-400 shadow-sm opacity-0 group-hover:opacity-100 hover:bg-amber-300 hover:border-amber-500 transition-all"
+                    title="Mark as sensitive (hide)"
+                >
+                    <ShieldAlert className="h-3.5 w-3.5" />
+                </button>
+            )}
             {type == "pinned" &&
                 <div className="h-10 -top-5 right-[40%] absolute">
                     <img src={"pin.png"} alt="pin-img" className="h-full" />

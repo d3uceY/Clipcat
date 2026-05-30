@@ -7,4 +7,5 @@ export interface Clip {
   image?: string
   type: string
   label: string
+  isHidden: boolean
 }

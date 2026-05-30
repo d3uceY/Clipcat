@@ -30,3 +30,21 @@ func SetGhostMode(enabled bool) error {
 	_, err := DB.Exec(`UPDATE settings SET ghost_mode = ? WHERE id = 0`, val)
 	return err
 }
+
+func GetAutoHideSensitive() (bool, error) {
+	var v int
+	err := DB.QueryRow(`SELECT auto_hide_sensitive FROM settings WHERE id = 0`).Scan(&v)
+	if err != nil {
+		return true, err // default on
+	}
+	return v == 1, nil
+}
+
+func SetAutoHideSensitive(enabled bool) error {
+	val := 0
+	if enabled {
+		val = 1
+	}
+	_, err := DB.Exec(`UPDATE settings SET auto_hide_sensitive = ? WHERE id = 0`, val)
+	return err
+}

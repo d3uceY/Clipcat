@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useMemo, lazy, Suspense } from "react"
 import { startTour, hasSeenTour } from "@/helpers/onboarding"
-import { Search } from "lucide-react"
+import { Search, ShieldAlert } from "lucide-react"
 import ClipCard from "./clip-card"
 import LabelFilterBar from "./label-filter-bar"
 import { useClips } from "../context/ClipContext"
@@ -18,7 +18,8 @@ function PageContent() {
     const [searchFocused, setSearchFocused] = useState(false)
     const [version, setVersion] = useState("")
     const [curtainsDone, setCurtainsDone] = useState(false)
-    const { clips, soundOn, hideContent, clipsLoaded, activeLabels } = useClips()
+    const [showSensitive, setShowSensitive] = useState(false)
+    const { clips, soundOn, hideContent, clipsLoaded, activeLabels, autoHideSensitive } = useClips()
     const searchInputRef = useRef<HTMLInputElement>(null)
 
     useGSAP(() => {
@@ -105,22 +106,18 @@ function PageContent() {
         const matchesLabel = (clip: { label?: string }) =>
             activeLabels.length === 0 || activeLabels.includes(clip.label || "")
 
-        if (!query) {
-            return {
-                pinned: clips.pinned.filter(matchesLabel),
-                recent: clips.recent.filter(matchesLabel),
-            }
-        }
+        const matchesQuery = (clip: { content?: string }) =>
+            !query || clip?.content?.toLowerCase().includes(query)
 
         return {
-            pinned: clips.pinned.filter(
-                (clip) => matchesLabel(clip) && clip?.content?.toLowerCase().includes(query),
-            ),
-            recent: clips.recent.filter(
-                (clip) => matchesLabel(clip) && clip?.content?.toLowerCase().includes(query),
-            ),
+            pinned: clips.pinned.filter(c => !c.isHidden && matchesLabel(c) && matchesQuery(c)),
+            recent: clips.recent.filter(c => !c.isHidden && matchesLabel(c) && matchesQuery(c)),
+            hiddenPinned: clips.pinned.filter(c => c.isHidden && matchesLabel(c) && matchesQuery(c)),
+            hiddenRecent: clips.recent.filter(c => c.isHidden && matchesLabel(c) && matchesQuery(c)),
         }
     }, [searchQuery, clips, activeLabels])
+
+    const hiddenCount = filteredClips.hiddenPinned.length + filteredClips.hiddenRecent.length
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -196,6 +193,41 @@ function PageContent() {
 
                 {/* Label filter bar — only renders when at least one label exists */}
                 <LabelFilterBar />
+
+                {/* Sensitive clips indicator — only shown when auto-hide is on and there are hidden clips */}
+                {autoHideSensitive && hiddenCount > 0 && (
+                    <div className="mb-6 flex items-center gap-3 flex-wrap">
+                        <button
+                            onClick={() => setShowSensitive(v => !v)}
+                            className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs rounded-full border transition-colors ${
+                                showSensitive
+                                    ? "bg-amber-100 text-amber-800 border-amber-400/60"
+                                    : "bg-amber-50/80 text-amber-700/80 border-amber-300/50 hover:bg-amber-100 hover:text-amber-800"
+                            }`}
+                        >
+                            <ShieldAlert className="h-3 w-3" />
+                            {hiddenCount} sensitive clip{hiddenCount !== 1 ? "s" : ""} hidden
+                        </button>
+                    </div>
+                )}
+
+                {/* Sensitive clips section — only shown when user expands it */}
+                {showSensitive && hiddenCount > 0 && (
+                    <section className="mb-10 p-4 rounded border border-dashed border-amber-400/40 bg-amber-50/20">
+                        <div className="flex items-center gap-2 mb-4">
+                            <ShieldAlert className="h-4 w-4 text-amber-700/60" />
+                            <h2 className="text-sm font-medium italic text-amber-800/70">
+                                Sensitive Clips ({hiddenCount})
+                            </h2>
+                            <span className="text-xs text-muted-foreground/50 ml-1">— use the shield button on each card to mark as safe</span>
+                        </div>
+                        <div className="free-form-grid-container">
+                            {[...filteredClips.hiddenPinned, ...filteredClips.hiddenRecent].map((clip, i) => (
+                                <ClipCard key={clip.id} clip={clip} type={clip.isPinned ? "pinned" : "recent"} initialVisible={i < 25} />
+                            ))}
+                        </div>
+                    </section>
+                )}
 
                 {/* Pinned Section */}
                 {filteredClips.pinned.length > 0 && (

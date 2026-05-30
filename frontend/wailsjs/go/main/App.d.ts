@@ -18,6 +18,8 @@ export function DisableStartup():Promise<void>;
 
 export function EnableStartup():Promise<void>;
 
+export function GetAutoHideSensitive():Promise<boolean>;
+
 export function GetClipImage(arg1:number):Promise<string>;
 
 export function GetClips():Promise<Array<store.Clip>>;
@@ -33,6 +35,8 @@ export function GetPlatform():Promise<string>;
 export function GetStorageLimit():Promise<number>;
 
 export function GetVersion():Promise<string>;
+
+export function HideClip(arg1:number):Promise<void>;
 
 export function IsMiniClip():Promise<boolean>;
 
@@ -52,9 +56,13 @@ export function RenameClip(arg1:number,arg2:string):Promise<void>;
 
 export function ResumeCapture():Promise<void>;
 
+export function SetAutoHideSensitive(arg1:boolean):Promise<void>;
+
 export function SetGhostMode(arg1:boolean):Promise<void>;
 
 export function TogglePin(arg1:number):Promise<void>;
+
+export function UnhideClip(arg1:number):Promise<void>;
 
 export function UpdateClipContent(arg1:number,arg2:string):Promise<void>;
 

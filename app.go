@@ -60,6 +60,7 @@ func (a *App) startup(ctx context.Context) {
 		panic(err)
 	}
 
+	// migrations and other startup tasks
 	store.CreateTables()
 	store.MigrateClipsTable()
 	store.MigrateSettingsTable()
@@ -72,6 +73,8 @@ func (a *App) startup(ctx context.Context) {
 	}
 	store.MigrateEncryptOldClips()
 	store.MigrateLabelColumn()
+	store.MigrateHiddenColumn()
+	store.MigrateAutoHideSetting()
 
 	// Enable launch-on-startup by default on first run.
 	// ClaimStartupDefault returns true only once — so if the user later
@@ -259,6 +262,34 @@ func (a *App) RenameClip(clipID int, label string) error {
 		if labels, err := store.GetDistinctLabels(); err == nil {
 			runtime.EventsEmit(a.ctx, "labels:updated", labels)
 		}
+	}
+	return nil
+}
+
+func (a *App) GetAutoHideSensitive() (bool, error) {
+	return store.GetAutoHideSensitive()
+}
+
+func (a *App) SetAutoHideSensitive(enabled bool) error {
+	return store.SetAutoHideSensitive(enabled)
+}
+
+func (a *App) UnhideClip(clipID int) error {
+	if err := store.UnhideClip(clipID); err != nil {
+		return err
+	}
+	if a.ctx != nil {
+		runtime.EventsEmit(a.ctx, "clip:unhidden", fmt.Sprintf("clip_%03d", clipID))
+	}
+	return nil
+}
+
+func (a *App) HideClip(clipID int) error {
+	if err := store.HideClip(clipID); err != nil {
+		return err
+	}
+	if a.ctx != nil {
+		runtime.EventsEmit(a.ctx, "clip:hidden", fmt.Sprintf("clip_%03d", clipID))
 	}
 	return nil
 }

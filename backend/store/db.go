@@ -125,6 +125,18 @@ func MigrateLabelColumn() {
 	_, _ = DB.Exec(`ALTER TABLE clips ADD COLUMN label TEXT NOT NULL DEFAULT ''`)
 }
 
+// MigrateHiddenColumn adds the hidden flag used by the sensitive-content
+// auto-hide feature.  Defaults to 0 (visible) for all existing clips.
+func MigrateHiddenColumn() {
+	_, _ = DB.Exec(`ALTER TABLE clips ADD COLUMN hidden INTEGER NOT NULL DEFAULT 0`)
+}
+
+// MigrateAutoHideSetting adds the auto_hide_sensitive column to settings.
+// The feature is enabled by default (value 1) on first migration.
+func MigrateAutoHideSetting() {
+	_, _ = DB.Exec(`ALTER TABLE settings ADD COLUMN auto_hide_sensitive INTEGER NOT NULL DEFAULT 1`)
+}
+
 func MigrateEncryptOldClips() {
 	type legacyRow struct {
 		id       int

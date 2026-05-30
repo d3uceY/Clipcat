@@ -10,6 +10,8 @@ import (
 	"image/jpeg"
 	"image/png"
 
+	"Clipcat/backend/lib/secretscan"
+
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"golang.org/x/image/draw"
 
@@ -25,6 +27,7 @@ type Clip struct {
 	Pinned    bool    `json:"isPinned"`
 	CreatedAt string  `json:"createdAt"`
 	Label     string  `json:"label"`
+	Hidden    bool    `json:"isHidden"`
 }
 
 func GetStorageLimit() (int, error) {
@@ -56,7 +59,7 @@ func UpdateStorageLimit(newLimit int) error {
 
 func GetClips() ([]Clip, error) {
 	query := `
-		SELECT id, content, image, thumbnail, type, pinned, created_at, encrypted, label
+		SELECT id, content, image, thumbnail, type, pinned, created_at, encrypted, label, hidden
 		FROM clips
 		ORDER BY pinned DESC, created_at DESC
 	`
@@ -80,9 +83,10 @@ func GetClips() ([]Clip, error) {
 			createdAt string
 			encrypted bool
 			label     string
+			hidden    bool
 		)
 
-		err := rows.Scan(&id, &content, &image, &thumbnail, &clipType, &pinned, &createdAt, &encrypted, &label)
+		err := rows.Scan(&id, &content, &image, &thumbnail, &clipType, &pinned, &createdAt, &encrypted, &label, &hidden)
 		if err != nil {
 			return nil, err
 		}
@@ -93,6 +97,7 @@ func GetClips() ([]Clip, error) {
 			Pinned:    pinned,
 			CreatedAt: createdAt,
 			Label:     label,
+			Hidden:    hidden,
 		}
 
 		if clipType == "text" && content.Valid {
@@ -151,10 +156,11 @@ func getClipByRowID(id int64) (*Clip, error) {
 		createdAt string
 		encrypted bool
 		label     string
+		hidden    bool
 	)
 	err := DB.QueryRow(
-		`SELECT id, content, image, thumbnail, type, pinned, created_at, encrypted, label FROM clips WHERE id = ?`, id,
-	).Scan(&rowID, &content, &img, &thumbnail, &clipType, &pinned, &createdAt, &encrypted, &label)
+		`SELECT id, content, image, thumbnail, type, pinned, created_at, encrypted, label, hidden FROM clips WHERE id = ?`, id,
+	).Scan(&rowID, &content, &img, &thumbnail, &clipType, &pinned, &createdAt, &encrypted, &label, &hidden)
 	if err != nil {
 		return nil, err
 	}
@@ -165,6 +171,7 @@ func getClipByRowID(id int64) (*Clip, error) {
 		Pinned:    pinned,
 		CreatedAt: createdAt,
 		Label:     label,
+		Hidden:    hidden,
 	}
 
 	if clipType == "text" && content.Valid {
@@ -242,8 +249,19 @@ func AddClip(content string, clipType string) (*Clip, []int, bool, error) {
 		return nil, nil, false, fmt.Errorf("failed to encrypt clip: %v", err)
 	}
 	hash := hashContent([]byte(content))
-	query := `INSERT INTO clips (content, content_hash, type, encrypted, created_at) VALUES (?, ?, ?, 1, datetime('now'))`
-	result, err := DB.Exec(query, enc, hash, clipType)
+
+	// Scan for secrets and auto-hide if the setting is enabled.
+	hidden := 0
+	autolabel := ""
+	if autoHide, _ := GetAutoHideSensitive(); autoHide {
+		if result := secretscan.Scan(content); result.IsSecret {
+			hidden = 1
+			autolabel = result.Label
+		}
+	}
+
+	query := `INSERT INTO clips (content, content_hash, type, encrypted, hidden, label, created_at) VALUES (?, ?, ?, 1, ?, ?, datetime('now'))`
+	result, err := DB.Exec(query, enc, hash, clipType, hidden, autolabel)
 	if err != nil {
 		return nil, nil, false, fmt.Errorf("failed to insert clip: %v", err)
 	}
@@ -276,6 +294,8 @@ func AddManualClip(content string, pinned bool) (*Clip, []int, bool, error) {
 		return nil, nil, false, fmt.Errorf("failed to encrypt clip: %v", err)
 	}
 	hash := hashContent([]byte(content))
+
+	// Manual clips are intentionally added by the user — do not auto-hide them.
 	query := `INSERT INTO clips (content, content_hash, type, pinned, encrypted, created_at) VALUES (?, ?, ?, ?, 1, datetime('now'))`
 	result, err := DB.Exec(query, enc, hash, "text", pinned)
 	if err != nil {
@@ -649,6 +669,19 @@ func RenameClip(clipID int, label string) error {
 	}
 
 	return nil
+}
+
+// UnhideClip marks a clip as visible (hidden=0), meaning the user has
+// confirmed it is not sensitive.
+func UnhideClip(clipID int) error {
+	_, err := DB.Exec(`UPDATE clips SET hidden = 0 WHERE id = ?`, clipID)
+	return err
+}
+
+// HideClip marks a clip as hidden (hidden=1) so the frontend suppresses it.
+func HideClip(clipID int) error {
+	_, err := DB.Exec(`UPDATE clips SET hidden = 1 WHERE id = ?`, clipID)
+	return err
 }
 
 // SeedTestImageClips finds the most recent image clip in the DB and inserts n

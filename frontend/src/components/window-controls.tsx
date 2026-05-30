@@ -14,7 +14,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 export default function WindowControls() {
     const [fullScreen, setFullScreen] = useState<boolean>(false);
     const [newIgnoreEntry, setNewIgnoreEntry] = useState("");
-    const { soundOn, toggleSound, isMiniClip, toggleMiniClip, toggleStartup, isStartup, hideContent, toggleHideContent, clips, isPaused, togglePause, ignoreList, addIgnoreEntry, removeIgnoreEntry, isGhostMode, toggleGhostMode } = useClips();
+    const { soundOn, toggleSound, isMiniClip, toggleMiniClip, toggleStartup, isStartup, hideContent, toggleHideContent, clips, isPaused, togglePause, ignoreList, addIgnoreEntry, removeIgnoreEntry, isGhostMode, toggleGhostMode, autoHideSensitive, toggleAutoHideSensitive } = useClips();
     const settingBtnRef = useRef<HTMLButtonElement>(null);
     const settingDialogRef = useRef<HTMLDivElement>(null);
     const settingDialogInnerRef = useRef<HTMLDivElement>(null);
@@ -272,6 +272,11 @@ export default function WindowControls() {
                             <div className="flex items-center gap-3 justify-between py-2" title="Enables or disables loading the app on system startup">
                                 <p className="sm:text-base text-sm p-0!">Load on Startup</p>
                                 {MenuSwitch(isStartup, toggleStartup)}
+                            </div>
+                           
+                            <div className="flex items-center gap-3 justify-between py-2" title="Automatically hide clipboard items that look like passwords, API keys, or tokens">
+                                <p className="sm:text-base text-sm p-0!">Auto-hide Sensitive</p>
+                                {MenuSwitch(autoHideSensitive, toggleAutoHideSensitive)}
                             </div>
                            
                             {/* Ignore List */}

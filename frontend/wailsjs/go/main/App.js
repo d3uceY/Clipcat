@@ -34,6 +34,10 @@ export function EnableStartup() {
   return window['go']['main']['App']['EnableStartup']();
 }
 
+export function GetAutoHideSensitive() {
+  return window['go']['main']['App']['GetAutoHideSensitive']();
+}
+
 export function GetClipImage(arg1) {
   return window['go']['main']['App']['GetClipImage'](arg1);
 }
@@ -64,6 +68,10 @@ export function GetStorageLimit() {
 
 export function GetVersion() {
   return window['go']['main']['App']['GetVersion']();
+}
+
+export function HideClip(arg1) {
+  return window['go']['main']['App']['HideClip'](arg1);
 }
 
 export function IsMiniClip() {
@@ -102,12 +110,20 @@ export function ResumeCapture() {
   return window['go']['main']['App']['ResumeCapture']();
 }
 
+export function SetAutoHideSensitive(arg1) {
+  return window['go']['main']['App']['SetAutoHideSensitive'](arg1);
+}
+
 export function SetGhostMode(arg1) {
   return window['go']['main']['App']['SetGhostMode'](arg1);
 }
 
 export function TogglePin(arg1) {
   return window['go']['main']['App']['TogglePin'](arg1);
+}
+
+export function UnhideClip(arg1) {
+  return window['go']['main']['App']['UnhideClip'](arg1);
 }
 
 export function UpdateClipContent(arg1, arg2) {

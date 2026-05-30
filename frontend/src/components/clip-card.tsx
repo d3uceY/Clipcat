@@ -223,35 +223,43 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
                 <span className="text-xs text-muted-foreground md:hidden">{relativeTime}</span>
             </div>
 
-            {/* Label editor */}
-            <div className="mb-1.5 min-h-[1.25rem]">
-                {isEditingLabel ? (
-                    <input
-                        ref={labelInputRef}
-                        type="text"
-                        className="w-full text-xs px-1 py-0.5 bg-transparent border-b border-dashed border-amber-600/50 outline-none text-foreground placeholder:text-muted-foreground/50"
-                        placeholder="Enter label…"
-                        value={editingLabel}
-                        onChange={(e) => setEditingLabel(e.target.value)}
-                        onBlur={saveLabel}
-                        onKeyDown={handleLabelKeyDown}
-                    />
-                ) : clip.label ? (
-                    <button
-                        onClick={startEditingLabel}
-                        className="group/label flex items-center gap-1 text-[11px] text-amber-700/70 hover:text-amber-700 transition-colors cursor-text"
-                    >
-                        <span className="truncate max-w-[200px]">{clip.label}</span>
-                        <Pencil className="h-3 w-3 opacity-0 group-hover/label:opacity-100 transition-opacity" />
-                    </button>
-                ) : (
-                    <button
-                        onClick={startEditingLabel}
-                        className="text-[11px] text-muted-foreground/40 hover:text-muted-foreground/70 opacity-0 group-hover:opacity-100 transition-all cursor-text"
-                    >
-                        Add label…
-                    </button>
-                )}
+            {/* Label editor – collapses to zero height when card is not hovered.
+                Uses the grid-template-rows trick (0fr → 1fr) so height can
+                transition smoothly without knowing the natural height in advance.
+                Hover is handled entirely via the parent `group` CSS class so
+                there are zero React rerenders on hover. */}
+            <div className={`grid transition-[grid-template-rows] duration-200 ease-in-out${isEditingLabel ? " grid-rows-[1fr]" : " grid-rows-[0fr] group-hover:grid-rows-[1fr]"}`}>
+                <div className="overflow-hidden min-h-0">
+                    <div className="mb-1.5">
+                        {isEditingLabel ? (
+                            <input
+                                ref={labelInputRef}
+                                type="text"
+                                className="w-full text-xs px-1 py-0.5 bg-transparent border-b border-dashed border-amber-600/50 outline-none text-foreground placeholder:text-muted-foreground/50"
+                                placeholder="Enter label…"
+                                value={editingLabel}
+                                onChange={(e) => setEditingLabel(e.target.value)}
+                                onBlur={saveLabel}
+                                onKeyDown={handleLabelKeyDown}
+                            />
+                        ) : clip.label ? (
+                            <button
+                                onClick={startEditingLabel}
+                                className="group/label flex items-center gap-1 text-[11px] text-amber-700/70 hover:text-amber-700 transition-colors cursor-text"
+                            >
+                                <span className="truncate max-w-[200px]">{clip.label}</span>
+                                <Pencil className="h-3 w-3 opacity-0 group-hover/label:opacity-100 transition-opacity" />
+                            </button>
+                        ) : (
+                            <button
+                                onClick={startEditingLabel}
+                                className="text-[11px] text-muted-foreground/40 hover:text-muted-foreground/70 transition-colors cursor-text"
+                            >
+                                Add label…
+                            </button>
+                        )}
+                    </div>
+                </div>
             </div>
 
             {/* Content */}

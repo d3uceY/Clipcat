@@ -228,7 +228,7 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
                 transition smoothly without knowing the natural height in advance.
                 Hover is handled entirely via the parent `group` CSS class so
                 there are zero React rerenders on hover. */}
-            <div className={`grid transition-[grid-template-rows] duration-200 ease-in-out${isEditingLabel ? " grid-rows-[1fr]" : " grid-rows-[0fr] group-hover:grid-rows-[1fr]"}`}>
+            <div className={`grid transition-[grid-template-rows] duration-200 ease-in-out${isEditingLabel || clip.label ? " grid-rows-[1fr]" : " grid-rows-[0fr] group-hover:grid-rows-[1fr]"}`}>
                 <div className="overflow-hidden min-h-0">
                     <div className="mb-1.5">
                         {isEditingLabel ? (

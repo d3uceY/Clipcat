@@ -8,6 +8,7 @@ export namespace store {
 	    length: number;
 	    isPinned: boolean;
 	    createdAt: string;
+	    label: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new Clip(source);
@@ -22,6 +23,7 @@ export namespace store {
 	        this.length = source["length"];
 	        this.isPinned = source["isPinned"];
 	        this.createdAt = source["createdAt"];
+	        this.label = source["label"];
 	    }
 	}
 

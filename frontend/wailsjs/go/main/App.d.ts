@@ -46,6 +46,8 @@ export function PauseCapture():Promise<void>;
 
 export function RemoveIgnoreEntry(arg1:string):Promise<void>;
 
+export function RenameClip(arg1:number,arg2:string):Promise<void>;
+
 export function ResumeCapture():Promise<void>;
 
 export function SetGhostMode(arg1:boolean):Promise<void>;

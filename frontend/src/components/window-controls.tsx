@@ -243,37 +243,37 @@ export default function WindowControls() {
                                 <p className="sm:text-base text-sm p-0!">Mini Clip</p>
                                 {MenuSwitch(isMiniClip, toggleMiniClip)}
                             </div>
-                            <Separator />
+                           
                             <div className="flex items-center gap-3 justify-between py-2" title="alt + h to toggle">
                                 <p className="sm:text-base text-sm p-0!">Hide Content</p>
                                 {MenuSwitch(hideContent, toggleHideContent, !hasClips())}
                             </div>
-                            <Separator />
+                           
                             <div className="flex items-center gap-3 justify-between py-2" title="Limits the number of clipboard items stored">
                                 <p className="sm:text-base text-sm p-0!">Clipboard Limit</p>
                                 <ClipStorageLimitSwitch />
                             </div>
-                            <Separator />
+                           
                             <div className="flex items-center gap-3 justify-between py-2" title="alt + s to toggle">
                                 <p className="sm:text-base text-sm p-0!">Sound</p>
                                 {MenuSwitch(soundOn, toggleSound)}
                             </div>
-                            <Separator />
+                           
                             <div className="flex items-center gap-3 justify-between py-2" title="Pause clipboard capture temporarily">
                                 <p className="sm:text-base text-sm p-0!">Pause Capture</p>
                                 {MenuSwitch(isPaused, togglePause)}
                             </div>
-                            <Separator />
+                           
                             <div className="flex items-center gap-3 justify-between py-2" title="Quick Paste: hides to the tray, Ctrl+Shift+V summons it, paste any clip into the last window you used">
                                 <p className="sm:text-base text-sm p-0!">Quick Paste</p>
                                 {MenuSwitch(isGhostMode, handleQuickPasteToggle)}
                             </div>
-                            <Separator />
+                           
                             <div className="flex items-center gap-3 justify-between py-2" title="Enables or disables loading the app on system startup">
                                 <p className="sm:text-base text-sm p-0!">Load on Startup</p>
                                 {MenuSwitch(isStartup, toggleStartup)}
                             </div>
-                            <Separator />
+                           
                             {/* Ignore List */}
                             <div className="py-2">
                                 <p className="sm:text-base text-sm mb-2">Blocked Apps</p>
@@ -311,7 +311,7 @@ export default function WindowControls() {
                                     </ul>
                                 )}
                             </div>
-                            <Separator />
+                       
                             <Suspense fallback={null}>
                                 <DeleteClipsDialog>
                                     <DeleteButton />

@@ -241,41 +241,49 @@ export default function WindowControls() {
                             <Separator />
                             <div className="flex items-center gap-3 justify-between py-2" title="alt + m to toggle">
                                 <p className="sm:text-base text-sm p-0!">Mini Clip</p>
+                                <span className="flex-1 border-b border-dashed border-current opacity-20  mb-1 mx-1" />
                                 {MenuSwitch(isMiniClip, toggleMiniClip)}
                             </div>
                            
                             <div className="flex items-center gap-3 justify-between py-2" title="alt + h to toggle">
                                 <p className="sm:text-base text-sm p-0!">Hide Content</p>
+                                <span className="flex-1 border-b border-dashed border-current opacity-20  mb-1 mx-1" />
                                 {MenuSwitch(hideContent, toggleHideContent, !hasClips())}
                             </div>
                            
                             <div className="flex items-center gap-3 justify-between py-2" title="Limits the number of clipboard items stored">
                                 <p className="sm:text-base text-sm p-0!">Clipboard Limit</p>
+                                <span className="flex-1 border-b border-dashed border-current opacity-20  mb-1 mx-1" />
                                 <ClipStorageLimitSwitch />
                             </div>
                            
                             <div className="flex items-center gap-3 justify-between py-2" title="alt + s to toggle">
                                 <p className="sm:text-base text-sm p-0!">Sound</p>
+                                <span className="flex-1 border-b border-dashed border-current opacity-20  mb-1 mx-1" />
                                 {MenuSwitch(soundOn, toggleSound)}
                             </div>
                            
                             <div className="flex items-center gap-3 justify-between py-2" title="Pause clipboard capture temporarily">
                                 <p className="sm:text-base text-sm p-0!">Pause Capture</p>
+                                <span className="flex-1 border-b border-dashed border-current opacity-20  mb-1 mx-1" />
                                 {MenuSwitch(isPaused, togglePause)}
                             </div>
                            
                             <div className="flex items-center gap-3 justify-between py-2" title="Quick Paste: hides to the tray, Ctrl+Shift+V summons it, paste any clip into the last window you used">
                                 <p className="sm:text-base text-sm p-0!">Quick Paste</p>
+                                <span className="flex-1 border-b border-dashed border-current opacity-20  mb-1 mx-1" />
                                 {MenuSwitch(isGhostMode, handleQuickPasteToggle)}
                             </div>
                            
                             <div className="flex items-center gap-3 justify-between py-2" title="Enables or disables loading the app on system startup">
                                 <p className="sm:text-base text-sm p-0!">Load on Startup</p>
+                                <span className="flex-1 border-b border-dashed border-current opacity-20  mb-1 mx-1" />
                                 {MenuSwitch(isStartup, toggleStartup)}
                             </div>
                            
                             <div className="flex items-center gap-3 justify-between py-2" title="Automatically hide clipboard items that look like passwords, API keys, or tokens">
                                 <p className="sm:text-base text-sm p-0!">Auto-hide Sensitive</p>
+                                <span className="flex-1 border-b border-dashed border-current opacity-20  mb-1 mx-1" />
                                 {MenuSwitch(autoHideSensitive, toggleAutoHideSensitive)}
                             </div>
                            

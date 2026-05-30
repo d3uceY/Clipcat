@@ -1,5 +1,5 @@
 import { memo } from "react"
-import { Tag, X } from "lucide-react"
+import { X } from "lucide-react"
 import { useClips } from "@/context/ClipContext"
 
 function LabelFilterBar() {
@@ -9,10 +9,6 @@ function LabelFilterBar() {
 
     return (
         <div className="mb-6 flex items-center gap-3 flex-wrap">
-            <div className="flex items-center gap-1.5 text-xs text-amber-800/70 shrink-0 font-medium italic">
-                <Tag className="h-3.5 w-3.5" />
-                <span>labels:</span>
-            </div>
             <div className="flex items-center gap-2 flex-wrap">
                 {distinctLabels.map(label => {
                     const active = activeLabels.includes(label)

@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useMemo, lazy, Suspense } from "react"
 import { startTour, hasSeenTour } from "@/helpers/onboarding"
 import { Search, ShieldAlert } from "lucide-react"
 import ClipCard from "./clip-card"
+import ClipListItem from "./clip-list-item"
 import LabelFilterBar from "./label-filter-bar"
 import { useClips } from "../context/ClipContext"
 import gsap from 'gsap';
@@ -19,7 +20,7 @@ function PageContent() {
     const [version, setVersion] = useState("")
     const [curtainsDone, setCurtainsDone] = useState(false)
     const [showSensitive, setShowSensitive] = useState(false)
-    const { clips, soundOn, hideContent, clipsLoaded, activeLabels, autoHideSensitive } = useClips()
+    const { clips, soundOn, hideContent, clipsLoaded, activeLabels, autoHideSensitive, isMiniClip } = useClips()
     const searchInputRef = useRef<HTMLInputElement>(null)
 
     useGSAP(() => {
@@ -195,7 +196,7 @@ function PageContent() {
                 <LabelFilterBar />
 
                 {/* Sensitive clips indicator — only shown when auto-hide is on and there are hidden clips */}
-                {autoHideSensitive && hiddenCount > 0 && (
+                {!isMiniClip && autoHideSensitive && hiddenCount > 0 && (
                     <div className="mb-6 flex items-center gap-3 flex-wrap">
                         <button
                             onClick={() => setShowSensitive(v => !v)}
@@ -212,7 +213,7 @@ function PageContent() {
                 )}
 
                 {/* Sensitive clips section — only shown when user expands it */}
-                {showSensitive && hiddenCount > 0 && (
+                {!isMiniClip && showSensitive && hiddenCount > 0 && (
                     <section className="mb-10 p-4 rounded border border-dashed border-amber-400/40 bg-amber-50/20">
                         <div className="flex items-center gap-2 mb-4">
                             <ShieldAlert className="h-4 w-4 text-amber-700/60" />
@@ -237,6 +238,7 @@ function PageContent() {
                                 <span className="text-2xl">📌</span>
                                 <span className="italic">Pinned <span className="text-xl"> ({filteredClips.pinned.length}) </span></span>
                             </h2>
+                            {!isMiniClip && (
                             <div id="tour-add-clip" className="sm:m-0 mx-auto mb-2">
                                 <Suspense fallback={null}>
                                     <AddClipDialog>
@@ -249,12 +251,21 @@ function PageContent() {
                                     </AddClipDialog>
                                 </Suspense>
                             </div>
+                            )}
                         </div>
-                        <div className="free-form-grid-container">
-                            {filteredClips.pinned.map((clip, i) => (
-                                <ClipCard key={clip.id} clip={clip} type="pinned" initialVisible={i < 25} tourId={i === 0 ? "tour-clip-card" : undefined} />
-                            ))}
-                        </div>
+                        {isMiniClip ? (
+                            <div className="flex flex-col gap-3">
+                                {filteredClips.pinned.map((clip) => (
+                                    <ClipListItem key={clip.id} clip={clip} />
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="free-form-grid-container">
+                                {filteredClips.pinned.map((clip, i) => (
+                                    <ClipCard key={clip.id} clip={clip} type="pinned" initialVisible={i < 25} tourId={i === 0 ? "tour-clip-card" : undefined} />
+                                ))}
+                            </div>
+                        )}
                     </section>
                 )}
 
@@ -266,6 +277,7 @@ function PageContent() {
                                 <span className="text-2xl">📝</span>
                                 <span className="italic">Recent <span className="text-xl"> ({filteredClips.recent.length}) </span></span>
                             </h2>
+                            {!isMiniClip && (
                             <div>
                                 <Suspense fallback={null}>
                                     <AddClipDialog triggerClassName="sm:block hidden">
@@ -278,12 +290,21 @@ function PageContent() {
                                     </AddClipDialog>
                                 </Suspense>
                             </div>
+                            )}
                         </div>
-                        <div className="free-form-grid-container">
-                            {filteredClips.recent.map((clip, i) => (
-                                <ClipCard key={clip.id} clip={clip} type="recent" initialVisible={i < 25} tourId={i === 0 && filteredClips.pinned.length === 0 ? "tour-clip-card" : undefined} />
-                            ))}
-                        </div>
+                        {isMiniClip ? (
+                            <div className="flex flex-col gap-3">
+                                {filteredClips.recent.map((clip) => (
+                                    <ClipListItem key={clip.id} clip={clip} />
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="free-form-grid-container">
+                                {filteredClips.recent.map((clip, i) => (
+                                    <ClipCard key={clip.id} clip={clip} type="recent" initialVisible={i < 25} tourId={i === 0 && filteredClips.pinned.length === 0 ? "tour-clip-card" : undefined} />
+                                ))}
+                            </div>
+                        )}
                     </section>
                 )}
 

@@ -90,6 +90,10 @@ export function RemoveIgnoreEntry(arg1) {
   return window['go']['main']['App']['RemoveIgnoreEntry'](arg1);
 }
 
+export function RenameClip(arg1, arg2) {
+  return window['go']['main']['App']['RenameClip'](arg1, arg2);
+}
+
 export function ResumeCapture() {
   return window['go']['main']['App']['ResumeCapture']();
 }

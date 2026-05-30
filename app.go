@@ -71,6 +71,7 @@ func (a *App) startup(ctx context.Context) {
 		panic(err)
 	}
 	store.MigrateEncryptOldClips()
+	store.MigrateLabelColumn()
 
 	// Enable launch-on-startup by default on first run.
 	// ClaimStartupDefault returns true only once — so if the user later
@@ -244,6 +245,10 @@ func (a *App) Delete(clipID int) error {
 
 func (a *App) GetClipImage(clipID int) (string, error) {
 	return store.GetClipImage(clipID)
+}
+
+func (a *App) RenameClip(clipID int, label string) error {
+	return store.RenameClip(clipID, label)
 }
 
 func (a *App) DeleteAllClips() error {

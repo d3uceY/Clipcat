@@ -24,6 +24,7 @@ type Clip struct {
 	Length    int     `json:"length"`
 	Pinned    bool    `json:"isPinned"`
 	CreatedAt string  `json:"createdAt"`
+	Label     string  `json:"label"`
 }
 
 func GetStorageLimit() (int, error) {
@@ -55,7 +56,7 @@ func UpdateStorageLimit(newLimit int) error {
 
 func GetClips() ([]Clip, error) {
 	query := `
-		SELECT id, content, image, thumbnail, type, pinned, created_at, encrypted
+		SELECT id, content, image, thumbnail, type, pinned, created_at, encrypted, label
 		FROM clips
 		ORDER BY pinned DESC, created_at DESC
 	`
@@ -78,9 +79,10 @@ func GetClips() ([]Clip, error) {
 			pinned    bool
 			createdAt string
 			encrypted bool
+			label     string
 		)
 
-		err := rows.Scan(&id, &content, &image, &thumbnail, &clipType, &pinned, &createdAt, &encrypted)
+		err := rows.Scan(&id, &content, &image, &thumbnail, &clipType, &pinned, &createdAt, &encrypted, &label)
 		if err != nil {
 			return nil, err
 		}
@@ -90,6 +92,7 @@ func GetClips() ([]Clip, error) {
 			Type:      clipType,
 			Pinned:    pinned,
 			CreatedAt: createdAt,
+			Label:     label,
 		}
 
 		if clipType == "text" && content.Valid {
@@ -147,10 +150,11 @@ func getClipByRowID(id int64) (*Clip, error) {
 		pinned    bool
 		createdAt string
 		encrypted bool
+		label     string
 	)
 	err := DB.QueryRow(
-		`SELECT id, content, image, thumbnail, type, pinned, created_at, encrypted FROM clips WHERE id = ?`, id,
-	).Scan(&rowID, &content, &img, &thumbnail, &clipType, &pinned, &createdAt, &encrypted)
+		`SELECT id, content, image, thumbnail, type, pinned, created_at, encrypted, label FROM clips WHERE id = ?`, id,
+	).Scan(&rowID, &content, &img, &thumbnail, &clipType, &pinned, &createdAt, &encrypted, &label)
 	if err != nil {
 		return nil, err
 	}
@@ -160,6 +164,7 @@ func getClipByRowID(id int64) (*Clip, error) {
 		Type:      clipType,
 		Pinned:    pinned,
 		CreatedAt: createdAt,
+		Label:     label,
 	}
 
 	if clipType == "text" && content.Valid {
@@ -605,6 +610,26 @@ func DeleteUnpinnedClips(ctx context.Context) error {
 		return fmt.Errorf("failed to delete unpinned clips: %v", err)
 	}
 	DB.Exec(`VACUUM`)
+	return nil
+}
+
+// RenameClip updates the label/nickname for a clip identified by its row ID.
+func RenameClip(clipID int, label string) error {
+	query := `UPDATE clips SET label = ? WHERE id = ?`
+	result, err := DB.Exec(query, label, clipID)
+	if err != nil {
+		return fmt.Errorf("failed to rename clip: %v", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected: %v", err)
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf("clip with id %d not found", clipID)
+	}
+
 	return nil
 }
 

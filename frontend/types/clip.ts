@@ -6,4 +6,5 @@ export interface Clip {
   createdAt: string
   image?: string
   type: string
+  label: string
 }

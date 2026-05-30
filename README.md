@@ -7,7 +7,8 @@
 
 A stylish clipboard manager that automatically saves everything you copy — text and images — so you can find it, reuse it, and manage it without thinking about it.
 
-<img width="1912" height="1026" alt="image" src="https://github.com/user-attachments/assets/ec4870c1-8555-49e0-9cb4-52c83f7551b0" />
+<img width="1917" height="1026" alt="image" src="https://github.com/user-attachments/assets/b836545a-0bdd-496f-b3da-f722199357e4" />
+
 
 
 ## Download
@@ -60,53 +61,33 @@ sudo apt install xdotool
 - **Automatic Capture** — Saves everything you copy (text and images) the moment it hits your clipboard, with no setup needed
 
 - **Pin Important Clips** — Keep your most-used clips at the top, protected from being pushed out when the storage limit is reached
-- <img width="577" height="471" alt="image" src="https://github.com/user-attachments/assets/aa6e7ff1-159e-4fc0-8565-fdc9208a07c4" />
-
 - **Fast Search** — Filter everything instantly with `Ctrl+F`
-- <img width="530" height="112" alt="showcase-search" src="https://github.com/user-attachments/assets/c2c76d50-5f94-481d-9191-ad37f2518967" />
+- <img width="1911" height="1016" alt="image" src="https://github.com/user-attachments/assets/41338104-c3a3-4c1d-9db6-42dd7901f35f" />
 
 - **Paste Into Any Window** — Click the paste button on any clip and it fires directly into whatever window you were using before opening Clipcat. No manual Ctrl+V needed
-
 - **Quick Paste Mode** — Hide Clipcat to the tray, press `Ctrl+Shift+V` from anywhere to summon it, pick a clip, and it pastes straight in — then vanishes
-- <img width="331" height="283" alt="image" src="https://github.com/user-attachments/assets/65dcb9dd-a402-4699-97fa-3042f1a4a9aa" />
-
 - **Edit Clips** — Fix typos or update content in any saved clip without re-copying
-
 - **Manual Clip Creation** — Add clips directly from the app, optionally pinned from the start
-- <img width="705" height="324" alt="showcase-action-btns" src="https://github.com/user-attachments/assets/d03a6634-8b41-4d78-a976-662b4c2b8f89" />
+- <img width="1917" height="1017" alt="image" src="https://github.com/user-attachments/assets/311f03f6-5e77-4a29-b3cd-73e6b85be890" />
 
 - **Privacy Mode** — Instantly blur all clip content for screen sharing or shoulder-surfing situations; toggle with `Alt+H`
-- <img width="1223" height="244" alt="image" src="https://github.com/user-attachments/assets/0d242347-2e1d-46bf-b57f-20255d7c4fd1" />
+- <img width="1918" height="1017" alt="image" src="https://github.com/user-attachments/assets/7989e737-d9b9-4b1d-a008-9fd2ad3fd079" />
 
 - **Blocked Apps** — Add any app's process name to a blocklist so its clipboard activity is never captured (useful for password managers)
-- <img width="259" height="335" alt="image" src="https://github.com/user-attachments/assets/ca3ed1ef-8a44-4aa2-a759-37d025e0682b" />
-
 - **Pause Capture** — Temporarily stop recording clipboard changes without closing the app
-- <img width="252" height="233" alt="image" src="https://github.com/user-attachments/assets/2ce57fca-f3bc-49c1-bfde-0ef62338dcde" />
-
 - **Bulk Delete** — Clear all clips, only pinned, or only unpinned in one click — always with a confirmation prompt
-- <img width="467" height="193" alt="image" src="https://github.com/user-attachments/assets/a78a8a32-0d91-4920-ba4a-4100bb8d8cca" />
-
 - **Mini Clip Mode** — Compact always-on-top window that stays out of your way; toggle with `Alt+M`
-- <img width="270" height="330" alt="image" src="https://github.com/user-attachments/assets/ddedff44-5007-4f57-b98e-006e28e24e71" />
-
 - **System Tray** — Lives quietly in your tray; summon or quit it any time
-- <img width="211" height="108" alt="image" src="https://github.com/user-attachments/assets/078cf695-5af4-41f5-a357-2ac21d12fc95" />
-
 - **Startup Support** — Optionally launch Clipcat on system startup
-- <img width="293" height="335" alt="image" src="https://github.com/user-attachments/assets/2437742c-48c4-4e09-9726-19551d86eb54" />
-
 - **Clickable Links** — URLs in clips are automatically detected and open in your browser with a click
+- <img width="1912" height="1011" alt="image" src="https://github.com/user-attachments/assets/531f4334-b857-437c-99e5-5907c495fb48" />
 
 - **Relative Timestamps** — Clips show live-updating times like "2 minutes ago" or "yesterday"
-
 - **Sound Effects** — Satisfying audio feedback on every action; toggle with `Alt+S`
-
 - **Configurable Storage Limit** — Choose how many clips to keep (100–500); pinned clips are always preserved
-
 - **Labels** — Tag any clip with a custom label to categorize and organize your history
-
 - **Label Filters** — Filter your clipboard history by label with one click using the filter bar above your clips
+- <img width="1918" height="1012" alt="image" src="https://github.com/user-attachments/assets/5cacae71-6e17-4062-9a2a-725ee3307ab7" />
 
 - **Auto-hide Sensitive Clips** — Automatically detects and hides clips that look like passwords, API keys, tokens, JWTs, private keys, and other credentials using pattern matching and entropy analysis. Hidden clips are collapsed into a separate section and can be revealed or marked safe individually. Toggle this on or off in Settings
 

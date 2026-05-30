@@ -62,11 +62,17 @@ sudo apt install xdotool
 
 - **Pin Important Clips** — Keep your most-used clips at the top, protected from being pushed out when the storage limit is reached
 - **Fast Search** — Filter everything instantly with `Ctrl+F`
+- <img width="1911" height="1016" alt="image" src="https://github.com/user-attachments/assets/41338104-c3a3-4c1d-9db6-42dd7901f35f" />
+
 - **Paste Into Any Window** — Click the paste button on any clip and it fires directly into whatever window you were using before opening Clipcat. No manual Ctrl+V needed
 - **Quick Paste Mode** — Hide Clipcat to the tray, press `Ctrl+Shift+V` from anywhere to summon it, pick a clip, and it pastes straight in — then vanishes
 - **Edit Clips** — Fix typos or update content in any saved clip without re-copying
 - **Manual Clip Creation** — Add clips directly from the app, optionally pinned from the start
+- <img width="1917" height="1017" alt="image" src="https://github.com/user-attachments/assets/311f03f6-5e77-4a29-b3cd-73e6b85be890" />
+
 - **Privacy Mode** — Instantly blur all clip content for screen sharing or shoulder-surfing situations; toggle with `Alt+H`
+- <img width="1918" height="1017" alt="image" src="https://github.com/user-attachments/assets/7989e737-d9b9-4b1d-a008-9fd2ad3fd079" />
+
 - **Blocked Apps** — Add any app's process name to a blocklist so its clipboard activity is never captured (useful for password managers)
 - **Pause Capture** — Temporarily stop recording clipboard changes without closing the app
 - **Bulk Delete** — Clear all clips, only pinned, or only unpinned in one click — always with a confirmation prompt
@@ -74,11 +80,15 @@ sudo apt install xdotool
 - **System Tray** — Lives quietly in your tray; summon or quit it any time
 - **Startup Support** — Optionally launch Clipcat on system startup
 - **Clickable Links** — URLs in clips are automatically detected and open in your browser with a click
+- <img width="1912" height="1011" alt="image" src="https://github.com/user-attachments/assets/531f4334-b857-437c-99e5-5907c495fb48" />
+
 - **Relative Timestamps** — Clips show live-updating times like "2 minutes ago" or "yesterday"
 - **Sound Effects** — Satisfying audio feedback on every action; toggle with `Alt+S`
 - **Configurable Storage Limit** — Choose how many clips to keep (100–500); pinned clips are always preserved
 - **Labels** — Tag any clip with a custom label to categorize and organize your history
 - **Label Filters** — Filter your clipboard history by label with one click using the filter bar above your clips
+- <img width="1918" height="1012" alt="image" src="https://github.com/user-attachments/assets/5cacae71-6e17-4062-9a2a-725ee3307ab7" />
+
 - **Auto-hide Sensitive Clips** — Automatically detects and hides clips that look like passwords, API keys, tokens, JWTs, private keys, and other credentials using pattern matching and entropy analysis. Hidden clips are collapsed into a separate section and can be revealed or marked safe individually. Toggle this on or off in Settings
 
 - **Unique Paper Aesthetic** — Hand-drawn notebook-style UI with GSAP animations and a paper curtain reveal on launch

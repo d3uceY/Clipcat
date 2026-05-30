@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useMemo, lazy, Suspense } from "react"
 import { startTour, hasSeenTour } from "@/helpers/onboarding"
 import { Search } from "lucide-react"
 import ClipCard from "./clip-card"
+import LabelFilterBar from "./label-filter-bar"
 import { useClips } from "../context/ClipContext"
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
@@ -17,7 +18,7 @@ function PageContent() {
     const [searchFocused, setSearchFocused] = useState(false)
     const [version, setVersion] = useState("")
     const [curtainsDone, setCurtainsDone] = useState(false)
-    const { clips, soundOn, hideContent, clipsLoaded } = useClips()
+    const { clips, soundOn, hideContent, clipsLoaded, activeLabels } = useClips()
     const searchInputRef = useRef<HTMLInputElement>(null)
 
     useGSAP(() => {
@@ -101,24 +102,25 @@ function PageContent() {
     const filteredClips = useMemo(() => {
         const query = searchQuery.toLowerCase()
 
+        const matchesLabel = (clip: { label?: string }) =>
+            activeLabels.length === 0 || activeLabels.includes(clip.label || "")
+
         if (!query) {
             return {
-                pinned: clips.pinned,
-                recent: clips.recent,
+                pinned: clips.pinned.filter(matchesLabel),
+                recent: clips.recent.filter(matchesLabel),
             }
         }
 
         return {
             pinned: clips.pinned.filter(
-                (clip) =>
-                    clip?.content?.toLowerCase().includes(query),
+                (clip) => matchesLabel(clip) && clip?.content?.toLowerCase().includes(query),
             ),
             recent: clips.recent.filter(
-                (clip) =>
-                    clip?.content?.toLowerCase().includes(query),
+                (clip) => matchesLabel(clip) && clip?.content?.toLowerCase().includes(query),
             ),
         }
-    }, [searchQuery, clips])
+    }, [searchQuery, clips, activeLabels])
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -191,6 +193,9 @@ function PageContent() {
                         <Search className="absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-[#c0bdbd]" />
                     </div>
                 </div>
+
+                {/* Label filter bar — only renders when at least one label exists */}
+                <LabelFilterBar />
 
                 {/* Pinned Section */}
                 {filteredClips.pinned.length > 0 && (

@@ -38,9 +38,19 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
     const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
     const labelInputRef = useRef<HTMLInputElement>(null)
     const cardRef = useRef<HTMLDivElement>(null)
-    const { soundOn, hideContent, isMiniClip, renameClip } = useClips()
+    const { soundOn, hideContent, isMiniClip, renameClip, distinctLabels } = useClips()
     const relativeTime = useRelativeTime(clip.createdAt)
     const linkedContent = useMemo(() => insertLinks(clip.content), [clip.content])
+
+    // Suggestions shown in the autocomplete dropdown while editing a label.
+    // Only the labels that contain the current query and aren't the current label.
+    const labelSuggestions = useMemo(() => {
+        if (!isEditingLabel || distinctLabels.length === 0) return []
+        const q = editingLabel.toLowerCase()
+        return distinctLabels
+            .filter(l => l !== (clip.label || "") && (q === "" || l.toLowerCase().includes(q)))
+            .slice(0, 8)
+    }, [isEditingLabel, editingLabel, distinctLabels, clip.label])
 
     // Fetch full-resolution image when the detail dialog opens.
     useEffect(() => {
@@ -229,29 +239,61 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
                 Hover is handled entirely via the parent `group` CSS class so
                 there are zero React rerenders on hover. */}
             <div className={`grid transition-[grid-template-rows] duration-200 ease-in-out${isEditingLabel || clip.label ? " grid-rows-[1fr]" : " grid-rows-[0fr] group-hover:grid-rows-[1fr]"}`}>
-                <div className="overflow-hidden min-h-0">
-                    <div className="mb-1.5">
+                {/* overflow-hidden is removed while editing so the autocomplete
+                    dropdown (position:absolute) isn’t clipped by this wrapper. */}
+                <div className={`min-h-0 ${isEditingLabel ? "" : "overflow-hidden"}`}>
+                    <div className={`mb-1.5 ${isEditingLabel ? "relative" : ""}`}>
                         {isEditingLabel ? (
-                            <div className="flex items-center gap-1">
-                                <Tag className="h-3 w-3 shrink-0 text-amber-600/50" />
-                                <input
-                                    ref={labelInputRef}
-                                    type="text"
-                                    className="w-full text-xs px-1 py-0.5 bg-transparent border-b border-dashed border-amber-600/50 outline-none text-foreground placeholder:text-muted-foreground/50"
-                                    placeholder="Enter label…"
-                                    value={editingLabel}
-                                    onChange={(e) => setEditingLabel(e.target.value)}
-                                    onBlur={saveLabel}
-                                    onKeyDown={handleLabelKeyDown}
-                                />
-                            </div>
+                            <>
+                                <div className="flex items-center gap-1">
+                                    <Tag className="h-3 w-3 shrink-0 text-amber-600/50" />
+                                    <input
+                                        ref={labelInputRef}
+                                        type="text"
+                                        className="w-full text-xs px-1 py-0.5 bg-transparent border-b border-dashed border-amber-600/50 outline-none text-foreground placeholder:text-muted-foreground/50"
+                                        placeholder="Enter label…"
+                                        value={editingLabel}
+                                        onChange={(e) => setEditingLabel(e.target.value)}
+                                        onBlur={saveLabel}
+                                        onKeyDown={handleLabelKeyDown}
+                                    />
+                                </div>
+                                {labelSuggestions.length > 0 && (
+                                    <div className="absolute top-full left-0 right-0 z-20 mt-0.5 bg-[#F9F5E6] border border-dashed border-amber-600/30 shadow-md overflow-y-auto max-h-50">
+                                        {labelSuggestions.map(suggestion => (
+                                            <button
+                                                key={suggestion}
+                                                className="w-full text-left px-2 py-1.5 text-[11px] text-amber-700/70 hover:bg-amber-50/80 hover:text-amber-800 flex items-center gap-1.5 transition-colors"
+                                                onMouseDown={(e) => {
+                                                    // Prevent blur from firing before we handle the click.
+                                                    e.preventDefault()
+                                                    if (isSavingLabelRef.current) return
+                                                    isSavingLabelRef.current = true
+                                                    setIsEditingLabel(false)
+                                                    setEditingLabel(suggestion)
+                                                    if (suggestion !== (clip.label || "")) {
+                                                        renameClip(clip.id, suggestion)
+                                                            .catch(console.error)
+                                                            .finally(() => { isSavingLabelRef.current = false })
+                                                    } else {
+                                                        isSavingLabelRef.current = false
+                                                    }
+                                                }}
+                                            >
+                                                <Tag className="h-2.5 w-2.5 shrink-0" />
+                                                {suggestion}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </>
                         ) : clip.label ? (
                             <button
                                 onClick={startEditingLabel}
                                 className="group/label flex items-center gap-1 text-[11px] text-amber-700/70 hover:text-amber-700 transition-colors cursor-text"
                             >
                                 <Tag className="h-3 w-3 shrink-0" />
-                                <span className="truncate max-w-[200px]">{clip.label}</span>
+                                <span className="truncate max-w-50">{clip.label}</span>
                                 <Pencil className="h-3 w-3 opacity-0 group-hover/label:opacity-100 transition-opacity" />
                             </button>
                         ) : (

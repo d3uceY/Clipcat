@@ -247,8 +247,20 @@ func (a *App) GetClipImage(clipID int) (string, error) {
 	return store.GetClipImage(clipID)
 }
 
+func (a *App) GetDistinctLabels() ([]string, error) {
+	return store.GetDistinctLabels()
+}
+
 func (a *App) RenameClip(clipID int, label string) error {
-	return store.RenameClip(clipID, label)
+	if err := store.RenameClip(clipID, label); err != nil {
+		return err
+	}
+	if a.ctx != nil {
+		if labels, err := store.GetDistinctLabels(); err == nil {
+			runtime.EventsEmit(a.ctx, "labels:updated", labels)
+		}
+	}
+	return nil
 }
 
 func (a *App) DeleteAllClips() error {

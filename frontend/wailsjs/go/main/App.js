@@ -42,6 +42,10 @@ export function GetClips() {
   return window['go']['main']['App']['GetClips']();
 }
 
+export function GetDistinctLabels() {
+  return window['go']['main']['App']['GetDistinctLabels']();
+}
+
 export function GetGhostMode() {
   return window['go']['main']['App']['GetGhostMode']();
 }

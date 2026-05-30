@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
 import type { ReactNode } from "react";
 import {
   GetClips,
@@ -27,6 +27,11 @@ interface ClipContextType {
   getClips: () => Promise<void>;
   addClip: (content: string, pinned: boolean) => Promise<void>;
   renameClip: (id: string, label: string) => Promise<void>;
+  // Labels
+  distinctLabels: string[];
+  activeLabels: string[];
+  toggleLabelFilter: (label: string) => void;
+  clearLabelFilters: () => void;
   soundOn: boolean;
   toggleSound: () => void;
   hideContent: boolean;
@@ -66,6 +71,32 @@ export function ClipProvider({ children }: { children: ReactNode }) {
   const [ignoreList, setIgnoreList] = useState<string[]>([]);
   const [isGhostMode, setIsGhostMode] = useState(false);
   const [clipsLoaded, setClipsLoaded] = useState(false);
+
+  // Distinct labels derived from loaded clips — reactive, zero extra DB calls.
+  const distinctLabels = useMemo(() => {
+    const set = new Set<string>();
+    for (const c of clips.pinned) { if (c.label) set.add(c.label); }
+    for (const c of clips.recent) { if (c.label) set.add(c.label); }
+    return Array.from(set).sort();
+  }, [clips]);
+
+  const [activeLabels, setActiveLabels] = useState<string[]>([]);
+
+  // Prune selected filters when their label no longer exists.
+  useEffect(() => {
+    setActiveLabels(prev => {
+      const next = prev.filter(l => distinctLabels.includes(l));
+      return next.length === prev.length ? prev : next;
+    });
+  }, [distinctLabels]);
+
+  const toggleLabelFilter = useCallback((label: string) => {
+    setActiveLabels(prev =>
+      prev.includes(label) ? prev.filter(l => l !== label) : [...prev, label]
+    );
+  }, []);
+
+  const clearLabelFilters = useCallback(() => setActiveLabels([]), []);
 
   /* ===============================
         GHOST MODE FUNCTIONS
@@ -272,6 +303,14 @@ export function ClipProvider({ children }: { children: ReactNode }) {
       getClips();
     });
 
+    // Safety-net: Go emits fresh distinct labels after every RenameClip call.
+    // The useMemo already keeps labels in sync, but this handles edge cases
+    // where a DB change originates outside the current frontend session.
+    const offLabels = EventsOn("labels:updated", () => {
+      // Nothing to do — distinctLabels is derived reactively from clips state.
+      // Kept here as an extension point for future cross-window sync.
+    });
+
     return () => {
       offAdded();
       offDeleted();
@@ -279,6 +318,7 @@ export function ClipProvider({ children }: { children: ReactNode }) {
       offUpdated();
       offPinToggled();
       offChanged();
+      offLabels();
     };
   }, []);
 
@@ -318,6 +358,11 @@ export function ClipProvider({ children }: { children: ReactNode }) {
         getClips,
         addClip,
         renameClip,
+        // LABEL OPERATIONS
+        distinctLabels,
+        activeLabels,
+        toggleLabelFilter,
+        clearLabelFilters,
         // SOUND OPERATIONS
         soundOn,
         toggleSound,

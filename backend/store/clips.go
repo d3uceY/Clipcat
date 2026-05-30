@@ -613,6 +613,24 @@ func DeleteUnpinnedClips(ctx context.Context) error {
 	return nil
 }
 
+// GetDistinctLabels returns all distinct non-empty labels across all clips, sorted.
+func GetDistinctLabels() ([]string, error) {
+	rows, err := DB.Query(`SELECT DISTINCT label FROM clips WHERE label != '' ORDER BY label`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var labels []string
+	for rows.Next() {
+		var l string
+		if err := rows.Scan(&l); err != nil {
+			return nil, err
+		}
+		labels = append(labels, l)
+	}
+	return labels, nil
+}
+
 // RenameClip updates the label/nickname for a clip identified by its row ID.
 func RenameClip(clipID int, label string) error {
 	query := `UPDATE clips SET label = ? WHERE id = ?`

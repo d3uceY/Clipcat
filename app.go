@@ -38,6 +38,26 @@ func (a *App) GetPlatform() string {
 	return lib.GetPlatform()
 }
 
+// domReady is called after the frontend DOM is fully loaded.
+// We show the window here (instead of in startup) so it only
+// becomes visible once React has rendered — no white flash.
+func (a *App) domReady(ctx context.Context) {
+	// Restore window state before showing — applied while window is still hidden
+	// so there is no visible repaint or resize flash.
+	if alwaysOnTop, err := store.GetAlwaysOnTop(); err == nil && alwaysOnTop {
+		runtime.WindowSetAlwaysOnTop(a.ctx, true)
+	}
+	if miniClip, err := store.GetMiniClip(); err == nil && miniClip {
+		a.makeMiniClip(true)
+	}
+
+	// Keep hidden if Ghost Mode was active in the last session.
+	if ghostMode, err := store.GetGhostMode(); err == nil && ghostMode {
+		return
+	}
+	runtime.WindowShow(a.ctx)
+}
+
 // startup is called when the app starts. The context is saved
 // so we can call the runtime methods
 func (a *App) startup(ctx context.Context) {
@@ -101,22 +121,6 @@ func (a *App) startup(ctx context.Context) {
 
 	// Start the system-tray icon so the app is reachable while hidden.
 	a.startTray()
-
-	// If Ghost Mode was left on from the last session, hide into the tray
-	// immediately so the user never sees the window on startup.
-	if ghostMode, err := store.GetGhostMode(); err == nil && ghostMode {
-		runtime.WindowHide(a.ctx)
-	}
-
-	// Restore always-on-top from the last session.
-	if alwaysOnTop, err := store.GetAlwaysOnTop(); err == nil && alwaysOnTop {
-		runtime.WindowSetAlwaysOnTop(a.ctx, true)
-	}
-
-	// Restore mini-clip mode from the last session.
-	if miniClip, err := store.GetMiniClip(); err == nil && miniClip {
-		a.makeMiniClip(true)
-	}
 
 	// start clipboard listener
 	var lastImage []byte

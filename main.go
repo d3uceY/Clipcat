@@ -45,11 +45,13 @@ func main() {
 			// On macOS/Linux: closing the window hides it instead of quitting.
 			// The user can quit via the tray menu → Quit.
 			HideWindowOnClose: true,
+			StartHidden:       true,
 			AssetServer: &assetserver.Options{
 				Assets: assets,
 			},
 			BackgroundColour: &options.RGBA{R: 245, G: 245, B: 240, A: 1},
 			OnStartup:        app.startup,
+			OnDomReady:       app.domReady,
 			Bind: []interface{}{
 				app,
 			},

@@ -434,7 +434,7 @@ func (a *App) makeMiniClip(value bool) {
 
 	if value {
 		runtime.WindowSetPosition(a.ctx, 20, 20)
-		runtime.WindowSetMaxSize(a.ctx, 400, 650)
+		runtime.WindowSetMaxSize(a.ctx, 450, 650)
 	} else {
 		runtime.WindowSetMaxSize(a.ctx, 0, 0)
 	}

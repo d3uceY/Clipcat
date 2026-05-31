@@ -68,7 +68,7 @@ function ClipListItem({ clip }: ClipListItemProps) {
                     style={{ maxHeight: 100 }}
                 />
             ) : (
-                <p className={`text-sm line-clamp-2 wrap-break-word leading-relaxed pr-10 ${hideContent ? "hard-to-read" : ""}`}>
+                <p className={`text-xs line-clamp-2 wrap-break-word leading-relaxed pr-10 ${hideContent ? "hard-to-read" : ""}`}>
                     {clip.content}
                 </p>
             )}

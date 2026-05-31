@@ -56,7 +56,7 @@ Clipcat/
 │   │   ├── db.go         DB init, table creation, schema migrations
 │   │   ├── encrypt.go    AES-256-GCM encryption, key derivation, HMAC hashing
 │   │   ├── clips.go      Clip type, CRUD operations, storage-limit enforcement
-│   │   ├── settings.go   Ghost/Quick Paste mode flag
+│   │   ├── settings.go   Persisted settings: Quick Paste / Ghost mode, always-on-top, mini-clip, auto-hide sensitive
 │   │   └── ignore.go     Blocked-app process list
 │   ├── tray/         # package tray — systray logic
 │   │   ├── tray_windows.go          systray setup for Windows
@@ -182,19 +182,29 @@ Each platform implements the same interface: `StartFocusTracker`, `FocusPrevious
 
 ```sql
 CREATE TABLE clips (
-    id         INTEGER PRIMARY KEY AUTOINCREMENT,
-    content    TEXT,           -- nullable; populated for text clips
-    image      BLOB,           -- populated for image clips
-    type       TEXT NOT NULL,  -- 'text' or 'image'
-    pinned     BOOLEAN DEFAULT 0,
-    encrypted  INTEGER DEFAULT 0,
-    content_hash TEXT,         -- HMAC-SHA256 for deduplication
-    created_at DATETIME
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    content      TEXT,           -- nullable; populated for text clips
+    image        BLOB,           -- populated for image clips
+    thumbnail    BLOB,           -- low-res preview sent to frontend
+    type         TEXT NOT NULL,  -- 'text' or 'image'
+    pinned       BOOLEAN DEFAULT 0,
+    encrypted    INTEGER DEFAULT 0,
+    content_hash TEXT,           -- HMAC-SHA256 for deduplication
+    label        TEXT DEFAULT '', -- optional user-defined tag
+    hidden       INTEGER DEFAULT 0, -- auto-hidden sensitive clips
+    created_at   DATETIME
 );
 
 CREATE TABLE clip_storage_limit (id INTEGER PRIMARY KEY CHECK (id = 0), limit_count INTEGER DEFAULT 100);
 CREATE TABLE ignore_list        (process_name TEXT PRIMARY KEY);
-CREATE TABLE settings           (id INTEGER PRIMARY KEY CHECK (id = 0), ghost_mode INTEGER DEFAULT 0);
+CREATE TABLE settings (
+    id                   INTEGER PRIMARY KEY CHECK (id = 0),
+    ghost_mode           INTEGER DEFAULT 0,  -- Quick Paste mode
+    auto_hide_sensitive  INTEGER DEFAULT 1,  -- auto-hide passwords/keys
+    always_on_top        INTEGER DEFAULT 0,  -- window always on top
+    mini_clip            INTEGER DEFAULT 0,  -- compact mini-clip mode
+    startup_default_set  INTEGER DEFAULT 0   -- first-run startup flag
+);
 CREATE TABLE encryption_meta    (id INTEGER PRIMARY KEY CHECK (id = 0), machine_key TEXT NOT NULL);
 ```
 
@@ -221,7 +231,16 @@ All clip content is encrypted at rest with AES-256-GCM using a per-installation 
 
 - Splits clips into `pinned` and `recent` arrays
 - Listens for `clipboard:changed` events from the backend
-- Manages all settings: sound, privacy mode, mini clip, startup, pause, blocked apps, Quick Paste
+- Manages all settings: sound, privacy mode, mini clip, startup, pause, blocked apps, Quick Paste, always-on-top, auto-hide sensitive
+- All toggle functions call the corresponding Go backend method and update local React state
+- Settings that need to survive restarts (always-on-top, mini-clip, Quick Paste, auto-hide sensitive) are persisted to SQLite via the Go layer; others (sound, hide-content) use `localStorage`
+
+### Startup / domReady flow (`app.go`)
+
+The app uses `StartHidden: true` in Wails options so the window is invisible during initialization. The lifecycle is:
+
+1. **`startup(ctx)`** — DB init, migrations, clipboard listener, tray setup. No window operations happen here.
+2. **`domReady(ctx)`** — Called after React has fully rendered. Window state is restored here (always-on-top, mini-clip sizing), then `WindowShow` is called. This prevents the white-flash that would occur if window operations ran before the WebView2 finished rendering.
 
 ---
 

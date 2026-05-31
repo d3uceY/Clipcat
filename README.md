@@ -65,7 +65,7 @@ sudo apt install xdotool
 - <img width="1911" height="1016" alt="image" src="https://github.com/user-attachments/assets/41338104-c3a3-4c1d-9db6-42dd7901f35f" />
 
 - **Paste Into Any Window** — Click the paste button on any clip and it fires directly into whatever window you were using before opening Clipcat. No manual Ctrl+V needed
-- **Quick Paste Mode** — Hide Clipcat to the tray, press `Ctrl+Shift+V` from anywhere to summon it, pick a clip, and it pastes straight in — then vanishes
+- **Quick Paste Mode** — Hide Clipcat to the tray, press `Ctrl+Shift+V` from anywhere to summon it, pick a clip, and it pastes straight in — then vanishes. Enabling Quick Paste also automatically turns on Mini Clip mode
 - **Edit Clips** — Fix typos or update content in any saved clip without re-copying
 - **Manual Clip Creation** — Add clips directly from the app, optionally pinned from the start
 - <img width="1917" height="1017" alt="image" src="https://github.com/user-attachments/assets/311f03f6-5e77-4a29-b3cd-73e6b85be890" />
@@ -76,7 +76,8 @@ sudo apt install xdotool
 - **Blocked Apps** — Add any app's process name to a blocklist so its clipboard activity is never captured (useful for password managers)
 - **Pause Capture** — Temporarily stop recording clipboard changes without closing the app
 - **Bulk Delete** — Clear all clips, only pinned, or only unpinned in one click — always with a confirmation prompt
-- **Mini Clip Mode** — Compact always-on-top window that stays out of your way; toggle with `Alt+M`
+- **Mini Clip Mode** — Compact always-on-top window that stays out of your way; toggle with `Alt+M`. State persists between sessions
+- **Always on Top** — Keep the Clipcat window above all other windows at all times. State persists between sessions
 - **System Tray** — Lives quietly in your tray; summon or quit it any time
 - **Startup Support** — Optionally launch Clipcat on system startup
 - **Clickable Links** — URLs in clips are automatically detected and open in your browser with a click

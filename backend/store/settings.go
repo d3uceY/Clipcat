@@ -66,3 +66,21 @@ func SetAlwaysOnTop(enabled bool) error {
 	_, err := DB.Exec(`UPDATE settings SET always_on_top = ? WHERE id = 0`, val)
 	return err
 }
+
+func GetMiniClip() (bool, error) {
+	var v int
+	err := DB.QueryRow(`SELECT mini_clip FROM settings WHERE id = 0`).Scan(&v)
+	if err != nil {
+		return false, err
+	}
+	return v == 1, nil
+}
+
+func SetMiniClip(enabled bool) error {
+	val := 0
+	if enabled {
+		val = 1
+	}
+	_, err := DB.Exec(`UPDATE settings SET mini_clip = ? WHERE id = 0`, val)
+	return err
+}

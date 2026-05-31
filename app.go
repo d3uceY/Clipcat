@@ -77,6 +77,7 @@ func (a *App) startup(ctx context.Context) {
 	store.MigrateHiddenColumn()
 	store.MigrateAutoHideSetting()
 	store.MigrateAlwaysOnTopSetting()
+	store.MigrateMiniClipSetting()
 
 	// Enable launch-on-startup by default on first run.
 	// ClaimStartupDefault returns true only once — so if the user later
@@ -105,6 +106,16 @@ func (a *App) startup(ctx context.Context) {
 	// immediately so the user never sees the window on startup.
 	if ghostMode, err := store.GetGhostMode(); err == nil && ghostMode {
 		runtime.WindowHide(a.ctx)
+	}
+
+	// Restore always-on-top from the last session.
+	if alwaysOnTop, err := store.GetAlwaysOnTop(); err == nil && alwaysOnTop {
+		runtime.WindowSetAlwaysOnTop(a.ctx, true)
+	}
+
+	// Restore mini-clip mode from the last session.
+	if miniClip, err := store.GetMiniClip(); err == nil && miniClip {
+		a.makeMiniClip(true)
 	}
 
 	// start clipboard listener
@@ -494,6 +505,7 @@ func (a *App) makeMiniClip(value bool) {
 
 func (a *App) MakeMiniClip(value bool) {
 	a.makeMiniClip(value)
+	_ = store.SetMiniClip(value)
 }
 
 func (a *App) IsMiniClip() bool {

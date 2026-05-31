@@ -39,6 +39,9 @@ export default function WindowControls() {
     const confirmEnableQuickPaste = async () => {
         playSound('/sounds/switch-off.mp3', soundOn, 1)
         await toggleGhostMode()
+        if (!isMiniClip) {
+            await toggleMiniClip()
+        }
         setShowQuickPasteConfirm(false)
         WindowHide()
     }

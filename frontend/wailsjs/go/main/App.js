@@ -34,6 +34,10 @@ export function EnableStartup() {
   return window['go']['main']['App']['EnableStartup']();
 }
 
+export function FocusAndPaste() {
+  return window['go']['main']['App']['FocusAndPaste']();
+}
+
 export function GetAlwaysOnTop() {
   return window['go']['main']['App']['GetAlwaysOnTop']();
 }
@@ -92,6 +96,10 @@ export function IsStartupEnabled() {
 
 export function MakeMiniClip(arg1) {
   return window['go']['main']['App']['MakeMiniClip'](arg1);
+}
+
+export function PasteImageToWindow(arg1) {
+  return window['go']['main']['App']['PasteImageToWindow'](arg1);
 }
 
 export function PasteToWindow(arg1) {

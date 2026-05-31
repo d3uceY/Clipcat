@@ -1,7 +1,7 @@
 import { Pin, Trash2 } from "lucide-react"
 import { useState, memo } from "react"
 import type { Clip } from '../../types/clip'
-import { TogglePin, Delete, PasteToWindow } from "../../wailsjs/go/main/App"
+import { TogglePin, Delete, PasteToWindow, FocusAndPaste, GetClipImage } from "../../wailsjs/go/main/App"
 import { useClips } from "@/context/ClipContext"
 import { playSound } from "@/helpers/playSound"
 
@@ -14,12 +14,23 @@ function ClipListItem({ clip }: ClipListItemProps) {
     const { soundOn, hideContent } = useClips()
 
     const handlePaste = async () => {
-        if (clip.type === "image" || !clip.content) return
         playSound("/sounds/paper-copy.wav", soundOn, 1)
         try {
-            await PasteToWindow(clip.content)
+            if (clip.type === "image") {
+                const clipId = Number(clip.id.replace('clip_', ''))
+                const b64 = await GetClipImage(clipId)
+                const binary = atob(b64)
+                const bytes = new Uint8Array(binary.length)
+                for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+                const blob = new Blob([bytes], { type: 'image/png' })
+                await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
+                await FocusAndPaste()
+            } else {
+                if (!clip.content) return
+                await PasteToWindow(clip.content)
+            }
         } catch (err) {
-            console.error("PasteToWindow failed:", err)
+            console.error("Paste failed:", err)
         }
     }
 

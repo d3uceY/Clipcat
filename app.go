@@ -7,6 +7,7 @@ import (
 	"Clipcat/backend/store"
 	"Clipcat/backend/tray"
 	"context"
+	"encoding/base64"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -398,6 +399,55 @@ func (a *App) PasteToWindow(content string) error {
 	// Give the target app time to come to the foreground.
 	time.Sleep(100 * time.Millisecond)
 
+	clipboard.SimulatePaste()
+	return nil
+}
+
+// PasteImageToWindow writes the image for the given clip ID to the system
+// clipboard as raw image data, then pastes it into the previously focused window.
+func (a *App) PasteImageToWindow(clipID int) error {
+	b64, err := store.GetClipImage(clipID)
+	if err != nil {
+		return err
+	}
+	imgBytes, err := base64.StdEncoding.DecodeString(b64)
+	if err != nil {
+		return err
+	}
+	gclip.Write(gclip.FmtImage, imgBytes)
+
+	if !clipboard.HasPreviousWindow() {
+		return nil
+	}
+
+	quickPaste, _ := store.GetGhostMode()
+	if quickPaste {
+		runtime.WindowHide(a.ctx)
+	}
+
+	time.Sleep(80 * time.Millisecond)
+	clipboard.FocusPreviousWindow()
+	time.Sleep(100 * time.Millisecond)
+	clipboard.SimulatePaste()
+	return nil
+}
+
+// FocusAndPaste focuses the previously active window and simulates Ctrl+V.
+// Call this after writing image data to the clipboard from the frontend via
+// the Web Clipboard API, which produces a format apps can reliably paste.
+func (a *App) FocusAndPaste() error {
+	if !clipboard.HasPreviousWindow() {
+		return nil
+	}
+
+	quickPaste, _ := store.GetGhostMode()
+	if quickPaste {
+		runtime.WindowHide(a.ctx)
+	}
+
+	time.Sleep(80 * time.Millisecond)
+	clipboard.FocusPreviousWindow()
+	time.Sleep(100 * time.Millisecond)
 	clipboard.SimulatePaste()
 	return nil
 }

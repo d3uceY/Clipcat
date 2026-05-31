@@ -18,6 +18,8 @@ export function DisableStartup():Promise<void>;
 
 export function EnableStartup():Promise<void>;
 
+export function FocusAndPaste():Promise<void>;
+
 export function GetAlwaysOnTop():Promise<boolean>;
 
 export function GetAutoHideSensitive():Promise<boolean>;
@@ -47,6 +49,8 @@ export function IsPaused():Promise<boolean>;
 export function IsStartupEnabled():Promise<boolean>;
 
 export function MakeMiniClip(arg1:boolean):Promise<void>;
+
+export function PasteImageToWindow(arg1:number):Promise<void>;
 
 export function PasteToWindow(arg1:string):Promise<void>;
 

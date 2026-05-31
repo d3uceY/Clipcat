@@ -27,10 +27,13 @@ export default function WindowControls() {
         GetPlatform().then(setPlatform).catch(() => setPlatform(""))
     }, [])
 
-    const handleQuickPasteToggle = () => {
+    const handleQuickPasteToggle = async () => {
         if (isGhostMode) {
             playSound(isGhostMode ? '/sounds/switch-on.mp3' : '/sounds/switch-off.mp3', soundOn, 1)
-            toggleGhostMode()
+            await toggleGhostMode()
+            if (isMiniClip) {
+                await toggleMiniClip()
+            }
         } else {
             setShowQuickPasteConfirm(true)
         }

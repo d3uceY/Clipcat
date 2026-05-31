@@ -164,6 +164,7 @@ function PageContent() {
             <div className="mx-auto max-w-6xl">
                 {/* Header */}
                 <div className="mb-10 sm:flex-row flex justify-center items-center gap-8 sm:justify-between">
+                    {!isMiniClip && (
                     <div id="tour-about" className="items-center gap-2 sm:flex">
                         <h1 className="font-serif text-xl font-bold italic text-foreground sm:block hidden">About</h1>
                         {
@@ -173,6 +174,7 @@ function PageContent() {
                             </Suspense>
                         }
                     </div>
+                    )}
 
                     <div className="relative w-full max-w-md torn-input">
                         <div className="tape-1 absolute -top-3 left-0 h-12 w-4 bg-yellow-200/40 rotate-45 rounded-sm shadow-sm"></div>

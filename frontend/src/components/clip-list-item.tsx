@@ -11,7 +11,7 @@ interface ClipListItemProps {
 
 function ClipListItem({ clip }: ClipListItemProps) {
     const [isDeleted, setIsDeleted] = useState(false)
-    const { soundOn } = useClips()
+    const { soundOn, hideContent } = useClips()
 
     const handlePaste = async () => {
         if (clip.type === "image" || !clip.content) return
@@ -64,11 +64,11 @@ function ClipListItem({ clip }: ClipListItemProps) {
                 <img
                     src={`data:image/png;base64,${clip.image}`}
                     alt="Clip image"
-                    className="w-full object-contain rounded"
+                    className={`w-full object-contain rounded ${hideContent ? "hard-to-read" : ""}`}
                     style={{ maxHeight: 100 }}
                 />
             ) : (
-                <p className="text-sm line-clamp-2 wrap-break-word leading-relaxed pr-10">
+                <p className={`text-sm line-clamp-2 wrap-break-word leading-relaxed pr-10 ${hideContent ? "hard-to-read" : ""}`}>
                     {clip.content}
                 </p>
             )}

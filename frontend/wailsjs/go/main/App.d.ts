@@ -18,6 +18,8 @@ export function DisableStartup():Promise<void>;
 
 export function EnableStartup():Promise<void>;
 
+export function GetAlwaysOnTop():Promise<boolean>;
+
 export function GetAutoHideSensitive():Promise<boolean>;
 
 export function GetClipImage(arg1:number):Promise<string>;
@@ -55,6 +57,8 @@ export function RemoveIgnoreEntry(arg1:string):Promise<void>;
 export function RenameClip(arg1:number,arg2:string):Promise<void>;
 
 export function ResumeCapture():Promise<void>;
+
+export function SetAlwaysOnTop(arg1:boolean):Promise<void>;
 
 export function SetAutoHideSensitive(arg1:boolean):Promise<void>;
 

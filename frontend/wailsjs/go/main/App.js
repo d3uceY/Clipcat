@@ -34,6 +34,10 @@ export function EnableStartup() {
   return window['go']['main']['App']['EnableStartup']();
 }
 
+export function GetAlwaysOnTop() {
+  return window['go']['main']['App']['GetAlwaysOnTop']();
+}
+
 export function GetAutoHideSensitive() {
   return window['go']['main']['App']['GetAutoHideSensitive']();
 }
@@ -108,6 +112,10 @@ export function RenameClip(arg1, arg2) {
 
 export function ResumeCapture() {
   return window['go']['main']['App']['ResumeCapture']();
+}
+
+export function SetAlwaysOnTop(arg1) {
+  return window['go']['main']['App']['SetAlwaysOnTop'](arg1);
 }
 
 export function SetAutoHideSensitive(arg1) {

@@ -75,6 +75,7 @@ func (a *App) startup(ctx context.Context) {
 	store.MigrateLabelColumn()
 	store.MigrateHiddenColumn()
 	store.MigrateAutoHideSetting()
+	store.MigrateAlwaysOnTopSetting()
 
 	// Enable launch-on-startup by default on first run.
 	// ClaimStartupDefault returns true only once — so if the user later
@@ -430,7 +431,6 @@ func (a *App) makeMiniClip(value bool) {
 	}
 
 	runtime.WindowUnmaximise(a.ctx)
-	runtime.WindowSetAlwaysOnTop(a.ctx, value)
 
 	if value {
 		runtime.WindowSetPosition(a.ctx, 20, 20)
@@ -448,6 +448,22 @@ func (a *App) MakeMiniClip(value bool) {
 
 func (a *App) IsMiniClip() bool {
 	return a.isMiniClip
+}
+
+// --------------------------------------------------------------------------------
+// Always On Top
+// --------------------------------------------------------------------------------
+
+func (a *App) GetAlwaysOnTop() (bool, error) {
+	return store.GetAlwaysOnTop()
+}
+
+func (a *App) SetAlwaysOnTop(enabled bool) error {
+	if err := store.SetAlwaysOnTop(enabled); err != nil {
+		return err
+	}
+	runtime.WindowSetAlwaysOnTop(a.ctx, enabled)
+	return nil
 }
 
 //

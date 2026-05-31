@@ -137,6 +137,12 @@ func MigrateAutoHideSetting() {
 	_, _ = DB.Exec(`ALTER TABLE settings ADD COLUMN auto_hide_sensitive INTEGER NOT NULL DEFAULT 1`)
 }
 
+// MigrateAlwaysOnTopSetting adds the always_on_top column to settings.
+// Defaults to 0 (off).
+func MigrateAlwaysOnTopSetting() {
+	_, _ = DB.Exec(`ALTER TABLE settings ADD COLUMN always_on_top INTEGER NOT NULL DEFAULT 0`)
+}
+
 func MigrateEncryptOldClips() {
 	type legacyRow struct {
 		id       int

@@ -21,6 +21,8 @@ import {
   SetAutoHideSensitive,
   UnhideClip,
   HideClip,
+  GetAlwaysOnTop,
+  SetAlwaysOnTop,
 } from "../../wailsjs/go/main/App";
 import { EventsOn } from "../../wailsjs/runtime";
 import type { Clip } from "../../types/clip";
@@ -59,6 +61,9 @@ interface ClipContextType {
   // Ghost Mode
   isGhostMode: boolean;
   toggleGhostMode: () => Promise<void>;
+  // Always on Top
+  isAlwaysOnTop: boolean;
+  toggleAlwaysOnTop: () => Promise<void>;
 }
 
 const ClipContext = createContext<ClipContextType | undefined>(undefined);
@@ -81,6 +86,7 @@ export function ClipProvider({ children }: { children: ReactNode }) {
   const [isGhostMode, setIsGhostMode] = useState(false);
   const [clipsLoaded, setClipsLoaded] = useState(false);
   const [autoHideSensitive, setAutoHideSensitive] = useState(true);
+  const [isAlwaysOnTop, setIsAlwaysOnTop] = useState(false);
 
   // Distinct labels derived from loaded clips — reactive, zero extra DB calls.
   const distinctLabels = useMemo(() => {
@@ -116,6 +122,16 @@ export function ClipProvider({ children }: { children: ReactNode }) {
     const next = !isGhostMode;
     await SetGhostMode(next);
     setIsGhostMode(next);
+  };
+
+  /* ===============================
+        ALWAYS ON TOP FUNCTIONS
+       ===============================
+    */
+  const toggleAlwaysOnTop = async () => {
+    const next = !isAlwaysOnTop;
+    await SetAlwaysOnTop(next);
+    setIsAlwaysOnTop(next);
   };
 
   /* ===============================
@@ -286,6 +302,9 @@ export function ClipProvider({ children }: { children: ReactNode }) {
     GetAutoHideSensitive()
       .then((v) => setAutoHideSensitive(v ?? true))
       .catch(() => {});
+    GetAlwaysOnTop()
+      .then((v) => setIsAlwaysOnTop(v ?? false))
+      .catch(() => {});
 
     const offAdded = EventsOn("clip:added", (clip: Clip) => {
       setClips((prev) => {
@@ -448,6 +467,9 @@ export function ClipProvider({ children }: { children: ReactNode }) {
         // GHOST MODE
         isGhostMode,
         toggleGhostMode,
+        // ALWAYS ON TOP
+        isAlwaysOnTop,
+        toggleAlwaysOnTop,
       }}
     >
       {children}

@@ -14,7 +14,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 export default function WindowControls() {
     const [fullScreen, setFullScreen] = useState<boolean>(false);
     const [newIgnoreEntry, setNewIgnoreEntry] = useState("");
-    const { soundOn, toggleSound, isMiniClip, toggleMiniClip, toggleStartup, isStartup, hideContent, toggleHideContent, clips, isPaused, togglePause, ignoreList, addIgnoreEntry, removeIgnoreEntry, isGhostMode, toggleGhostMode, autoHideSensitive, toggleAutoHideSensitive } = useClips();
+    const { soundOn, toggleSound, isMiniClip, toggleMiniClip, toggleStartup, isStartup, hideContent, toggleHideContent, clips, isPaused, togglePause, ignoreList, addIgnoreEntry, removeIgnoreEntry, isGhostMode, toggleGhostMode, autoHideSensitive, toggleAutoHideSensitive, isAlwaysOnTop, toggleAlwaysOnTop } = useClips();
     const settingBtnRef = useRef<HTMLButtonElement>(null);
     const settingDialogRef = useRef<HTMLDivElement>(null);
     const settingDialogInnerRef = useRef<HTMLDivElement>(null);
@@ -285,6 +285,12 @@ export default function WindowControls() {
                                 <p className="sm:text-base text-sm p-0!">Auto-hide Sensitive</p>
                                 <span className="flex-1 border-b border-dashed border-current opacity-20  mb-1 mx-1" />
                                 {MenuSwitch(autoHideSensitive, toggleAutoHideSensitive)}
+                            </div>
+                           
+                            <div className="flex items-center gap-3 justify-between py-2" title="Keep the Clipcat window always above other windows">
+                                <p className="sm:text-base text-sm p-0!">Always on Top</p>
+                                <span className="flex-1 border-b border-dashed border-current opacity-20  mb-1 mx-1" />
+                                {MenuSwitch(isAlwaysOnTop, toggleAlwaysOnTop)}
                             </div>
                            
                             {/* Ignore List */}

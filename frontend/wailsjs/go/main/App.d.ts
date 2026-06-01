@@ -30,11 +30,11 @@ export function GetClips():Promise<Array<store.Clip>>;
 
 export function GetDistinctLabels():Promise<Array<string>>;
 
-export function GetGhostMode():Promise<boolean>;
-
 export function GetIgnoreList():Promise<Array<string>>;
 
 export function GetPlatform():Promise<string>;
+
+export function GetQuickPaste():Promise<boolean>;
 
 export function GetStorageLimit():Promise<number>;
 
@@ -66,7 +66,7 @@ export function SetAlwaysOnTop(arg1:boolean):Promise<void>;
 
 export function SetAutoHideSensitive(arg1:boolean):Promise<void>;
 
-export function SetGhostMode(arg1:boolean):Promise<void>;
+export function SetQuickPaste(arg1:boolean):Promise<void>;
 
 export function TogglePin(arg1:number):Promise<void>;
 

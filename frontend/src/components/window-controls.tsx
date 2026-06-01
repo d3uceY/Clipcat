@@ -14,7 +14,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 export default function WindowControls() {
     const [fullScreen, setFullScreen] = useState<boolean>(false);
     const [newIgnoreEntry, setNewIgnoreEntry] = useState("");
-    const { soundOn, toggleSound, isMiniClip, toggleMiniClip, toggleStartup, isStartup, hideContent, toggleHideContent, clips, isPaused, togglePause, ignoreList, addIgnoreEntry, removeIgnoreEntry, isGhostMode, toggleGhostMode, autoHideSensitive, toggleAutoHideSensitive, isAlwaysOnTop, toggleAlwaysOnTop } = useClips();
+    const { soundOn, toggleSound, isMiniClip, toggleMiniClip, toggleStartup, isStartup, hideContent, toggleHideContent, clips, isPaused, togglePause, ignoreList, addIgnoreEntry, removeIgnoreEntry, isQuickPaste, toggleQuickPaste, autoHideSensitive, toggleAutoHideSensitive, isAlwaysOnTop, toggleAlwaysOnTop } = useClips();
     const settingBtnRef = useRef<HTMLButtonElement>(null);
     const settingDialogRef = useRef<HTMLDivElement>(null);
     const settingDialogInnerRef = useRef<HTMLDivElement>(null);
@@ -29,9 +29,9 @@ export default function WindowControls() {
     }, [])
 
     const handleQuickPasteToggle = async () => {
-        if (isGhostMode) {
-            playSound(isGhostMode ? '/sounds/switch-on.mp3' : '/sounds/switch-off.mp3', soundOn, 1)
-            await toggleGhostMode()
+        if (isQuickPaste) {
+            playSound(isQuickPaste ? '/sounds/switch-on.mp3' : '/sounds/switch-off.mp3', soundOn, 1)
+            await toggleQuickPaste()
             if (isMiniClip) {
                 await toggleMiniClip()
             }
@@ -42,7 +42,7 @@ export default function WindowControls() {
 
     const confirmEnableQuickPaste = async () => {
         playSound('/sounds/switch-off.mp3', soundOn, 1)
-        await toggleGhostMode()
+        await toggleQuickPaste()
         if (!isMiniClip) {
             await toggleMiniClip()
         }
@@ -300,7 +300,7 @@ export default function WindowControls() {
                             <div className="flex items-center gap-3 justify-between py-2" title="Quick Paste: hides to the tray, Ctrl+Shift+V summons it, paste any clip into the last window you used">
                                 <p className="sm:text-base text-sm p-0!">Quick Paste</p>
                                 <span className="flex-1 border-b border-dashed border-current opacity-20  mb-1 mx-1" />
-                                {MenuSwitch(isGhostMode, handleQuickPasteToggle)}
+                                {MenuSwitch(isQuickPaste, handleQuickPasteToggle)}
                             </div>
 
                             <Separator />
@@ -364,7 +364,7 @@ export default function WindowControls() {
                         <button onClick={() => handleWindowScreen()}>
                             <img src={fullScreen ? "/unmaximise.png" : "/maximize.png"} alt="maximize" className="h-5 shadow-md/30" />
                         </button>
-                        <button onClick={() => isGhostMode ? WindowHide() : Quit()}>
+                        <button onClick={() => isQuickPaste ? WindowHide() : Quit()}>
                             <img src="/close.png" alt="close" className="h-5 shadow-md/30" />
                         </button>
                     </div>

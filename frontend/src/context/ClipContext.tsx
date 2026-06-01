@@ -14,8 +14,8 @@ import {
   GetIgnoreList,
   AddIgnoreEntry,
   RemoveIgnoreEntry,
-  GetGhostMode,
-  SetGhostMode,
+  GetQuickPaste,
+  SetQuickPaste,
   RenameClip,
   GetAutoHideSensitive,
   SetAutoHideSensitive,
@@ -59,8 +59,8 @@ interface ClipContextType {
   addIgnoreEntry: (name: string) => Promise<void>;
   removeIgnoreEntry: (name: string) => Promise<void>;
   // Ghost Mode
-  isGhostMode: boolean;
-  toggleGhostMode: () => Promise<void>;
+  isQuickPaste: boolean;
+  toggleQuickPaste: () => Promise<void>;
   // Always on Top
   isAlwaysOnTop: boolean;
   toggleAlwaysOnTop: () => Promise<void>;
@@ -83,7 +83,7 @@ export function ClipProvider({ children }: { children: ReactNode }) {
   const [isStartup, setIsStartup] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [ignoreList, setIgnoreList] = useState<string[]>([]);
-  const [isGhostMode, setIsGhostMode] = useState(false);
+  const [isQuickPaste, setIsQuickPaste] = useState(false);
   const [clipsLoaded, setClipsLoaded] = useState(false);
   const [autoHideSensitive, setAutoHideSensitive] = useState(true);
   const [isAlwaysOnTop, setIsAlwaysOnTop] = useState(false);
@@ -118,10 +118,10 @@ export function ClipProvider({ children }: { children: ReactNode }) {
         GHOST MODE FUNCTIONS
        ===============================
     */
-  const toggleGhostMode = async () => {
-    const next = !isGhostMode;
-    await SetGhostMode(next);
-    setIsGhostMode(next);
+  const toggleQuickPaste = async () => {
+    const next = !isQuickPaste;
+    await SetQuickPaste(next);
+    setIsQuickPaste(next);
   };
 
   /* ===============================
@@ -296,8 +296,8 @@ export function ClipProvider({ children }: { children: ReactNode }) {
     getClips();
     IsPaused().then(setIsPaused);
     loadIgnoreList();
-    GetGhostMode()
-      .then((v) => setIsGhostMode(v ?? false))
+    GetQuickPaste()
+      .then((v) => setIsQuickPaste(v ?? false))
       .catch(() => {});
     GetAutoHideSensitive()
       .then((v) => setAutoHideSensitive(v ?? true))
@@ -468,8 +468,8 @@ export function ClipProvider({ children }: { children: ReactNode }) {
         addIgnoreEntry: addToIgnoreList,
         removeIgnoreEntry: removeFromIgnoreList,
         // GHOST MODE
-        isGhostMode,
-        toggleGhostMode,
+        isQuickPaste,
+        toggleQuickPaste,
         // ALWAYS ON TOP
         isAlwaysOnTop,
         toggleAlwaysOnTop,

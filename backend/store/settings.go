@@ -13,7 +13,7 @@ func ClaimStartupDefault() bool {
 	return n > 0
 }
 
-func GetGhostMode() (bool, error) {
+func GetQuickPaste() (bool, error) {
 	var v int
 	err := DB.QueryRow(`SELECT ghost_mode FROM settings WHERE id = 0`).Scan(&v)
 	if err != nil {
@@ -22,7 +22,7 @@ func GetGhostMode() (bool, error) {
 	return v == 1, nil
 }
 
-func SetGhostMode(enabled bool) error {
+func SetQuickPaste(enabled bool) error {
 	val := 0
 	if enabled {
 		val = 1

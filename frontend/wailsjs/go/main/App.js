@@ -58,16 +58,16 @@ export function GetDistinctLabels() {
   return window['go']['main']['App']['GetDistinctLabels']();
 }
 
-export function GetGhostMode() {
-  return window['go']['main']['App']['GetGhostMode']();
-}
-
 export function GetIgnoreList() {
   return window['go']['main']['App']['GetIgnoreList']();
 }
 
 export function GetPlatform() {
   return window['go']['main']['App']['GetPlatform']();
+}
+
+export function GetQuickPaste() {
+  return window['go']['main']['App']['GetQuickPaste']();
 }
 
 export function GetStorageLimit() {
@@ -130,8 +130,8 @@ export function SetAutoHideSensitive(arg1) {
   return window['go']['main']['App']['SetAutoHideSensitive'](arg1);
 }
 
-export function SetGhostMode(arg1) {
-  return window['go']['main']['App']['SetGhostMode'](arg1);
+export function SetQuickPaste(arg1) {
+  return window['go']['main']['App']['SetQuickPaste'](arg1);
 }
 
 export function TogglePin(arg1) {

@@ -52,7 +52,7 @@ func (a *App) domReady(ctx context.Context) {
 	}
 
 	// Keep hidden if Ghost Mode was active in the last session.
-	if ghostMode, err := store.GetGhostMode(); err == nil && ghostMode {
+	if quickPaste, err := store.GetQuickPaste(); err == nil && quickPaste {
 		return
 	}
 	runtime.WindowShow(a.ctx)
@@ -343,12 +343,12 @@ func (a *App) IsPaused() bool {
 // Ghost Mode
 // --------------------------------------------------------------------------------
 
-func (a *App) GetGhostMode() (bool, error) {
-	return store.GetGhostMode()
+func (a *App) GetQuickPaste() (bool, error) {
+	return store.GetQuickPaste()
 }
 
-func (a *App) SetGhostMode(enabled bool) error {
-	return store.SetGhostMode(enabled)
+func (a *App) SetQuickPaste(enabled bool) error {
+	return store.SetQuickPaste(enabled)
 }
 
 // --------------------------------------------------------------------------------
@@ -400,7 +400,7 @@ func (a *App) PasteToWindow(content string) error {
 
 	// Only hide the window when Quick Paste mode is active. In normal mode the
 	// app stays visible after the paste so the user can keep picking clips.
-	quickPaste, _ := store.GetGhostMode()
+	quickPaste, _ := store.GetQuickPaste()
 	if quickPaste {
 		runtime.WindowHide(a.ctx)
 	}
@@ -435,7 +435,7 @@ func (a *App) PasteImageToWindow(clipID int) error {
 		return nil
 	}
 
-	quickPaste, _ := store.GetGhostMode()
+	quickPaste, _ := store.GetQuickPaste()
 	if quickPaste {
 		runtime.WindowHide(a.ctx)
 	}
@@ -455,7 +455,7 @@ func (a *App) FocusAndPaste() error {
 		return nil
 	}
 
-	quickPaste, _ := store.GetGhostMode()
+	quickPaste, _ := store.GetQuickPaste()
 	if quickPaste {
 		runtime.WindowHide(a.ctx)
 	}

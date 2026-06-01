@@ -31,11 +31,11 @@ func (a *App) startTray() {
 			}
 		},
 		GetQuickPaste: func() bool {
-			v, _ := store.GetGhostMode()
+			v, _ := store.GetQuickPaste()
 			return v
 		},
 		SetQuickPaste: func(enabled bool) {
-			_ = store.SetGhostMode(enabled)
+			_ = store.SetQuickPaste(enabled)
 		},
 		GetPaused: func() bool {
 			return clipboard.IsPaused()

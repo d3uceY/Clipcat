@@ -351,7 +351,7 @@ export default function WindowControls({ updateAvailable, onCheckUpdate }: Windo
                                             setIsCheckingUpdate(false);
                                         }}
                                         disabled={isCheckingUpdate || !onCheckUpdate}
-                                        className="flex items-center gap-1 text-xs px-2 py-1 hand-drawn-btn lined thin font-bold hover:opacity-70 transition-opacity disabled:opacity-40"
+                                        className="flex items-center gap-1 !text-xs px-2 py-1 hand-drawn-btn lined thin font-bold hover:opacity-70 transition-opacity disabled:opacity-40"
                                         title="Check for a new version"
                                     >
                                         <RefreshCw size={11} className={isCheckingUpdate ? "animate-spin" : ""} />

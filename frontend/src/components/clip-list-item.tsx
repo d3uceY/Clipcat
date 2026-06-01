@@ -60,7 +60,7 @@ function ClipListItem({ clip }: ClipListItemProps) {
 
     return (
         <div
-            className="hand-drawn lined thin p-3 bg-[#F9F5E6] cursor-pointer hover:bg-amber-50 active:bg-amber-100 transition-colors group relative"
+            className={`hand-drawn lined thin p-3 bg-[#F9F5E6] cursor-pointer hover:bg-amber-50 active:bg-amber-100 transition-colors group relative ${clip.isPinned ? "mt-4" : ""}`}
             onClick={handlePaste}
         >
             {/* Pinned indicator */}

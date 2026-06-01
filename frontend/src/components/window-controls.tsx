@@ -25,6 +25,7 @@ export default function WindowControls() {
 
     useEffect(() => {
         GetPlatform().then(setPlatform).catch(() => setPlatform(""))
+        WindowIsMaximised().then(setFullScreen).catch(() => {})
     }, [])
 
     const handleQuickPasteToggle = async () => {

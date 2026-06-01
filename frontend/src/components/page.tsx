@@ -277,20 +277,48 @@ function PageContent() {
                 <LabelFilterBar />
 
                 {/* Sensitive clips indicator — only shown when auto-hide is on and there are hidden clips */}
-                {!isMiniClip && autoHideSensitive && hiddenCount > 0 && (
+                {autoHideSensitive && hiddenCount > 0 && (
                     <div className="mb-6 flex items-center gap-3 flex-wrap">
-                        <button
-                            onClick={() => setShowSensitive(v => !v)}
-                            className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs rounded-full border transition-colors ${
-                                showSensitive
-                                    ? "bg-amber-100 text-amber-800 border-amber-400/60"
-                                    : "bg-amber-50/80 text-amber-700/80 border-amber-300/50 hover:bg-amber-100 hover:text-amber-800"
-                            }`}
-                        >
-                            <ShieldAlert className="h-3 w-3" />
-                            {hiddenCount} sensitive clip{hiddenCount !== 1 ? "s" : ""} hidden
-                        </button>
+                        {isMiniClip ? (
+                            <button
+                                onClick={() => setShowSensitive(v => !v)}
+                                className={`relative inline-flex items-center justify-center w-8 h-8 rounded-full border-2 transition-colors ${
+                                    showSensitive
+                                        ? "bg-amber-200 text-amber-900 border-amber-500"
+                                        : "bg-amber-400 text-white border-amber-500 hover:bg-amber-500 animate-pulse"
+                                }`}
+                                title={`${hiddenCount} sensitive clip${hiddenCount !== 1 ? "s" : ""} hidden — click to ${showSensitive ? "hide" : "reveal"}`}
+                            >
+                                <ShieldAlert className="h-4 w-4" />
+                                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white leading-none">
+                                    {hiddenCount}
+                                </span>
+                            </button>
+                        ) : (
+                            <button
+                                onClick={() => setShowSensitive(v => !v)}
+                                className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs rounded-full border transition-colors ${
+                                    showSensitive
+                                        ? "bg-amber-100 text-amber-800 border-amber-400/60"
+                                        : "bg-amber-50/80 text-amber-700/80 border-amber-300/50 hover:bg-amber-100 hover:text-amber-800"
+                                }`}
+                            >
+                                <ShieldAlert className="h-3 w-3" />
+                                {hiddenCount} sensitive clip{hiddenCount !== 1 ? "s" : ""} hidden
+                            </button>
+                        )}
                     </div>
+                )}
+
+                {/* Sensitive clips — miniclip/quickpaste list view */}
+                {isMiniClip && showSensitive && hiddenCount > 0 && (
+                    <section className="mb-4 rounded border border-dashed border-amber-400/40 bg-amber-50/20 p-2">
+                        <div className="flex flex-col gap-2">
+                            {[...filteredClips.hiddenPinned, ...filteredClips.hiddenRecent].map((clip) => (
+                                <ClipListItem key={clip.id} clip={clip} />
+                            ))}
+                        </div>
+                    </section>
                 )}
 
                 {/* Sensitive clips section — only shown when user expands it */}

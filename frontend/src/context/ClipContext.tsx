@@ -305,6 +305,9 @@ export function ClipProvider({ children }: { children: ReactNode }) {
     GetAlwaysOnTop()
       .then((v) => setIsAlwaysOnTop(v ?? false))
       .catch(() => {});
+    IsMiniClip()
+      .then((v) => setIsMiniClip(v ?? false))
+      .catch(() => {});
 
     const offAdded = EventsOn("clip:added", (clip: Clip) => {
       setClips((prev) => {

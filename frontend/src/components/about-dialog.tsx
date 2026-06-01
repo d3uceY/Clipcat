@@ -11,16 +11,18 @@ import { BrowserOpenURL } from "../../wailsjs/runtime/runtime";
 
 interface AboutDialogProps {
     version: string;
+    updateAvailable?: UpdateInfo | null;
 }
 
-interface UpdateInfo {
+export interface UpdateInfo {
     version: string;
     releaseUrl: string;
     releaseDate: string;
 }
 
-export default function AboutDialog({ version }: AboutDialogProps) {
-    const [updateAvailable, setUpdateAvailable] = useState<UpdateInfo | null>(null);
+export default function AboutDialog({ version, updateAvailable: updateAvailableProp }: AboutDialogProps) {
+    const [updateAvailableInternal, setUpdateAvailableInternal] = useState<UpdateInfo | null>(null);
+    const updateAvailable = updateAvailableProp !== undefined ? updateAvailableProp : updateAvailableInternal;
     const [isBirthday, setIsBirthday] = useState<boolean>(false);
     const [_, setIsChecking] = useState<boolean>(false);
 
@@ -29,6 +31,9 @@ export default function AboutDialog({ version }: AboutDialogProps) {
         if (today.getDate() === 24 && today.getMonth() === 9) {
             setIsBirthday(true);
         }
+
+        // Skip internal fetch if parent already provides update info
+        if (updateAvailableProp !== undefined) return;
 
         const checkVersion = async () => {
             setIsChecking(true);
@@ -46,7 +51,7 @@ export default function AboutDialog({ version }: AboutDialogProps) {
                 // Compare versions
                 const isStable = !version.endsWith("-dev") && !version.endsWith("-beta") && !version.endsWith("-alpha");
                 if (latestVersion !== version && isStable) {
-                    setUpdateAvailable({
+                    setUpdateAvailableInternal({
                         version: latestVersion,
                         releaseUrl: data.html_url,
                         releaseDate: data.published_at,

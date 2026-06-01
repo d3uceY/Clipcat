@@ -30,7 +30,7 @@ func darwinHotkeyFired() {
 }
 
 // StartClipboardListener starts clipboard monitoring and registers a global
-// Ctrl+Shift+V hotkey via Carbon. The hotkey registration is best-effort;
+// Cmd+Shift+V hotkey via Carbon. The hotkey registration is best-effort;
 // clipboard monitoring works regardless.
 func StartClipboardListener(onChange func(), onHotkey func()) {
 	onChangeCallback = onChange

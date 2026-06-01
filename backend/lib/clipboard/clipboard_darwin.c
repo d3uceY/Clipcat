@@ -20,8 +20,8 @@ void registerDarwinHotkey(void) {
 	EventHotKeyID hotKeyID;
 	hotKeyID.signature = 'CLIP';
 	hotKeyID.id = 1;
-	// kVK_ANSI_V = 9, Ctrl+Shift
-	RegisterEventHotKey(9, controlKey | shiftKey, hotKeyID, GetApplicationEventTarget(), 0, &gHotKeyRef);
+	// kVK_ANSI_V = 9, Cmd+Shift
+	RegisterEventHotKey(9, cmdKey | shiftKey, hotKeyID, GetApplicationEventTarget(), 0, &gHotKeyRef);
 }
 
 void unregisterDarwinHotkey(void) {

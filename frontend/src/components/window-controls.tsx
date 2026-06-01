@@ -1,5 +1,6 @@
 import { useRef, useState, useEffect, lazy, Suspense } from "react";
 import { WindowIsMaximised, WindowMinimise, WindowUnmaximise, WindowMaximise, Quit, WindowHide } from "../../wailsjs/runtime/runtime";
+import { BrowserOpenURL } from "../../wailsjs/runtime/runtime";
 import { useClips } from "@/context/ClipContext";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
@@ -8,10 +9,17 @@ import { UpdateStorageLimit, GetStorageLimit, GetPlatform } from "../../wailsjs/
 import { GetClips } from "../../wailsjs/go/main/App";
 import { ScrollArea } from "./ui/scroll-area";
 import DeleteButton from "./delete-button";
+import { Search, Command, ArrowBigUp, EyeOff, Volume2, Minimize2, ClipboardList, RefreshCw, Download } from "lucide-react";
 const DeleteClipsDialog = lazy(() => import("./delete-clips-dialog"));
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import type { UpdateInfo } from "./about-dialog";
 
-export default function WindowControls() {
+interface WindowControlsProps {
+    updateAvailable?: UpdateInfo | null;
+    onCheckUpdate?: () => Promise<void>;
+}
+
+export default function WindowControls({ updateAvailable, onCheckUpdate }: WindowControlsProps) {
     const [fullScreen, setFullScreen] = useState<boolean>(false);
     const [newIgnoreEntry, setNewIgnoreEntry] = useState("");
     const { soundOn, toggleSound, isMiniClip, toggleMiniClip, toggleStartup, isStartup, hideContent, toggleHideContent, clips, isPaused, togglePause, ignoreList, addIgnoreEntry, removeIgnoreEntry, isQuickPaste, toggleQuickPaste, autoHideSensitive, toggleAutoHideSensitive, isAlwaysOnTop, toggleAlwaysOnTop } = useClips();
@@ -22,6 +30,8 @@ export default function WindowControls() {
     const [limit, setLimit] = useState(100)
     const [showQuickPasteConfirm, setShowQuickPasteConfirm] = useState(false)
     const [platform, setPlatform] = useState<string>("")
+    const [isCheckingUpdate, setIsCheckingUpdate] = useState(false)
+    const [shortcutsOpen, setShortcutsOpen] = useState(false)
 
     useEffect(() => {
         GetPlatform().then(setPlatform).catch(() => setPlatform(""))
@@ -233,6 +243,9 @@ export default function WindowControls() {
             <div className="mt-1 relative z-10">
                 <button id="tour-settings" onClick={handleSettingsClick} ref={settingBtnRef} className="relative z-10">
                     <img src="/settings.png" alt="close" className="h-5 shadow-md/30" />
+                    {updateAvailable && (
+                        <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-red-500 border border-white pointer-events-none" />
+                    )}
                 </button>
                 <div ref={settingDialogRef} className="fixed inset-0 z-50 flex items-center justify-center">
                     <div className="absolute inset-0 bg-black/30" onClick={handleSettingsClick} />
@@ -297,10 +310,128 @@ export default function WindowControls() {
                                 <span className="flex-1 border-b border-dashed border-current opacity-20  mb-1 mx-1" />
                                 {MenuSwitch(isStartup, toggleStartup)}
                             </div>
-                            <div className="flex items-center gap-3 justify-between py-2" title="Quick Paste: hides to the tray, Ctrl+Shift+V summons it, paste any clip into the last window you used">
+                            <div className="flex items-center gap-3 justify-between py-2" title={`Quick Paste: hides to the tray, ${platform === "darwin" ? "Cmd" : "Ctrl"}+Shift+V summons it, paste any clip into the last window you used`}>
                                 <p className="sm:text-base text-sm p-0!">Quick Paste</p>
                                 <span className="flex-1 border-b border-dashed border-current opacity-20  mb-1 mx-1" />
                                 {MenuSwitch(isQuickPaste, handleQuickPasteToggle)}
+                            </div>
+
+                            <Separator />
+                            {/* ── Updates ── */}
+                            <p className="text-[10px] uppercase tracking-widest opacity-40 mt-1 mb-1">Updates</p>
+                            {updateAvailable ? (
+                                <div className="py-2 space-y-2">
+                                    <div className="flex items-center gap-2">
+                                        <span className="w-2 h-2 rounded-full bg-red-500 shrink-0" />
+                                        <p className="sm:text-base text-sm font-semibold">Update Available</p>
+                                    </div>
+                                    <p className="text-xs text-foreground/60">
+                                        Version <strong>{updateAvailable.version}</strong> is ready to download.
+                                        {updateAvailable.releaseDate && (
+                                            <> Released {new Date(updateAvailable.releaseDate).toLocaleDateString()}.</>
+                                        )}
+                                    </p>
+                                    <button
+                                        onClick={() => BrowserOpenURL(updateAvailable.releaseUrl)}
+                                        className="inline-flex items-center gap-1.5 hand-drawn-btn lined thin text-xs px-2 py-1 font-bold hover:opacity-70 transition-opacity"
+                                    >
+                                        <Download size={11} />
+                                        Download Update
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="flex items-center gap-3 justify-between py-2">
+                                    <p className="sm:text-base text-sm p-0!">Check for Updates</p>
+                                    <span className="flex-1 border-b border-dashed border-current opacity-20 mb-1 mx-1" />
+                                    <button
+                                        onClick={async () => {
+                                            if (!onCheckUpdate) return;
+                                            setIsCheckingUpdate(true);
+                                            await onCheckUpdate();
+                                            setIsCheckingUpdate(false);
+                                        }}
+                                        disabled={isCheckingUpdate || !onCheckUpdate}
+                                        className="flex items-center gap-1 text-xs px-2 py-1 hand-drawn-btn lined thin font-bold hover:opacity-70 transition-opacity disabled:opacity-40"
+                                        title="Check for a new version"
+                                    >
+                                        <RefreshCw size={11} className={isCheckingUpdate ? "animate-spin" : ""} />
+                                        {isCheckingUpdate ? "Checking…" : "Check"}
+                                    </button>
+                                </div>
+                            )}
+
+                            <Separator />
+                            {/* ── Shortcuts ── */}
+                            <p className="text-[10px] uppercase tracking-widest opacity-40 mt-1 mb-1">Shortcuts</p>
+                            <div className="py-1">
+                                <button
+                                    onClick={() => setShortcutsOpen(o => !o)}
+                                    className="flex items-center gap-2 justify-between w-full py-1 hover:opacity-70 transition-opacity"
+                                >
+                                    <p className="sm:text-base text-sm p-0!">Keyboard Shortcuts</p>
+                                    <img
+                                        src="/arrow.png"
+                                        alt=""
+                                        className={`w-3.5 block transition-transform duration-200 ${shortcutsOpen ? "-rotate-90" : "rotate-90"}`}
+                                    />
+                                </button>
+                                {shortcutsOpen && (() => {
+                                    const isMac = platform === "darwin";
+                                    const Kbd = ({ children }: { children: React.ReactNode }) => (
+                                        <span className="inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-mono leading-none bg-foreground/10 border border-foreground/25 rounded min-w-4.5">
+                                            {children}
+                                        </span>
+                                    );
+                                    const Plus = () => <span className="mx-0.5 text-[10px] opacity-40">+</span>;
+                                    const shortcuts: { icon: React.ReactNode; label: string; keys: React.ReactNode[]; note?: string }[] = [
+                                        {
+                                            icon: <Search size={12} />,
+                                            label: "Search",
+                                            keys: isMac
+                                                ? [<Kbd key="cmd"><Command size={9} /></Kbd>, <Plus key="p1" />, <Kbd key="f">F</Kbd>]
+                                                : [<Kbd key="ctrl">Ctrl</Kbd>, <Plus key="p1" />, <Kbd key="f">F</Kbd>],
+                                        },
+                                        {
+                                            icon: <ClipboardList size={12} />,
+                                            label: "Open Clipcat",
+                                            keys: isMac
+                                                ? [<Kbd key="cmd"><Command size={9} /></Kbd>, <Plus key="p1" />, <Kbd key="shift"><ArrowBigUp size={9} /></Kbd>, <Plus key="p2" />, <Kbd key="v">V</Kbd>]
+                                                : [<Kbd key="ctrl">Ctrl</Kbd>, <Plus key="p1" />, <Kbd key="shift">Shift</Kbd>, <Plus key="p2" />, <Kbd key="v">V</Kbd>],
+                                            note: "Quick Paste mode",
+                                        },
+                                        {
+                                            icon: <Minimize2 size={12} />,
+                                            label: "Mini Clip",
+                                            keys: [<Kbd key="alt">Alt</Kbd>, <Plus key="p1" />, <Kbd key="m">M</Kbd>],
+                                        },
+                                        {
+                                            icon: <EyeOff size={12} />,
+                                            label: "Hide Content",
+                                            keys: [<Kbd key="alt">Alt</Kbd>, <Plus key="p1" />, <Kbd key="h">H</Kbd>],
+                                        },
+                                        {
+                                            icon: <Volume2 size={12} />,
+                                            label: "Sound",
+                                            keys: [<Kbd key="alt">Alt</Kbd>, <Plus key="p1" />, <Kbd key="s">S</Kbd>],
+                                        },
+                                    ];
+                                    return (
+                                        <div className="mt-2 mb-1 space-y-2.5">
+                                            {shortcuts.map(({ icon, label, keys, note }) => (
+                                                <div key={label} className="flex items-center justify-between gap-2">
+                                                    <div className="flex items-center gap-1.5 text-xs opacity-80 shrink-0">
+                                                        {icon}
+                                                        <span>{label}</span>
+                                                        {note && <span className="text-[9px] opacity-50 hidden sm:inline">({note})</span>}
+                                                    </div>
+                                                    <div className="flex items-center flex-wrap justify-end">
+                                                        {keys}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    );
+                                })()}
                             </div>
 
                             <Separator />
@@ -382,7 +513,7 @@ export default function WindowControls() {
                                 Clipcat will slip into the system tray and stay out of your way.
                             </p>
                             <ul className="text-sm mt-1 space-y-1.5">
-                                <li><span className="font-semibold">Ctrl+Shift+V</span> — summon Clipcat from any window</li>
+                                <li><span className="font-semibold">{platform === "darwin" ? "Cmd" : "Ctrl"}+Shift+V</span> — summon Clipcat from any window</li>
                                 <li>Click the paste icon on a clip to fire it into the last window you used</li>
                                 <li>The tray icon also brings Clipcat back whenever you need it</li>
                             </ul>

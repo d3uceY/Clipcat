@@ -10,6 +10,9 @@ import { useGSAP } from '@gsap/react';
 import { playSound } from "@/helpers/playSound";
 import WindowControls from "./window-controls";
 import { GetVersion } from "../../wailsjs/go/main/App";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { BrowserOpenURL } from "../../wailsjs/runtime/runtime";
+import type { UpdateInfo } from "./about-dialog";
 
 const AboutDialog = lazy(() => import("./about-dialog"))
 const AddClipDialog = lazy(() => import("./add-clip-dialog"))
@@ -20,8 +23,26 @@ function PageContent() {
     const [version, setVersion] = useState("")
     const [curtainsDone, setCurtainsDone] = useState(false)
     const [showSensitive, setShowSensitive] = useState(false)
+    const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null)
+    const [showUpdateDialog, setShowUpdateDialog] = useState(false)
     const { clips, soundOn, hideContent, clipsLoaded, activeLabels, autoHideSensitive, isMiniClip } = useClips()
     const searchInputRef = useRef<HTMLInputElement>(null)
+
+    const checkForUpdates = async () => {
+        if (!version) return;
+        try {
+            const response = await fetch("https://api.github.com/repos/d3uceY/Clipcat/releases/latest");
+            if (!response.ok) return;
+            const data = await response.json();
+            const latestVersion = data.tag_name;
+            const isStable = !version.endsWith("-dev") && !version.endsWith("-beta") && !version.endsWith("-alpha");
+            if (latestVersion !== version && isStable) {
+                setUpdateInfo({ version: latestVersion, releaseUrl: data.html_url, releaseDate: data.published_at });
+            } else {
+                setUpdateInfo(null);
+            }
+        } catch { /* silently ignore network errors */ }
+    }
 
     useGSAP(() => {
         if (!clipsLoaded) return;
@@ -92,6 +113,31 @@ function PageContent() {
         GetVersion().then(setVersion).catch(err => console.error("Failed to get version:", err))
     }, [])
 
+    // Run the update check once version is loaded
+    useEffect(() => {
+        if (!version) return;
+        const run = async () => {
+            try {
+                const response = await fetch("https://api.github.com/repos/d3uceY/Clipcat/releases/latest");
+                if (!response.ok) return;
+                const data = await response.json();
+                const latestVersion = data.tag_name;
+                const isStable = !version.endsWith("-dev") && !version.endsWith("-beta") && !version.endsWith("-alpha");
+                if (latestVersion !== version && isStable) {
+                    const info: UpdateInfo = { version: latestVersion, releaseUrl: data.html_url, releaseDate: data.published_at };
+                    setUpdateInfo(info);
+                    // Show first-load dialog once per available version
+                    const seenKey = `update-seen-${latestVersion}`;
+                    if (!localStorage.getItem(seenKey)) {
+                        localStorage.setItem(seenKey, "1");
+                        setShowUpdateDialog(true);
+                    }
+                }
+            } catch { /* silently ignore */ }
+        };
+        run();
+    }, [version])
+
     useEffect(() => {
         if (!hasSeenTour()) {
             // Small delay so the page entrance animation has finished
@@ -139,9 +185,42 @@ function PageContent() {
     return (
         <main className=" bg-background p-6 md:p-10">
 
+            {/* First-load update notification dialog */}
+            <Dialog open={showUpdateDialog} onOpenChange={setShowUpdateDialog}>
+                <DialogContent showCloseButton={false} className="hand-drawn lined thin p-6 bg-[#F9F5E6] max-w-sm border-0 sm:rounded-none">
+                    <div className="flex flex-col gap-4">
+                        <div className="flex flex-col gap-2">
+                            <h2 className="text-lg font-bold">🎉 Update Available</h2>
+                            <p className="text-sm text-muted-foreground leading-relaxed">
+                                Version <strong>{updateInfo?.version}</strong> of Clipcat is ready to download.
+                            </p>
+                            {updateInfo?.releaseDate && (
+                                <p className="text-xs text-muted-foreground">
+                                    Released {new Date(updateInfo.releaseDate).toLocaleDateString()}
+                                </p>
+                            )}
+                        </div>
+                        <div className="flex justify-end gap-2 pt-1">
+                            <button
+                                onClick={() => setShowUpdateDialog(false)}
+                                className="rounded px-3 py-1 text-sm bg-foreground/5 hover:bg-foreground/10 transition-colors"
+                            >
+                                Later
+                            </button>
+                            <button
+                                onClick={() => { setShowUpdateDialog(false); updateInfo && BrowserOpenURL(updateInfo.releaseUrl); }}
+                                className="rounded px-3 py-1 text-sm bg-foreground text-white hover:opacity-80 transition-opacity"
+                            >
+                                ⬇︎ Download
+                            </button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
             {/* Draggable title bar */}
             <div className="fixed z-10 top-1 left-0 right-0 h-10 cursor-grab" style={{ '--wails-draggable': 'drag' } as React.CSSProperties}></div>
-            <WindowControls />
+            <WindowControls updateAvailable={updateInfo} onCheckUpdate={checkForUpdates} />
             {!curtainsDone && (
                 <>
                     <img src="/paper-curtain.png" className="paper-curtain-1 h-screen fixed w-[53vw] left-0 top-0 bottom-0 z-10 " />
@@ -170,7 +249,7 @@ function PageContent() {
                         {
                             version &&
                             <Suspense fallback={null}>
-                                <AboutDialog version={version} />
+                                <AboutDialog version={version} updateAvailable={updateInfo} />
                             </Suspense>
                         }
                     </div>

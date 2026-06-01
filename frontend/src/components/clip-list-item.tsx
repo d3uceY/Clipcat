@@ -1,4 +1,4 @@
-import { Pin, Trash2 } from "lucide-react"
+import { Pin, Trash2, ShieldCheck } from "lucide-react"
 import { useState, memo } from "react"
 import type { Clip } from '../../types/clip'
 import { TogglePin, Delete, PasteToWindow, FocusAndPaste, GetClipImage } from "../../wailsjs/go/main/App"
@@ -11,7 +11,7 @@ interface ClipListItemProps {
 
 function ClipListItem({ clip }: ClipListItemProps) {
     const [isDeleted, setIsDeleted] = useState(false)
-    const { soundOn, hideContent } = useClips()
+    const { soundOn, hideContent, unhideClip } = useClips()
 
     const handlePaste = async () => {
         playSound("/sounds/paper-copy.wav", soundOn, 1)
@@ -57,6 +57,20 @@ function ClipListItem({ clip }: ClipListItemProps) {
     }
 
     if (isDeleted) return null
+
+    // Sensitive clip — show a prominent icon-only block in mini/quickpaste mode.
+    if (clip.isHidden) {
+        return (
+            <button
+                onClick={() => unhideClip(clip.id)}
+                className={`hand-drawn lined thin w-full flex items-center justify-center gap-2 p-3 bg-amber-100 border border-amber-400 text-amber-800 hover:bg-green-100 hover:text-green-800 hover:border-green-400 transition-colors cursor-pointer ${clip.isPinned ? "mt-4" : ""}`}
+                title="Sensitive clip — click to reveal"
+            >
+                <ShieldCheck className="h-4 w-4 shrink-0" />
+                <span className="text-xs font-medium">sensitive</span>
+            </button>
+        )
+    }
 
     return (
         <div

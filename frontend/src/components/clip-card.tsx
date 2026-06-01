@@ -227,11 +227,13 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
             {clip.isHidden ? (
                 <button
                     onClick={() => unhideClip(clip.id)}
-                    className="absolute -top-2 -right-2 z-10 flex items-center gap-1 text-[11px] font-medium text-amber-900 bg-amber-300 border border-amber-500 rounded-full px-2 py-0.5 shadow-sm hover:bg-green-200 hover:text-green-900 hover:border-green-500 transition-colors"
+                    className={`absolute -top-2 -right-2 z-10 flex items-center gap-1 text-[11px] font-medium text-amber-900 bg-amber-300 border border-amber-500 rounded-full shadow-sm hover:bg-green-200 hover:text-green-900 hover:border-green-500 transition-colors ${
+                        isMiniClip ? "p-1" : "px-2 py-0.5"
+                    }`}
                     title="Mark as safe (unhide)"
                 >
                     <ShieldCheck className="h-3 w-3" />
-                    <span>sensitive</span>
+                    {!isMiniClip && <span>sensitive</span>}
                 </button>
             ) : (
                 <button

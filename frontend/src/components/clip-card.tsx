@@ -247,7 +247,7 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
             {type == "pinned" &&
                 <div className="h-10 -top-5 right-[40%] absolute">
                     <img src={"pin.png"} alt="pin-img" className="h-full" />
-                    <div className="absolute h-6 w-5 rounded-full shadow-lg/80 top-2 right-3" />
+                    <div className="absolute h-3 w-4 rounded-[10px] shadow-lg/80 top-4 right-[10.5px]" />
                 </div>
             }
             <div className="mb-3 flex items-start justify-between">

@@ -7,9 +7,10 @@ import { playSound } from "@/helpers/playSound"
 
 interface ClipListItemProps {
     clip: Clip
+    revealed?: boolean
 }
 
-function ClipListItem({ clip }: ClipListItemProps) {
+function ClipListItem({ clip, revealed = false }: ClipListItemProps) {
     const [isDeleted, setIsDeleted] = useState(false)
     const { soundOn, hideContent, unhideClip } = useClips()
 
@@ -59,7 +60,8 @@ function ClipListItem({ clip }: ClipListItemProps) {
     if (isDeleted) return null
 
     // Sensitive clip — show a prominent icon-only block in mini/quickpaste mode.
-    if (clip.isHidden) {
+    // Skip this guard when `revealed` is true (user explicitly expanded the sensitive section).
+    if (clip.isHidden && !revealed) {
         return (
             <button
                 onClick={() => unhideClip(clip.id)}
@@ -131,5 +133,6 @@ export default memo(ClipListItem, (prev, next) =>
     prev.clip.content === next.clip.content &&
     prev.clip.image === next.clip.image &&
     prev.clip.isPinned === next.clip.isPinned &&
-    prev.clip.isHidden === next.clip.isHidden
+    prev.clip.isHidden === next.clip.isHidden &&
+    prev.revealed === next.revealed
 )

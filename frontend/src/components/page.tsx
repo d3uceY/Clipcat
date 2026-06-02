@@ -315,7 +315,7 @@ function PageContent() {
                     <section className="mb-4 rounded border border-dashed border-amber-400/40 bg-amber-50/20 p-2">
                         <div className="flex flex-col gap-2">
                             {[...filteredClips.hiddenPinned, ...filteredClips.hiddenRecent].map((clip) => (
-                                <ClipListItem key={clip.id} clip={clip} />
+                                <ClipListItem key={clip.id} clip={clip} revealed />
                             ))}
                         </div>
                     </section>

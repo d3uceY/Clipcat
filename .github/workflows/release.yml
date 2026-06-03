@@ -241,12 +241,12 @@ jobs:
           {
             echo '## Download'
             echo ''
-            echo '| Platform | Link |'
-            echo '|---|---|'
-            echo "| Windows (installer) | [Clipcat-windows-amd64-installer.exe](https://github.com/${{ github.repository }}/releases/download/${CURR_TAG}/Clipcat-windows-amd64-installer.exe) |"
-            echo "| macOS Apple Silicon | [Clipcat-macos-arm64.dmg](https://github.com/${{ github.repository }}/releases/download/${CURR_TAG}/Clipcat-macos-arm64.dmg) |"
-            echo "| macOS Intel         | [Clipcat-macos-amd64.dmg](https://github.com/${{ github.repository }}/releases/download/${CURR_TAG}/Clipcat-macos-amd64.dmg) |"
-            echo "| Linux x86-64        | [Clipcat-linux-amd64](https://github.com/${{ github.repository }}/releases/download/${CURR_TAG}/Clipcat-linux-amd64) |"
+            echo '| Platform | Link | Note |'
+            echo '|---|---|---|'
+            echo "| Windows (installer) | [Clipcat-windows-amd64-installer.exe](https://github.com/${{ github.repository }}/releases/download/${CURR_TAG}/Clipcat-windows-amd64-installer.exe) | ⚠️ SmartScreen will block it — see First-Run Notes below |"
+            echo "| macOS Apple Silicon | [Clipcat-macos-arm64.dmg](https://github.com/${{ github.repository }}/releases/download/${CURR_TAG}/Clipcat-macos-arm64.dmg) | ⚠️ Gatekeeper will block it — see First-Run Notes below |"
+            echo "| macOS Intel         | [Clipcat-macos-amd64.dmg](https://github.com/${{ github.repository }}/releases/download/${CURR_TAG}/Clipcat-macos-amd64.dmg) | ⚠️ Gatekeeper will block it — see First-Run Notes below |"
+            echo "| Linux x86-64        | [Clipcat-linux-amd64](https://github.com/${{ github.repository }}/releases/download/${CURR_TAG}/Clipcat-linux-amd64) | |"
             echo ''
             echo 'SHA-256 checksums are in `SHA256SUMS.txt` attached below.'
             echo ''

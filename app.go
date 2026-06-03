@@ -50,11 +50,7 @@ func (a *App) domReady(ctx context.Context) {
 	if miniClip, err := store.GetMiniClip(); err == nil && miniClip {
 		a.makeMiniClip(true)
 	}
-
-	// Keep hidden if Ghost Mode was active in the last session.
-	if quickPaste, err := store.GetQuickPaste(); err == nil && quickPaste {
-		return
-	}
+	
 	runtime.WindowShow(a.ctx)
 }
 

@@ -267,10 +267,13 @@ export default function WindowControls({ updateAvailable, onCheckUpdate }: Windo
                                 <span className="flex-1 border-b border-dashed border-current opacity-20  mb-1 mx-1" />
                                 {MenuSwitch(isMiniClip, toggleMiniClip)}
                             </div>
-                            <div className="flex items-center gap-3 justify-between py-2" title="Keep the Clipcat window always above other windows">
-                                <p className="sm:text-base text-sm p-0!">Always on Top</p>
+                            <div className="flex items-center gap-3 justify-between py-2" title={isQuickPaste ? "Turn off Quick Paste to use Always on Top" : "Keep the Clipcat window always above other windows"}>
+                                <div className="flex flex-col">
+                                    <p className="sm:text-base text-sm p-0!">Always on Top</p>
+                                    {isQuickPaste && <p className="text-[10px] opacity-50 p-0!">Turn off Quick Paste first</p>}
+                                </div>
                                 <span className="flex-1 border-b border-dashed border-current opacity-20  mb-1 mx-1" />
-                                {MenuSwitch(isAlwaysOnTop, toggleAlwaysOnTop)}
+                                {MenuSwitch(isAlwaysOnTop, toggleAlwaysOnTop, isQuickPaste)}
                             </div>
 
                             <Separator />

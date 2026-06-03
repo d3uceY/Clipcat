@@ -122,6 +122,11 @@ export function ClipProvider({ children }: { children: ReactNode }) {
     const next = !isQuickPaste;
     await SetQuickPaste(next);
     setIsQuickPaste(next);
+    // Enabling quick paste is incompatible with always-on-top
+    if (next && isAlwaysOnTop) {
+      await SetAlwaysOnTop(false);
+      setIsAlwaysOnTop(false);
+    }
   };
 
   /* ===============================
@@ -194,6 +199,7 @@ export function ClipProvider({ children }: { children: ReactNode }) {
        ===============================
     */
   const toggleMiniClip = useCallback(async () => {
+    const turningOff = isMiniClip;
     await MakeMiniClip(!isMiniClip).then(() => {
       setIsMiniClip((prev) => !prev);
     });
@@ -201,7 +207,13 @@ export function ClipProvider({ children }: { children: ReactNode }) {
     await IsMiniClip().then((res) => {
       setIsMiniClip(res);
     });
-  }, [isMiniClip]);
+
+    // Quick paste requires mini clip — turn it off when mini clip is disabled
+    if (turningOff && isQuickPaste) {
+      await SetQuickPaste(false);
+      setIsQuickPaste(false);
+    }
+  }, [isMiniClip, isQuickPaste]);
 
   /* ===============================
         CLIP OPS FUNCTIONS     

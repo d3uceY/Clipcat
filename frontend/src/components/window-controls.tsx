@@ -9,7 +9,7 @@ import { UpdateStorageLimit, GetStorageLimit, GetPlatform } from "../../wailsjs/
 import { GetClips } from "../../wailsjs/go/main/App";
 import { ScrollArea } from "./ui/scroll-area";
 import DeleteButton from "./delete-button";
-import { Search, Command, ArrowBigUp, EyeOff, Volume2, Minimize2, ClipboardList, RefreshCw, Download } from "lucide-react";
+import { RefreshCw, Download } from "lucide-react";
 const DeleteClipsDialog = lazy(() => import("./delete-clips-dialog"));
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import type { UpdateInfo } from "./about-dialog";
@@ -31,7 +31,6 @@ export default function WindowControls({ updateAvailable, onCheckUpdate }: Windo
     const [showQuickPasteConfirm, setShowQuickPasteConfirm] = useState(false)
     const [platform, setPlatform] = useState<string>("")
     const [isCheckingUpdate, setIsCheckingUpdate] = useState(false)
-    const [shortcutsOpen, setShortcutsOpen] = useState(false)
 
     useEffect(() => {
         GetPlatform().then(setPlatform).catch(() => setPlatform(""))
@@ -51,6 +50,9 @@ export default function WindowControls({ updateAvailable, onCheckUpdate }: Windo
     }
 
     const confirmEnableQuickPaste = async () => {
+        // Close settings panel immediately before hiding the window
+        setDialogOpen(false)
+        gsap.set(settingDialogRef.current, { display: "none" })
         playSound('/sounds/switch-off.mp3', soundOn, 1)
         await toggleQuickPaste()
         if (!isMiniClip) {
@@ -362,80 +364,6 @@ export default function WindowControls({ updateAvailable, onCheckUpdate }: Windo
                                     </button>
                                 </div>
                             )}
-
-                            <Separator />
-                            {/* ── Shortcuts ── */}
-                            <p className="text-[10px] uppercase tracking-widest opacity-40 mt-1 mb-1">Shortcuts</p>
-                            <div className="py-1">
-                                <button
-                                    onClick={() => setShortcutsOpen(o => !o)}
-                                    className="flex items-center gap-2 justify-between w-full py-1 hover:opacity-70 transition-opacity"
-                                >
-                                    <p className="sm:text-base text-sm p-0!">Keyboard Shortcuts</p>
-                                    <img
-                                        src="/arrow.png"
-                                        alt=""
-                                        className={`w-3.5 block transition-transform duration-200 ${shortcutsOpen ? "-rotate-90" : "rotate-90"}`}
-                                    />
-                                </button>
-                                {shortcutsOpen && (() => {
-                                    const isMac = platform === "darwin";
-                                    const Kbd = ({ children }: { children: React.ReactNode }) => (
-                                        <span className="inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-mono leading-none bg-foreground/10 border border-foreground/25 rounded min-w-4.5">
-                                            {children}
-                                        </span>
-                                    );
-                                    const Plus = () => <span className="mx-0.5 text-[10px] opacity-40">+</span>;
-                                    const shortcuts: { icon: React.ReactNode; label: string; keys: React.ReactNode[]; note?: string }[] = [
-                                        {
-                                            icon: <Search size={12} />,
-                                            label: "Search",
-                                            keys: isMac
-                                                ? [<Kbd key="cmd"><Command size={9} /></Kbd>, <Plus key="p1" />, <Kbd key="f">F</Kbd>]
-                                                : [<Kbd key="ctrl">Ctrl</Kbd>, <Plus key="p1" />, <Kbd key="f">F</Kbd>],
-                                        },
-                                        {
-                                            icon: <ClipboardList size={12} />,
-                                            label: "Open Clipcat",
-                                            keys: isMac
-                                                ? [<Kbd key="cmd"><Command size={9} /></Kbd>, <Plus key="p1" />, <Kbd key="shift"><ArrowBigUp size={9} /></Kbd>, <Plus key="p2" />, <Kbd key="v">V</Kbd>]
-                                                : [<Kbd key="ctrl">Ctrl</Kbd>, <Plus key="p1" />, <Kbd key="shift">Shift</Kbd>, <Plus key="p2" />, <Kbd key="v">V</Kbd>],
-                                            note: "Quick Paste mode",
-                                        },
-                                        {
-                                            icon: <Minimize2 size={12} />,
-                                            label: "Mini Clip",
-                                            keys: [<Kbd key="alt">Alt</Kbd>, <Plus key="p1" />, <Kbd key="m">M</Kbd>],
-                                        },
-                                        {
-                                            icon: <EyeOff size={12} />,
-                                            label: "Hide Content",
-                                            keys: [<Kbd key="alt">Alt</Kbd>, <Plus key="p1" />, <Kbd key="h">H</Kbd>],
-                                        },
-                                        {
-                                            icon: <Volume2 size={12} />,
-                                            label: "Sound",
-                                            keys: [<Kbd key="alt">Alt</Kbd>, <Plus key="p1" />, <Kbd key="s">S</Kbd>],
-                                        },
-                                    ];
-                                    return (
-                                        <div className="mt-2 mb-1 space-y-2.5">
-                                            {shortcuts.map(({ icon, label, keys, note }) => (
-                                                <div key={label} className="flex items-center justify-between gap-2">
-                                                    <div className="flex items-center gap-1.5 text-xs opacity-80 shrink-0">
-                                                        {icon}
-                                                        <span>{label}</span>
-                                                        {note && <span className="text-[9px] opacity-50 hidden sm:inline">({note})</span>}
-                                                    </div>
-                                                    <div className="flex items-center flex-wrap justify-end">
-                                                        {keys}
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    );
-                                })()}
-                            </div>
 
                             <Separator />
                             {/* ── Privacy ── */}

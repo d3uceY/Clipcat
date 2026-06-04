@@ -8,6 +8,8 @@ import {
 } from "@/components/ui/dialog";
 import { useEffect, useState } from "react";
 import { BrowserOpenURL } from "../../wailsjs/runtime/runtime";
+import { GetPlatform } from "../../wailsjs/go/main/App";
+import HowToUseDialog from "./how-to-use-dialog";
 
 interface AboutDialogProps {
     version: string;
@@ -25,12 +27,15 @@ export default function AboutDialog({ version, updateAvailable: updateAvailableP
     const updateAvailable = updateAvailableProp !== undefined ? updateAvailableProp : updateAvailableInternal;
     const [isBirthday, setIsBirthday] = useState<boolean>(false);
     const [_, setIsChecking] = useState<boolean>(false);
+    const [platform, setPlatform] = useState<string>("");
 
     useEffect(() => {
         const today = new Date();
         if (today.getDate() === 24 && today.getMonth() === 9) {
             setIsBirthday(true);
         }
+
+        GetPlatform().then(setPlatform).catch(() => setPlatform(""));
 
         // Skip internal fetch if parent already provides update info
         if (updateAvailableProp !== undefined) return;
@@ -77,7 +82,7 @@ export default function AboutDialog({ version, updateAvailable: updateAvailableP
                     ⓘ
                 </button>
             </DialogTrigger>
-            <DialogContent className="bg-transparent! shadow-none border-0 pt-9">
+            <DialogContent className="bg-transparent! shadow-none border-0 pt-9 max-h-[88vh] overflow-y-auto">
                 <div className="absolute h-[calc(100%+2rem)] w-full -z-1">
                     <img src="/dialog-bg.png" alt="" className=" h-full w-full" />
                 </div>
@@ -135,7 +140,13 @@ export default function AboutDialog({ version, updateAvailable: updateAvailableP
                                     ⬇︎ Download Update
                                 </button>
                             </div>
-                        )} 
+                        )}
+
+                        {/* How to Use */}
+                        <div>
+                            <img src="/seperator.png" alt="" className="w-full my-2 opacity-70" />
+                            <HowToUseDialog platform={platform} />
+                        </div>
                     </DialogDescription>
                 </DialogHeader>
             </DialogContent>

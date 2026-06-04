@@ -220,7 +220,7 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
         <div
             id={tourId}
             ref={cardRef}
-            className={`hand-drawn lined thin p-3 bg-[#F9F5E6] relative group${clip.isHidden ? " ring-1 ring-amber-500/30" : ""}`}
+            className={`hand-drawn lined thin p-3 bg-[#F9F5E6] relative group${clip.isHidden ? " ring-1 ring-amber-500/30" : ""}${isEditingLabel ? " z-50" : ""}`}
         >   {/* Header with icon and timestamp */}
             {/* Shield button — absolute top-right. Shows as a sensitive badge when hidden,
                 or as a faint hover-only shield icon when not hidden. */}

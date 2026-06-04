@@ -517,8 +517,8 @@ export default function WindowControls({ updateAvailable, onCheckUpdate }: Windo
                             </p>
                             <ul className="text-sm mt-1 space-y-1.5">
                                 <li><span className="font-semibold">{platform === "darwin" ? "Cmd" : "Ctrl"}+Shift+V</span> — summon Clipcat from any window</li>
-                                <li>Click the paste icon on a clip to fire it into the last window you used</li>
-                                <li>The tray icon also brings Clipcat back whenever you need it</li>
+                                <li>Click the content on a clip to fire it into the last window you used</li>
+                                <li>The tray icon also brings Clipcat back whenever you need it (only supported on Windows)</li>
                             </ul>
                         </div>
                         <div className="flex justify-end gap-2 pt-1">

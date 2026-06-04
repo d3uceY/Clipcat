@@ -15,7 +15,7 @@ import (
 //go:embed all:frontend/dist
 var assets embed.FS
 
-const AppVersion = "v0.10.3"
+const AppVersion = "v0.10.4"
 
 func main() {
 	if !prepareDarwinBundleLaunch() {

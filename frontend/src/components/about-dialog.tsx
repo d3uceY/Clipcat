@@ -28,6 +28,9 @@ export default function AboutDialog({ version, updateAvailable: updateAvailableP
     const [isBirthday, setIsBirthday] = useState<boolean>(false);
     const [_, setIsChecking] = useState<boolean>(false);
     const [platform, setPlatform] = useState<string>("");
+    const [hasSeenHowToUse, setHasSeenHowToUse] = useState<boolean>(
+        () => localStorage.getItem("clipcat-how-to-use-seen") === "true"
+    );
 
     useEffect(() => {
         const today = new Date();
@@ -76,13 +79,13 @@ export default function AboutDialog({ version, updateAvailable: updateAvailableP
         <Dialog>
             <DialogTrigger asChild>
                 <button
-                    className={`heartbeat info min-[400px]:block hidden sm:text-2xl hover:opacity-70 transition-opacity cursor-pointer font-bold about-btn ${updateAvailable || isBirthday ? "indicator" : ""}`}
+                    className={`heartbeat info min-[400px]:block hidden sm:text-2xl hover:opacity-70 transition-opacity cursor-pointer font-bold about-btn ${updateAvailable || isBirthday || !hasSeenHowToUse ? "indicator" : ""}`}
                     title="About"
                 >
                     ⓘ
                 </button>
             </DialogTrigger>
-            <DialogContent className="bg-transparent! shadow-none border-0 pt-9 max-h-[88vh] overflow-y-auto">
+            <DialogContent className="bg-transparent! shadow-none border-0 pt-9 max-h-[88vh]">
                 <div className="absolute h-[calc(100%+2rem)] w-full -z-1">
                     <img src="/dialog-bg.png" alt="" className=" h-full w-full" />
                 </div>
@@ -144,8 +147,14 @@ export default function AboutDialog({ version, updateAvailable: updateAvailableP
 
                         {/* How to Use */}
                         <div>
-                            <img src="/seperator.png" alt="" className="w-full my-2 opacity-70" />
-                            <HowToUseDialog platform={platform} />
+                            <HowToUseDialog
+                                platform={platform}
+                                hasSeenHowToUse={hasSeenHowToUse}
+                                onOpen={() => {
+                                    localStorage.setItem("clipcat-how-to-use-seen", "true");
+                                    setHasSeenHowToUse(true);
+                                }}
+                            />
                         </div>
                     </DialogDescription>
                 </DialogHeader>

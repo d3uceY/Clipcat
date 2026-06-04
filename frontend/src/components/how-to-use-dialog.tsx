@@ -1,17 +1,35 @@
 import {
     Dialog,
     DialogContent,
-    DialogHeader,
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "./ui/scroll-area";
+import {
+    ClipboardCopy,
+    Zap,
+    Pin,
+    Tag,
+    Search,
+    EyeOff,
+    Pencil,
+    Ban,
+    ShieldAlert,
+    Minimize2,
+    ArrowUpToLine,
+    Pause,
+    Database,
+    Volume2,
+    Rocket,
+} from "lucide-react";
 
 interface HowToUseDialogProps {
     platform: string;
+    onOpen?: () => void;
+    hasSeenHowToUse?: boolean;
 }
 
-export default function HowToUseDialog({ platform }: HowToUseDialogProps) {
+export default function HowToUseDialog({ platform, onOpen, hasSeenHowToUse = true }: HowToUseDialogProps) {
     const isMac = platform === "darwin";
     const mod = isMac ? "⌘" : "Ctrl";
 
@@ -31,100 +49,127 @@ export default function HowToUseDialog({ platform }: HowToUseDialogProps) {
         { keys: ["Alt", "S"], label: "Toggle sound" },
     ];
 
-    const features: { emoji: string; title: string; desc: React.ReactNode }[] = [
+    const features: { icon: React.ReactNode; title: string; desc: React.ReactNode }[] = [
         {
-            emoji: "📋",
+            icon: <ClipboardCopy size={14} />,
             title: "Auto-capture",
             desc: "Everything you copy is saved instantly — text and images — with no setup needed.",
         },
         {
-            emoji: "⚡",
+            icon: <Zap size={14} />,
             title: "Quick Paste",
             desc: (
                 <>
                     Enable in Settings, then press{" "}
-                    <strong>
-                        {mod}+Shift+V
-                    </strong>{" "}
+                    <Kbd>{mod}</Kbd><Plus /><Kbd>Shift</Kbd><Plus /><Kbd>V</Kbd>{" "}
                     from any app to summon Clipcat, pick a clip, and it pastes straight in then vanishes.
                 </>
             ),
         },
         {
-            emoji: "📌",
+            icon: <Pin size={14} />,
             title: "Pin Clips",
             desc: "Keep important clips at the top, protected from being pushed out when the storage limit is reached.",
         },
         {
-            emoji: "🏷️",
+            icon: <Tag size={14} />,
             title: "Labels",
             desc: "Tag any clip with a custom label to categorise and organise your history. Filter by label using the bar above your clips.",
         },
         {
-            emoji: "🔍",
+            icon: <Search size={14} />,
             title: "Search",
             desc: (
                 <>
-                    <strong>{mod}+F</strong> focuses the search bar instantly to filter your entire clipboard history.
+                    <Kbd>{mod}</Kbd><Plus /><Kbd>F</Kbd> focuses the search bar instantly to filter your entire clipboard history.
                 </>
             ),
         },
         {
-            emoji: "🙈",
+            icon: <EyeOff size={14} />,
             title: "Privacy Mode",
             desc: (
                 <>
-                    <strong>Alt+H</strong> blurs all clip content — handy for screen sharing or shoulder-surfing situations.
+                    <Kbd>Alt</Kbd><Plus /><Kbd>H</Kbd> blurs all clip content — handy for screen sharing or shoulder-surfing situations.
                 </>
             ),
         },
         {
-            emoji: "✏️",
+            icon: <Pencil size={14} />,
             title: "Edit Clips",
             desc: "Fix typos or update any saved clip without re-copying. Click the pencil icon on any clip card.",
         },
         {
-            emoji: "🚫",
+            icon: <Ban size={14} />,
             title: "Blocked Apps",
             desc: "Add a process name (e.g. 1password.exe) in Settings → Blocked Apps and Clipcat will never capture from that app.",
         },
         {
-            emoji: "🔒",
+            icon: <ShieldAlert size={14} />,
             title: "Auto-hide Sensitive",
             desc: "Clipcat automatically detects and collapses clips that look like passwords, API keys, or tokens. Toggle in Settings.",
         },
         {
-            emoji: "📦",
+            icon: <Minimize2 size={14} />,
             title: "Mini Clip Mode",
             desc: (
                 <>
-                    A compact always-on-top window. Toggle with <strong>Alt+M</strong>. State persists between sessions.
+                    A compact always-on-top window. Toggle with <Kbd>Alt</Kbd><Plus /><Kbd>M</Kbd>. State persists between sessions.
                 </>
             ),
+        },
+        {
+            icon: <ArrowUpToLine size={14} />,
+            title: "Always on Top",
+            desc: "Keep the Clipcat window above all other windows at all times. Enable in Settings → Window. (Unavailable while Quick Paste is on.)",
+        },
+        {
+            icon: <Pause size={14} />,
+            title: "Pause Capture",
+            desc: "Temporarily stop recording clipboard changes without closing the app. Toggle in Settings → Clipboard.",
+        },
+        {
+            icon: <Database size={14} />,
+            title: "Clipboard Limit",
+            desc: "Choose how many clips to keep (100–500). Pinned clips are always preserved regardless of the limit. Adjust in Settings → Clipboard.",
+        },
+        {
+            icon: <Volume2 size={14} />,
+            title: "Sound Effects",
+            desc: (
+                <>
+                    Satisfying audio feedback on every action. Toggle with <Kbd>Alt</Kbd><Plus /><Kbd>S</Kbd> or in Settings → System.
+                </>
+            ),
+        },
+        {
+            icon: <Rocket size={14} />,
+            title: "Load on Startup",
+            desc: "Optionally launch Clipcat automatically when your system starts. Toggle in Settings → System.",
         },
     ];
 
     return (
-        <Dialog>
+        <Dialog onOpenChange={(open) => { if (open && onOpen) onOpen(); }}>
             <DialogTrigger asChild>
-                <button className="hand-drawn-btn lined thin px-3 py-1 text-xs! font-bold hover:opacity-70 transition-opacity cursor-pointer w-full text-left">
-                    📖 How to Use
+                <button className="relative flex items-center gap-1.5 hover:opacity-70 transition-opacity cursor-pointer">
+                    <span className="text-sm font-bold">How to Use</span>
+                    <span className="inline-flex items-center justify-center w-4 h-4 rounded-full border border-current text-[10px] font-bold leading-none shrink-0">?</span>
+                    {!hasSeenHowToUse && (
+                        <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-red-500 border border-white pointer-events-none" />
+                    )}
                 </button>
             </DialogTrigger>
-            <DialogContent className="bg-transparent! shadow-none border-0 pt-9 max-h-[88vh]">
-                <div className="absolute h-[calc(100%+2rem)] w-full -z-1">
-                    <img src="/dialog-bg.png" alt="" className="h-full w-full" />
-                </div>
-                <DialogHeader>
-                    <DialogTitle className="text-2xl font-serif italic">How to Use Clipcat</DialogTitle>
-                </DialogHeader>
-                <ScrollArea className="max-h-[65vh] pr-2">
-                    <div className="space-y-4 pb-2">
+            <DialogContent className="bg-transparent! shadow-none border-0 p-0 w-[90vw] max-w-sm">
+                <div className="setting-dialog relative w-full h-screen! sm:h-[90vh]! max-h-100 rounded-sm overflow-hidden">
+                    <ScrollArea className="relative z-1 h-full pt-6 px-6 pb-4">
+                        <DialogTitle className="text-lg text-center mb-4">How to Use Clipcat</DialogTitle>
+                        <div className="space-y-4 pb-2">
                         {/* Features */}
                         <div className="space-y-3">
-                            {features.map(({ emoji, title, desc }) => (
+                            {features.map(({ icon, title, desc }) => (
                                 <div key={title} className="flex gap-3 text-sm">
-                                    <span className="text-base shrink-0 leading-snug">{emoji}</span>
+                                    <span className="shrink-0 leading-snug mt-0.5 opacity-70">{icon}</span>
                                     <div>
                                         <strong>{title}</strong>
                                         <span className="text-muted-foreground"> — </span>
@@ -154,8 +199,10 @@ export default function HowToUseDialog({ platform }: HowToUseDialogProps) {
                                 ))}
                             </div>
                         </div>
-                    </div>
-                </ScrollArea>
+                        </div>
+                    </ScrollArea>
+                    <img src="/menu-clean.png" alt="" className="settings-bg" />
+                </div>
             </DialogContent>
         </Dialog>
     );

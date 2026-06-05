@@ -43,7 +43,91 @@ const PLATFORMS = [
   },
 ];
 
-function MacDropdownBtn() {
+// ── Download warning dialog ────────────────────────────────
+type DialogInfo = { platform: 'windows' | 'mac'; href: string; label: string };
+
+const DIALOG_CONTENT = {
+  windows: {
+    title: 'Heads up — Windows SmartScreen',
+    body: "Because Clipcat isn't code-signed yet, Windows will show a SmartScreen warning when you run the installer. The app is fully open source and safe.",
+    steps: [
+      'Run the downloaded installer.',
+      'Click "More info" on the SmartScreen popup.',
+      'Click "Run anyway".',
+    ],
+    guideLabel: 'Full first-run guide →',
+    guideHash: '#windows--smartscreen',
+  },
+  mac: {
+    title: 'Heads up — macOS Gatekeeper',
+    body: "Because Clipcat isn't code-signed yet, Gatekeeper will block it on first launch. The app is fully open source and safe.",
+    steps: [
+      'Open the downloaded .dmg file.',
+      'Right-click the app → Open.',
+      'Click "Open" in the Gatekeeper dialog.',
+    ],
+    guideLabel: 'Full first-run guide →',
+    guideHash: '#macos--gatekeeper',
+  },
+};
+
+function DownloadDialog({ info, onClose }: { info: DialogInfo; onClose: () => void }) {
+  const content = DIALOG_CONTENT[info.platform];
+
+  // Close on backdrop click
+  function handleBackdrop(e: React.MouseEvent<HTMLDivElement>) {
+    if (e.target === e.currentTarget) onClose();
+  }
+
+  // Close on Escape
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') onClose(); }
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  return (
+    <div className={styles.dialogBackdrop} onClick={handleBackdrop} role="dialog" aria-modal="true" aria-labelledby="dl-dialog-title">
+      <div className={styles.dialogBox}>
+        <button className={styles.dialogClose} onClick={onClose} aria-label="Close">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <line x1="1" y1="1" x2="13" y2="13"/><line x1="13" y1="1" x2="1" y2="13"/>
+          </svg>
+        </button>
+
+        <p className={styles.dialogIcon}>{info.platform === 'windows' ? '🛡️' : '🍎'}</p>
+        <h2 id="dl-dialog-title" className={styles.dialogTitle}>{content.title}</h2>
+        <p className={styles.dialogBody}>{content.body}</p>
+
+        <ol className={styles.dialogSteps}>
+          {content.steps.map((s, i) => <li key={i}>{s}</li>)}
+        </ol>
+
+        <Link
+          to={`/docs/intro${content.guideHash}`}
+          className={styles.dialogGuideLink}
+          onClick={onClose}
+        >
+          {content.guideLabel}
+        </Link>
+
+        <div className={styles.dialogActions}>
+          <button className={styles.dialogCancelBtn} onClick={onClose}>Cancel</button>
+          <a
+            href={info.href}
+            className={styles.dialogDownloadBtn}
+            onClick={onClose}
+          >
+            Download {info.label} anyway
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── macOS dropdown with dialog ─────────────────────────────
+function MacDropdownBtn({ onDownload }: { onDownload: (info: DialogInfo) => void }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -77,9 +161,16 @@ function MacDropdownBtn() {
       {open && (
         <div className={styles.dropdownMenu}>
           {mac.dropdown!.map(opt => (
-            <a key={opt.label} href={opt.href} className={styles.dropdownItem} onClick={() => setOpen(false)}>
+            <button
+              key={opt.label}
+              className={styles.dropdownItem}
+              onClick={() => {
+                setOpen(false);
+                onDownload({ platform: 'mac', href: opt.href, label: `macOS ${opt.label}` });
+              }}
+            >
               {opt.label}
-            </a>
+            </button>
           ))}
         </div>
       )}
@@ -137,6 +228,8 @@ const FEATURES = [
 
 function HeroSection() {
   const heroImg = useBaseUrl('/img/app-screenshot.png');
+  const [dlDialog, setDlDialog] = useState<DialogInfo | null>(null);
+
   return (
     <section className={styles.heroWrapper}>
       {/* ── gradient sky background ── */}
@@ -160,18 +253,29 @@ function HeroSection() {
         </p>
 
         <div className={styles.heroCtas}>
-          {PLATFORMS.map((p) => p.label === 'macOS' ? (
-            <MacDropdownBtn key="macOS" />
-          ) : (
-            <a
-              key={p.label}
-              href={p.href!}
-              className={clsx(styles.ctaBtn, p.label === 'Windows' && styles.ctaBtnPrimary)}
-            >
-              {p.icon}
-              {p.label === 'Windows' ? 'Get for Windows' : p.label}
-            </a>
-          ))}
+          {PLATFORMS.map((p) => {
+            if (p.label === 'macOS') {
+              return <MacDropdownBtn key="macOS" onDownload={setDlDialog} />;
+            }
+            if (p.label === 'Windows') {
+              return (
+                <button
+                  key="Windows"
+                  className={clsx(styles.ctaBtn, styles.ctaBtnPrimary)}
+                  onClick={() => setDlDialog({ platform: 'windows', href: p.href!, label: 'Windows' })}
+                >
+                  {p.icon}
+                  Get for Windows
+                </button>
+              );
+            }
+            return (
+              <a key={p.label} href={p.href!} className={styles.ctaBtn}>
+                {p.icon}
+                {p.label}
+              </a>
+            );
+          })}
         </div>
 
         <p className={styles.heroNote}>
@@ -184,6 +288,8 @@ function HeroSection() {
           </div>
         </div>
       </div>
+
+      {dlDialog && <DownloadDialog info={dlDialog} onClose={() => setDlDialog(null)} />}
     </section>
   );
 }

@@ -110,7 +110,7 @@ This works by checking the foreground window's process name at the moment the cl
 
 ## Mini Clip Mode
 
-A compact, always-on-top window that stays out of your way. Toggle with <kbd>Alt</kbd>+<kbd>M</kbd>. The mode state persists between sessions.
+A compact window that stays out of your way. Toggle with <kbd>Alt</kbd>+<kbd>M</kbd>. The mode state persists between sessions.
 
 {/* Screenshot placeholder: mini clip mode window */}
 :::info Screenshot placeholder

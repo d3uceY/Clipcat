@@ -177,6 +177,84 @@
   color: #1a1108 !important;
 }
 
+/* ── macOS dropdown ──────────────────────────────────────── */
+.dropdownWrapper {
+  position: relative;
+}
+
+.dropdownTrigger {
+  cursor: pointer;
+  background: none;
+  border: none;
+  font: inherit;
+}
+
+.dropdownChevron {
+  margin-left: 0.25rem;
+  transition: transform 0.15s ease;
+  flex-shrink: 0;
+}
+
+.dropdownChevronOpen {
+  transform: rotate(180deg);
+}
+
+.dropdownMenu {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 150px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1.5px solid rgba(120, 90, 40, 0.2);
+  border-radius: 0.6rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+  z-index: 100;
+}
+
+[data-theme='dark'] .dropdownMenu {
+  background: rgba(36, 27, 18, 0.95);
+  border-color: rgba(212, 165, 116, 0.2);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.dropdownItem {
+  display: block;
+  padding: 0.6rem 1rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #4A3A28;
+  text-decoration: none;
+  transition: background 0.1s ease;
+  white-space: nowrap;
+}
+
+.dropdownItem:hover {
+  background: rgba(120, 90, 40, 0.08);
+  color: #4A3A28;
+  text-decoration: none;
+}
+
+[data-theme='dark'] .dropdownItem {
+  color: #F9F5E6;
+}
+
+[data-theme='dark'] .dropdownItem:hover {
+  background: rgba(212, 165, 116, 0.1);
+  color: #F9F5E6;
+}
+
+.dropdownItem + .dropdownItem {
+  border-top: 1px solid rgba(120, 90, 40, 0.1);
+}
+
+[data-theme='dark'] .dropdownItem + .dropdownItem {
+  border-top-color: rgba(212, 165, 116, 0.1);
+}
+
 .heroNote {
   font-size: 0.78rem;
   opacity: 0.5;

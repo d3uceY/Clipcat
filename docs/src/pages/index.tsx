@@ -1,4 +1,5 @@
 import type {ReactNode} from 'react';
+import {useState, useRef, useEffect} from 'react';
 import clsx from 'clsx';
 import Link from '@docusaurus/Link';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
@@ -20,12 +21,16 @@ const PLATFORMS = [
   },
   {
     label: 'macOS',
-    href: 'https://github.com/d3uceY/Clipcat/releases/latest/download/Clipcat-macos-arm64.dmg',
+    href: null,
     icon: (
       <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
         <path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/>
       </svg>
     ),
+    dropdown: [
+      { label: 'Apple Silicon', href: 'https://github.com/d3uceY/Clipcat/releases/latest/download/Clipcat-macos-arm64.dmg' },
+      { label: 'Intel (x86)', href: 'https://github.com/d3uceY/Clipcat/releases/latest/download/Clipcat-macos-amd64.dmg' },
+    ],
   },
   {
     label: 'Linux',
@@ -37,6 +42,50 @@ const PLATFORMS = [
     ),
   },
 ];
+
+function MacDropdownBtn() {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
+  const mac = PLATFORMS.find(p => p.label === 'macOS')!;
+
+  return (
+    <div ref={ref} className={styles.dropdownWrapper}>
+      <button
+        className={clsx(styles.ctaBtn, styles.dropdownTrigger)}
+        onClick={() => setOpen(o => !o)}
+        aria-expanded={open}
+        aria-haspopup="true"
+      >
+        {mac.icon}
+        macOS
+        <svg
+          className={clsx(styles.dropdownChevron, open && styles.dropdownChevronOpen)}
+          width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"
+        >
+          <path d="M1 3l4 4 4-4" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </button>
+      {open && (
+        <div className={styles.dropdownMenu}>
+          {mac.dropdown!.map(opt => (
+            <a key={opt.label} href={opt.href} className={styles.dropdownItem} onClick={() => setOpen(false)}>
+              {opt.label}
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 const FEATURES = [
   {
@@ -111,10 +160,12 @@ function HeroSection() {
         </p>
 
         <div className={styles.heroCtas}>
-          {PLATFORMS.map((p) => (
+          {PLATFORMS.map((p) => p.label === 'macOS' ? (
+            <MacDropdownBtn key="macOS" />
+          ) : (
             <a
               key={p.label}
-              href={p.href}
+              href={p.href!}
               className={clsx(styles.ctaBtn, p.label === 'Windows' && styles.ctaBtnPrimary)}
             >
               {p.icon}

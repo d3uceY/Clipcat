@@ -221,35 +221,6 @@
   display: block;
 }
 
-.screenshotPlaceholder {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  min-height: 360px;
-  border: 2px dashed var(--cc-border, #D4C09A);
-  border-radius: 1rem;
-  padding: 2rem;
-}
-
-.screenshotIcon {
-  font-size: 3rem;
-  opacity: 0.3;
-}
-
-.screenshotLabel {
-  font-size: 0.9rem;
-  font-weight: 600;
-  opacity: 0.45;
-}
-
-.screenshotHint {
-  font-size: 0.78rem;
-  opacity: 0.35;
-  text-align: center;
-}
-
 /* ── Features section ────────────────────────────────────── */
 .featuresSection {
   padding: 5rem 0;
@@ -456,16 +427,6 @@
   width: 100%;
   height: auto;
   display: block;
-}
-
-.screenshotCardPlaceholder {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
-  min-height: 220px;
-  padding: 1.5rem;
 }
 
 /* ── CTA section ─────────────────────────────────────────── */

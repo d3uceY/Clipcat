@@ -132,13 +132,7 @@ function HeroSection() {
             ───────────────────────────────────────────────────────── */}
         <div className={styles.heroScreenshotWrapper}>
           <div className={styles.heroScreenshot}>
-            <div className={styles.screenshotPlaceholder}>
-              <span className={styles.screenshotIcon}>📋</span>
-              <span className={styles.screenshotLabel}>App Screenshot</span>
-              <span className={styles.screenshotHint}>
-                Drop <code>app-screenshot.png</code> in <code>docs/static/img/</code>
-              </span>
-            </div>
+            <img src="/img/app-screenshot.png" alt="Clipcat main window" />
           </div>
         </div>
       </div>
@@ -233,15 +227,12 @@ function ScreenshotBand() {
             ───────────────────────────────────────────────────────── */}
         <div className={styles.screenshotGrid}>
           {[
-            {label: 'Search & Filter', hint: 'screenshot-search.png'},
-            {label: 'Privacy Mode',   hint: 'screenshot-privacy.png'},
-            {label: 'Mini Clip',      hint: 'screenshot-mini.png'},
-          ].map(({label, hint}) => (
+            {src: '/img/screenshot-search.png', label: 'Search & Filter'},
+            {src: '/img/screenshot-privacy.png', label: 'Privacy Mode'},
+            {src: '/img/screenshot-mini.png',   label: 'Mini Clip'},
+          ].map(({src, label}) => (
             <div key={label} className={styles.screenshotCard}>
-              <div className={styles.screenshotCardPlaceholder}>
-                <span className={styles.screenshotLabel}>{label}</span>
-                <span className={styles.screenshotHint}><code>{hint}</code></span>
-              </div>
+              <img src={src} alt={label} />
             </div>
           ))}
         </div>

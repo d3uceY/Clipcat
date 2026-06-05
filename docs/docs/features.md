@@ -1,0 +1,188 @@
+---
+sidebar_position: 2
+title: Features
+description: A full overview of everything Clipcat can do.
+---
+
+# Features
+
+A complete tour of everything Clipcat offers — from basic capture to advanced privacy controls.
+
+---
+
+## Automatic Capture
+
+The moment you press <kbd>Ctrl</kbd>+<kbd>C</kbd> (or <kbd>⌘</kbd>+<kbd>C</kbd> on Mac), Clipcat saves it. Text, rich text, and images are all captured instantly with zero configuration.
+
+{/* Screenshot placeholder: main clip list with text + image entries */}
+:::info Screenshot placeholder
+`/img/feature-capture.png` — main clip list with text + image entries
+:::
+
+---
+
+## Quick Paste Mode
+
+Enable **Quick Paste** in Settings, then:
+
+1. Work in any app
+2. Copy something or need something old
+3. Press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>V</kbd> (or <kbd>⌘</kbd>+<kbd>Shift</kbd>+<kbd>V</kbd>)
+4. Clipcat summons, pick a clip
+5. It pastes directly into your previous window and disappears
+
+Enabling Quick Paste automatically turns on **Mini Clip mode** too.
+
+{/* Screenshot placeholder: Clipcat summoned as overlay */}
+:::info Screenshot placeholder
+`/img/feature-quick-paste.png` — Clipcat summoned as overlay
+:::
+
+---
+
+## Pin Clips
+
+Click the pin icon on any clip to lock it to the top of your list. Pinned clips are **never pushed out** when the storage limit is reached, regardless of how many other clips come in.
+
+---
+
+## Labels
+
+Tag any clip with a custom label to categorize your history. A **label filter bar** appears above your clips — click any label to filter instantly.
+
+{/* Screenshot placeholder: label filter bar in use */}
+:::info Screenshot placeholder
+`/img/feature-labels.png` — label filter bar above clip list
+:::
+
+---
+
+## Instant Search
+
+Press <kbd>Ctrl</kbd>+<kbd>F</kbd> (or <kbd>⌘</kbd>+<kbd>F</kbd>) to focus the search bar and filter your entire clipboard history in real time. Works across clip content, not just titles.
+
+---
+
+## Edit Clips
+
+Click the **pencil icon** on any clip card to open an inline editor. Fix typos, update content, or rewrite the clip entirely — no need to re-copy from the original source.
+
+---
+
+## Privacy Mode
+
+Press <kbd>Alt</kbd>+<kbd>H</kbd> to instantly blur all clip content. Useful when:
+
+- Screen sharing in a meeting
+- Working in a public place
+- Presenting to others
+
+The blur persists until you toggle it off. State is not saved between sessions.
+
+{/* Screenshot placeholder: clips blurred in privacy mode */}
+:::info Screenshot placeholder
+`/img/feature-privacy.png` — clip list in privacy mode (blurred)
+:::
+
+---
+
+## Auto-hide Sensitive Clips
+
+Clipcat automatically detects clips that look like:
+
+- Passwords
+- API keys and tokens
+- JWTs
+- Private keys
+- High-entropy secret strings
+
+These clips are **collapsed into a separate section** and hidden by default. You can reveal or mark them safe individually. Toggle this feature in **Settings → Clipboard**.
+
+---
+
+## Blocked Apps
+
+Add a process name (e.g. `1password.exe`, `Bitwarden.exe`) in **Settings → Blocked Apps** and Clipcat will never capture clipboard content from that application.
+
+This works by checking the foreground window's process name at the moment the clipboard changes.
+
+---
+
+## Mini Clip Mode
+
+A compact, always-on-top window that stays out of your way. Toggle with <kbd>Alt</kbd>+<kbd>M</kbd>. The mode state persists between sessions.
+
+{/* Screenshot placeholder: mini clip mode window */}
+:::info Screenshot placeholder
+`/img/feature-mini-clip.png` — compact mini clip window
+:::
+
+---
+
+## Always on Top
+
+Keep the full Clipcat window above all other windows at all times. Enable in **Settings → Window**.
+
+:::note
+Always on Top is unavailable while Quick Paste mode is enabled.
+:::
+
+---
+
+## Pause Capture
+
+Temporarily stop recording clipboard changes without quitting the app. Useful when working with sensitive data you don't want stored. Toggle in **Settings → Clipboard**.
+
+---
+
+## Bulk Delete
+
+Clear your history in one click with options to delete:
+
+- All clips
+- Only pinned clips
+- Only unpinned clips
+
+Always shown with a confirmation prompt to prevent accidents.
+
+---
+
+## Manual Clip Creation
+
+Add clips directly from within the app using the **+ Add Clip** button. You can optionally pin the clip from the creation dialog.
+
+---
+
+## Clickable Links
+
+URLs detected inside clip text are automatically rendered as clickable links. Click them to open in your default browser.
+
+---
+
+## Relative Timestamps
+
+Every clip shows a live-updating relative time: `"2 minutes ago"`, `"yesterday"`, `"3 days ago"`. Hover for the exact date and time.
+
+---
+
+## Sound Effects
+
+Satisfying audio feedback on every action. Toggle with <kbd>Alt</kbd>+<kbd>S</kbd> or in **Settings → System**.
+
+---
+
+## Configurable Storage Limit
+
+Choose how many clips to keep (100–500). Older unpinned clips are automatically removed when the limit is reached. Pinned clips are always preserved. Adjust in **Settings → Clipboard**.
+
+---
+
+## Load on Startup
+
+Optionally launch Clipcat automatically when your system starts. Toggle in **Settings → System**.
+
+---
+
+## System Tray
+
+Clipcat lives quietly in your system tray. Right-click for options or double-click to show/hide the window.

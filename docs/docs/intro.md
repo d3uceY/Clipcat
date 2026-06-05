@@ -1,0 +1,97 @@
+---
+sidebar_position: 1
+title: Getting Started
+description: Install and set up Clipcat on Windows, macOS, or Linux.
+---
+
+# Getting Started
+
+Clipcat is a **clipboard manager** that automatically saves everything you copy — text and images — so you can find it, reuse it, and manage it without thinking about it.
+
+It runs on **Windows**, **macOS**, and **Linux** as a lightweight tray app with no cloud, no account, and no tracking.
+
+---
+
+## Download
+
+Pick your platform and download the latest release:
+
+| Platform | Download |
+|---|---|
+| **Windows** | [Clipcat-windows-amd64-installer.exe](https://github.com/d3uceY/Clipcat/releases/latest/download/Clipcat-windows-amd64-installer.exe) |
+| **macOS (Apple Silicon)** | [Clipcat-macos-arm64.dmg](https://github.com/d3uceY/Clipcat/releases/latest/download/Clipcat-macos-arm64.dmg) |
+| **macOS (Intel)** | [Clipcat-macos-amd64.dmg](https://github.com/d3uceY/Clipcat/releases/latest/download/Clipcat-macos-amd64.dmg) |
+| **Linux x86-64** | [Clipcat-linux-amd64](https://github.com/d3uceY/Clipcat/releases/latest/download/Clipcat-linux-amd64) |
+
+:::note App is not code-signed
+Clipcat is fully open source and safe, but has no code-signing certificate yet. See the first-run notes below for how to bypass the OS warning.
+:::
+
+---
+
+## First-Run Notes
+
+### Windows — SmartScreen
+
+1. Click **More info**
+2. Click **Run anyway**
+
+Or right-click the `.exe` → **Properties** → check **Unblock** → **Apply**.
+
+### macOS — Gatekeeper
+
+Right-click the `.dmg` → **Open** → click **Open** in the dialog.
+
+Alternatively, go to **System Settings → Privacy & Security** and click **Open Anyway** after the first blocked attempt.
+
+:::tip Accessibility permission required on macOS
+Clipcat needs **Accessibility** permission to simulate paste (`Cmd+V`). Grant it under **System Settings → Privacy & Security → Accessibility**.
+:::
+
+### Linux
+
+Make the binary executable before running:
+
+```bash
+chmod +x Clipcat-linux-amd64
+./Clipcat-linux-amd64
+```
+
+Install `xdotool` for window focus and paste simulation:
+
+```bash
+sudo apt install xdotool
+```
+
+---
+
+## App Screenshot
+
+{/* Replace the placeholder below with an actual screenshot:
+    ![Clipcat main window](/img/app-screenshot.png) */}
+
+:::info Screenshot placeholder
+Add `app-screenshot.png` to `docs/static/img/` and replace this notice with:
+
+`![Clipcat main window](/img/app-screenshot.png)`
+:::
+
+---
+
+## Where Are My Clips Stored?
+
+All clips are saved in a local **SQLite** database. No data ever leaves your machine.
+
+| Platform | Path |
+|---|---|
+| Windows | `%APPDATA%\clipussy\db\gyatt.db` |
+| macOS | `~/Library/Application Support/clipussy/db/gyatt.db` |
+| Linux | `~/.config/clipussy/db/gyatt.db` |
+
+---
+
+## Next Steps
+
+- [Explore all features →](./features)
+- [Learn keyboard shortcuts →](./keyboard-shortcuts)
+- [Configure settings →](./settings)

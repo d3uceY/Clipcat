@@ -1,0 +1,47 @@
+---
+sidebar_position: 3
+title: Keyboard Shortcuts
+description: All keyboard shortcuts available in Clipcat.
+---
+
+# Keyboard Shortcuts
+
+Clipcat is designed to be fast. The most common actions are just a key combo away, no mouse required.
+
+---
+
+## System-wide Shortcuts
+
+These work from **any application** on your system, even when Clipcat is hidden or minimized to the tray.
+
+| Shortcut | Action |
+|---|---|
+| <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>V</kbd> | Summon Clipcat (Windows / Linux) |
+| <kbd>⌘</kbd>+<kbd>Shift</kbd>+<kbd>V</kbd> | Summon Clipcat (macOS) |
+
+---
+
+## In-app Shortcuts
+
+These work when the Clipcat window is focused.
+
+| Shortcut | Action |
+|---|---|
+| <kbd>Ctrl</kbd>+<kbd>F</kbd> / <kbd>⌘</kbd>+<kbd>F</kbd> | Focus the search bar |
+| <kbd>Alt</kbd>+<kbd>M</kbd> | Toggle Mini Clip mode |
+| <kbd>Alt</kbd>+<kbd>H</kbd> | Toggle Privacy Mode (blur all clips) |
+| <kbd>Alt</kbd>+<kbd>S</kbd> | Toggle sound effects |
+
+{/* Screenshot placeholder: shortcut reference panel */}
+:::info Screenshot placeholder
+`/img/shortcuts-overview.png` — shortcut reference panel
+:::
+
+---
+
+## Tips
+
+- **Quick Paste workflow:** Press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>V</kbd> to summon Clipcat while in any app, click a clip, and it pastes into the window you were just using.
+- **Search from anywhere:** Once Clipcat is open, <kbd>Ctrl</kbd>+<kbd>F</kbd> jumps focus to the search box immediately.
+- **Mini Clip toggle:** <kbd>Alt</kbd>+<kbd>M</kbd> is persistent — Mini Clip state saves between sessions.
+- **Sound toggle:** <kbd>Alt</kbd>+<kbd>S</kbd> is great for quick muting during meetings.

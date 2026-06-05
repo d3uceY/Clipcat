@@ -1,0 +1,65 @@
+---
+sidebar_position: 4
+title: Settings
+description: A complete guide to every Clipcat setting.
+---
+
+# Settings
+
+Open Settings from the gear icon in the top-right corner of Clipcat. All settings are saved locally and apply instantly.
+
+{/* Screenshot placeholder: settings panel */}
+:::info Screenshot placeholder
+`/img/settings-overview.png` — full settings panel
+:::
+
+---
+
+## Clipboard
+
+| Setting | Description |
+|---|---|
+| **Clipboard Limit** | How many clips to keep in history. Range: 100–500. Oldest unpinned clips are removed when the limit is reached. Pinned clips are always preserved. |
+| **Pause Capture** | Temporarily stop recording clipboard changes. Useful when working with sensitive content you don't want saved. |
+| **Auto-hide Sensitive** | Automatically detect and collapse clips that look like passwords, API keys, tokens, JWTs, or private keys. Hidden clips can be revealed individually. |
+
+---
+
+## Blocked Apps
+
+Add a process name to the blocklist and Clipcat will never capture clipboard content from that application.
+
+**Examples:**
+- `1password.exe` — 1Password (Windows)
+- `Bitwarden.exe` — Bitwarden (Windows)
+- `1Password` — 1Password (macOS)
+
+Clipcat checks the **foreground window's process name** at the moment your clipboard changes. If it matches a blocked entry, the clip is silently discarded.
+
+:::tip
+Use your OS task manager to find the exact process name for an app you want to block.
+:::
+
+---
+
+## Window
+
+| Setting | Description |
+|---|---|
+| **Always on Top** | Keep the Clipcat window above all other windows at all times. State persists between sessions. Unavailable while Quick Paste is enabled. |
+| **Quick Paste** | Hides Clipcat to the tray. Press the global shortcut from any app to summon it, pick a clip, and it pastes directly into your previous window then disappears. Enabling this also turns on Mini Clip mode. |
+
+---
+
+## System
+
+| Setting | Description |
+|---|---|
+| **Load on Startup** | Automatically launch Clipcat when your system starts. |
+| **Sound Effects** | Enable or disable audio feedback on every action. Can also be toggled with <kbd>Alt</kbd>+<kbd>S</kbd>. |
+
+---
+
+## About
+
+Shows the current Clipcat version and a link to the GitHub releases page for updates.

@@ -1,0 +1,297 @@
+import type {ReactNode} from 'react';
+import clsx from 'clsx';
+import Link from '@docusaurus/Link';
+import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
+import Layout from '@theme/Layout';
+import Heading from '@theme/Heading';
+
+import styles from './index.module.css';
+
+const PLATFORMS = [
+  {
+    label: 'Windows',
+    href: 'https://github.com/d3uceY/Clipcat/releases/latest/download/Clipcat-windows-amd64-installer.exe',
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-13.051-1.801"/>
+      </svg>
+    ),
+  },
+  {
+    label: 'macOS',
+    href: 'https://github.com/d3uceY/Clipcat/releases/latest/download/Clipcat-macos-arm64.dmg',
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/>
+      </svg>
+    ),
+  },
+  {
+    label: 'Linux',
+    href: 'https://github.com/d3uceY/Clipcat/releases/latest/download/Clipcat-linux-amd64',
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/>
+      </svg>
+    ),
+  },
+];
+
+const FEATURES = [
+  {
+    icon: '📋',
+    title: 'Auto-Capture',
+    desc: 'Everything you copy — text and images — is saved instantly with no setup needed.',
+  },
+  {
+    icon: '⚡',
+    title: 'Quick Paste',
+    desc: 'Summon Clipcat from any app, pick a clip, and it pastes directly then vanishes.',
+  },
+  {
+    icon: '📌',
+    title: 'Pin & Label',
+    desc: 'Pin important clips to the top and tag them with labels to keep your history organised.',
+  },
+  {
+    icon: '🔍',
+    title: 'Instant Search',
+    desc: 'Filter your entire clipboard history in real time with a single keyboard shortcut.',
+  },
+  {
+    icon: '🛡️',
+    title: 'Privacy Mode',
+    desc: 'Blur all clip content instantly for screen sharing or shoulder-surfing situations.',
+  },
+  {
+    icon: '🔒',
+    title: 'Auto-hide Secrets',
+    desc: 'Automatically detects and collapses passwords, API keys, tokens, and JWTs.',
+  },
+  {
+    icon: '🚫',
+    title: 'Blocked Apps',
+    desc: 'Exclude any app by process name so its clipboard activity is never captured.',
+  },
+  {
+    icon: '✏️',
+    title: 'Edit Clips',
+    desc: 'Fix typos or update any saved clip without re-copying.',
+  },
+  {
+    icon: '🖼️',
+    title: 'Image Support',
+    desc: 'Copied images are saved as previews and can be pasted back just like text clips.',
+  },
+];
+
+function HeroSection() {
+  return (
+    <section className={styles.heroWrapper}>
+      {/* ── gradient sky background ── */}
+      <div className={styles.heroBg} aria-hidden="true" />
+
+      <div className={styles.heroContent}>
+        <div className={styles.heroBadge}>
+          <span>Clipboard Manager</span>
+          <span className={styles.heroBadgeDot} />
+          <span>Windows · macOS · Linux</span>
+        </div>
+
+        <Heading as="h1" className={styles.heroTitle}>
+          Your clipboard,<br />
+          <span className={styles.heroTitleAccent}>always at hand.</span>
+        </Heading>
+
+        <p className={styles.heroSubtitle}>
+          Everything you copy — text and images — saved instantly.<br />
+          Find it, reuse it, and manage it without thinking about it.
+        </p>
+
+        <div className={styles.heroCtas}>
+          {PLATFORMS.map((p) => (
+            <a
+              key={p.label}
+              href={p.href}
+              className={clsx(styles.ctaBtn, p.label === 'Windows' && styles.ctaBtnPrimary)}
+            >
+              {p.icon}
+              {p.label === 'Windows' ? 'Get for Windows' : p.label}
+            </a>
+          ))}
+        </div>
+
+        <p className={styles.heroNote}>
+          Free &amp; open source · No cloud · No account · No tracking
+        </p>
+
+        {/* ─────────────────────────────────────────────────────────
+            APP SCREENSHOT
+            Replace the placeholder below with an actual screenshot:
+              <img src="/img/app-screenshot.png" alt="Clipcat app" />
+            ───────────────────────────────────────────────────────── */}
+        <div className={styles.heroScreenshotWrapper}>
+          <div className={styles.heroScreenshot}>
+            <div className={styles.screenshotPlaceholder}>
+              <span className={styles.screenshotIcon}>📋</span>
+              <span className={styles.screenshotLabel}>App Screenshot</span>
+              <span className={styles.screenshotHint}>
+                Drop <code>app-screenshot.png</code> in <code>docs/static/img/</code>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function FeaturesSection() {
+  return (
+    <section className={styles.featuresSection}>
+      <div className="container">
+        <Heading as="h2" className={styles.sectionTitle}>
+          Everything you need from a clipboard manager
+        </Heading>
+        <p className={styles.sectionSubtitle}>
+          Clipcat quietly captures everything, then gets out of your way.
+        </p>
+        <div className={styles.featuresGrid}>
+          {FEATURES.map(({icon, title, desc}) => (
+            <div key={title} className={styles.featureCard}>
+              <span className={styles.featureIcon} aria-hidden="true">{icon}</span>
+              <Heading as="h3" className={styles.featureTitle}>{title}</Heading>
+              <p className={styles.featureDesc}>{desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ShortcutsSection() {
+  const SHORTCUTS = [
+    {keys: ['Ctrl / ⌘', 'Shift', 'V'], label: 'Summon Clipcat (system-wide)'},
+    {keys: ['Ctrl / ⌘', 'F'], label: 'Focus search'},
+    {keys: ['Alt', 'M'], label: 'Toggle Mini Clip mode'},
+    {keys: ['Alt', 'H'], label: 'Toggle Privacy Mode'},
+    {keys: ['Alt', 'S'], label: 'Toggle sound effects'},
+  ];
+
+  return (
+    <section className={styles.shortcutsSection}>
+      <div className={clsx('container', styles.shortcutsContainer)}>
+        <div className={styles.shortcutsLeft}>
+          <Heading as="h2" className={styles.sectionTitle}>
+            Keyboard shortcuts
+          </Heading>
+          <p className={styles.sectionSubtitle}>
+            Fast by design. Everything important is one key combo away.
+          </p>
+          <Link className={styles.shortcutsLink} to="/docs/keyboard-shortcuts">
+            View all shortcuts →
+          </Link>
+        </div>
+        <div className={styles.shortcutsList}>
+          {SHORTCUTS.map(({keys, label}) => (
+            <div key={label} className={styles.shortcutRow}>
+              <span className={styles.shortcutLabel}>{label}</span>
+              <div className={styles.shortcutKeys}>
+                {keys.map((k, i) => (
+                  <span key={i} className={styles.shortcutKeyGroup}>
+                    {i > 0 && <span className={styles.shortcutPlus}>+</span>}
+                    <kbd className={styles.key}>{k}</kbd>
+                  </span>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ScreenshotBand() {
+  return (
+    <section className={styles.screenshotBand}>
+      <div className="container">
+        <Heading as="h2" className={clsx(styles.sectionTitle, styles.centered)}>
+          See it in action
+        </Heading>
+        <p className={clsx(styles.sectionSubtitle, styles.centered)}>
+          A stylish clipboard manager that stays out of your way until you need it.
+        </p>
+
+        {/* ─────────────────────────────────────────────────────────
+            FEATURE SCREENSHOTS
+            Add actual screenshots as follows:
+              <img src="/img/screenshot-search.png" alt="Searching clips" />
+              <img src="/img/screenshot-privacy.png" alt="Privacy mode" />
+              <img src="/img/screenshot-mini.png"   alt="Mini clip mode" />
+            ───────────────────────────────────────────────────────── */}
+        <div className={styles.screenshotGrid}>
+          {[
+            {label: 'Search & Filter', hint: 'screenshot-search.png'},
+            {label: 'Privacy Mode',   hint: 'screenshot-privacy.png'},
+            {label: 'Mini Clip',      hint: 'screenshot-mini.png'},
+          ].map(({label, hint}) => (
+            <div key={label} className={styles.screenshotCard}>
+              <div className={styles.screenshotCardPlaceholder}>
+                <span className={styles.screenshotLabel}>{label}</span>
+                <span className={styles.screenshotHint}><code>{hint}</code></span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function CTASection() {
+  return (
+    <section className={styles.ctaSection}>
+      <div className={clsx('container', styles.ctaContainer)}>
+        <Heading as="h2" className={clsx(styles.sectionTitle, styles.ctaTitle)}>
+          Ready to never lose a copy again?
+        </Heading>
+        <p className={clsx(styles.sectionSubtitle, styles.ctaSubtitle)}>
+          Free, open source, and takes 30 seconds to install.
+        </p>
+        <div className={styles.heroCtas}>
+          <a
+            href="https://github.com/d3uceY/Clipcat/releases/latest/download/Clipcat-windows-amd64-installer.exe"
+            className={clsx(styles.ctaBtn, styles.ctaBtnPrimary)}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-13.051-1.801"/>
+            </svg>
+            Download for Windows
+          </a>
+          <Link className={clsx(styles.ctaBtn)} to="/docs/intro">
+            Read the docs
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export default function Home(): ReactNode {
+  const {siteConfig} = useDocusaurusContext();
+  return (
+    <Layout
+      title={siteConfig.tagline}
+      description="Clipcat — a stylish clipboard manager that automatically saves everything you copy. Text and images, instantly captured. Find it, reuse it, manage it.">
+      <HeroSection />
+      <main>
+        <FeaturesSection />
+        <ShortcutsSection />
+        <ScreenshotBand />
+        <CTASection />
+      </main>
+    </Layout>
+  );
+}

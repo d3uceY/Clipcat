@@ -1,0 +1,152 @@
+/* ============================================================
+   Clipcat Design System — Docusaurus Theme
+   Paper / hand-drawn notebook aesthetic with warm ink tones
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Playpen+Sans:wght@300;400;600;700;800&display=swap');
+
+/* ── Light mode ─────────────────────────────────────────── */
+:root {
+  /* Infima primary palette — warm amber-brown */
+  --ifm-color-primary: #7C5C2E;
+  --ifm-color-primary-dark: #6E5028;
+  --ifm-color-primary-darker: #674B26;
+  --ifm-color-primary-darkest: #553D1E;
+  --ifm-color-primary-light: #8A6834;
+  --ifm-color-primary-lighter: #916E38;
+  --ifm-color-primary-lightest: #A17E45;
+
+  --ifm-code-font-size: 93%;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.08);
+
+  /* Clipcat custom tokens */
+  --cc-paper: #F9F5E6;
+  --cc-paper-mid: #EDE8D5;
+  --cc-paper-dark: #D8C9A8;
+  --cc-ink: #1a1108;
+  --cc-ink-muted: #6B5E4A;
+  --cc-accent: #C8941A;
+  --cc-border: #D4C09A;
+  --cc-selection: #ffeb3b80;
+  --cc-sky-top: #B5CCDF;
+  --cc-sky-mid: #C9A870;
+  --cc-sky-paper: #E8D5A0;
+
+  /* Override Infima backgrounds */
+  --ifm-background-color: #F9F5E6;
+  --ifm-background-surface-color: #FBF8EE;
+  --ifm-navbar-background-color: rgba(249, 245, 230, 0.92);
+  --ifm-navbar-shadow: 0 1px 0 0 #D4C09A;
+  --ifm-footer-background-color: #1a1108;
+  --ifm-footer-color: #c9b99a;
+  --ifm-link-color: #7C5C2E;
+  --ifm-link-hover-color: #553D1E;
+
+  /* Typography */
+  --ifm-font-family-base: 'Playpen Sans', 'Comic Sans MS', cursive, system-ui, sans-serif;
+  --ifm-heading-font-family: 'Playpen Sans', cursive;
+  --ifm-font-weight-bold: 700;
+
+  /* Card / code */
+  --ifm-card-background-color: #FBF8EE;
+  --ifm-card-border-radius: 0.75rem;
+  --ifm-code-background: #EDE8D5;
+
+  /* Table */
+  --ifm-table-border-color: #D4C09A;
+  --ifm-table-stripe-background: rgba(216, 201, 168, 0.2);
+}
+
+/* ── Dark mode ───────────────────────────────────────────── */
+[data-theme='dark'] {
+  --ifm-color-primary: #D4A574;
+  --ifm-color-primary-dark: #C99660;
+  --ifm-color-primary-darker: #C48F57;
+  --ifm-color-primary-darkest: #B67B42;
+  --ifm-color-primary-light: #DFB488;
+  --ifm-color-primary-lighter: #E4BB92;
+  --ifm-color-primary-lightest: #EDD1AE;
+  --docusaurus-highlighted-code-line-bg: rgba(255, 255, 255, 0.08);
+
+  --cc-paper: #1C1710;
+  --cc-paper-mid: #241B12;
+  --cc-paper-dark: #2F2218;
+  --cc-ink: #F9F5E6;
+  --cc-ink-muted: #A89880;
+  --cc-accent: #D4A574;
+  --cc-border: #3D3020;
+
+  --ifm-background-color: #1C1710;
+  --ifm-background-surface-color: #241B12;
+  --ifm-navbar-background-color: rgba(28, 23, 16, 0.92);
+  --ifm-navbar-shadow: 0 1px 0 0 #3D3020;
+  --ifm-footer-background-color: #0E0B07;
+  --ifm-link-color: #D4A574;
+  --ifm-link-hover-color: #EDD1AE;
+  --ifm-card-background-color: #241B12;
+  --ifm-code-background: #2F2218;
+  --ifm-table-border-color: #3D3020;
+  --ifm-table-stripe-background: rgba(61, 48, 32, 0.4);
+}
+
+/* ── Global styles ───────────────────────────────────────── */
+::selection {
+  background: var(--cc-selection);
+  color: #000;
+}
+
+.navbar {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.navbar__title {
+  font-weight: 800;
+  font-size: 1.15rem;
+  letter-spacing: -0.01em;
+}
+
+.navbar__link {
+  font-weight: 600;
+}
+
+/* Kbd element */
+kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.15em 0.4em;
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.8em;
+  background: var(--cc-paper-mid);
+  border: 1px solid var(--cc-border);
+  border-radius: 4px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+}
+
+[data-theme='dark'] kbd {
+  background: var(--cc-paper-dark);
+  border-color: var(--cc-border);
+}
+
+/* Doc sidebar */
+.theme-doc-sidebar-item-link-level-1 > a {
+  font-weight: 600;
+}
+
+/* Admonition styling */
+.alert {
+  border-radius: 0.75rem;
+  border-left-width: 4px;
+}
+
+/* Table styling */
+table {
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}

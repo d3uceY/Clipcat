@@ -127,11 +127,16 @@
   border-radius: 0.6rem;
   font-size: 0.95rem;
   font-weight: 700;
+  font-family: inherit;
+  line-height: 1;
   text-decoration: none;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
   transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
-  border: 1.5px solid rgba(120, 90, 40, 0.3);
-  background: rgba(255, 255, 255, 0.55);
-  color: #4A3A28;
+  border: 1.5px solid rgba(90, 60, 20, 0.55) !important;
+  background: rgba(255, 255, 255, 0.82);
+  color: #3A2A14;
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
 }
@@ -140,7 +145,7 @@
   transform: translateY(-1px);
   box-shadow: 0 4px 16px rgba(120, 90, 40, 0.2);
   text-decoration: none;
-  color: #4A3A28;
+  color: #3A2A14;
 }
 
 .ctaBtnPrimary {
@@ -184,9 +189,6 @@
 
 .dropdownTrigger {
   cursor: pointer;
-  background: none;
-  border: none;
-  font: inherit;
 }
 
 .dropdownChevron {

@@ -225,11 +225,20 @@
 
 .dropdownItem {
   display: block;
+  width: 100%;
   padding: 0.6rem 1rem;
   font-size: 0.88rem;
   font-weight: 600;
+  font-family: inherit;
+  line-height: 1.4;
+  text-align: left;
   color: #4A3A28;
+  background: none;
+  border: none !important;
   text-decoration: none;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
   transition: background 0.1s ease;
   white-space: nowrap;
 }

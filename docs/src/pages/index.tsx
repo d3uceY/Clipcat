@@ -118,7 +118,7 @@ function DownloadDialog({ info, onClose }: { info: DialogInfo; onClose: () => vo
             className={styles.dialogDownloadBtn}
             onClick={onClose}
           >
-            Download {info.label} anyway
+            Download anyway
           </a>
         </div>
       </div>

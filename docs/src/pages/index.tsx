@@ -2,6 +2,7 @@ import type {ReactNode} from 'react';
 import clsx from 'clsx';
 import Link from '@docusaurus/Link';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
+import useBaseUrl from '@docusaurus/useBaseUrl';
 import Layout from '@theme/Layout';
 import Heading from '@theme/Heading';
 
@@ -86,6 +87,7 @@ const FEATURES = [
 ];
 
 function HeroSection() {
+  const heroImg = useBaseUrl('/img/app-screenshot.png');
   return (
     <section className={styles.heroWrapper}>
       {/* ── gradient sky background ── */}
@@ -125,14 +127,9 @@ function HeroSection() {
           Free &amp; open source · No cloud · No account · No tracking
         </p>
 
-        {/* ─────────────────────────────────────────────────────────
-            APP SCREENSHOT
-            Replace the placeholder below with an actual screenshot:
-              <img src="/img/app-screenshot.png" alt="Clipcat app" />
-            ───────────────────────────────────────────────────────── */}
         <div className={styles.heroScreenshotWrapper}>
           <div className={styles.heroScreenshot}>
-            <img src="/img/app-screenshot.png" alt="Clipcat main window" />
+            <img src={heroImg} alt="Clipcat main window" />
           </div>
         </div>
       </div>
@@ -208,6 +205,11 @@ function ShortcutsSection() {
 }
 
 function ScreenshotBand() {
+  const screenshots = [
+    {src: useBaseUrl('/img/screenshot-search.png'), label: 'Search & Filter'},
+    {src: useBaseUrl('/img/screenshot-privacy.png'), label: 'Privacy Mode'},
+    {src: useBaseUrl('/img/screenshot-mini.png'),   label: 'Mini Clip'},
+  ];
   return (
     <section className={styles.screenshotBand}>
       <div className="container">
@@ -218,19 +220,9 @@ function ScreenshotBand() {
           A stylish clipboard manager that stays out of your way until you need it.
         </p>
 
-        {/* ─────────────────────────────────────────────────────────
-            FEATURE SCREENSHOTS
-            Add actual screenshots as follows:
-              <img src="/img/screenshot-search.png" alt="Searching clips" />
-              <img src="/img/screenshot-privacy.png" alt="Privacy mode" />
-              <img src="/img/screenshot-mini.png"   alt="Mini clip mode" />
-            ───────────────────────────────────────────────────────── */}
+            {/* ─── comment kept for reference ─── */}
         <div className={styles.screenshotGrid}>
-          {[
-            {src: '/img/screenshot-search.png', label: 'Search & Filter'},
-            {src: '/img/screenshot-privacy.png', label: 'Privacy Mode'},
-            {src: '/img/screenshot-mini.png',   label: 'Mini Clip'},
-          ].map(({src, label}) => (
+          {screenshots.map(({src, label}) => (
             <div key={label} className={styles.screenshotCard}>
               <img src={src} alt={label} />
             </div>

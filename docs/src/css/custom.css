@@ -95,7 +95,7 @@
   color: #000;
 }
 
-.navbar {
+.navbar__inner {
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
 }

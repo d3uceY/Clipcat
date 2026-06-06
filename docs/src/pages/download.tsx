@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { useState, useEffect } from 'react';
 import Layout from '@theme/Layout';
 import Heading from '@theme/Heading';
+import Link from '@docusaurus/Link';
 import styles from './download.module.css';
 
 function useLatestVersion() {
@@ -129,7 +130,7 @@ export default function DownloadPage(): ReactNode {
                     <line x1="12" y1="17" x2="12.01" y2="17"/>
                   </svg>
                   <span>{warning}</span>
-                  <a href={guideHash} className={styles.warningLink}>First-run guide {'->'}</a>
+                  <Link to={guideHash} className={styles.warningLink}>First-run guide {'->'}</Link>
                 </div>
               )}
             </div>

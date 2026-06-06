@@ -74,17 +74,38 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
         const el = cardRef.current
         if (!el) return
         let observer: IntersectionObserver | null = null
+        // Debounce timer for hiding: prevents brief layout shifts (e.g. the
+        // sensitive section opening / closing) from flipping visible cards to
+        // placeholder state.  Only commit the hide after the card has been
+        // continuously outside the rootMargin for 300 ms.
+        let hideDebounceTimer: ReturnType<typeof setTimeout> | null = null
         // Delay setup so initial batch measurements (~41 ms) complete first.
         // Cards that started invisible have no measurement race — they render
         // as placeholders immediately and get measured when scrolled into view.
         const timerId = setTimeout(() => {
             observer = new IntersectionObserver(
                 ([entry]) => {
-                    if (!entry.isIntersecting) {
+                    if (entry.isIntersecting) {
+                        // Cancel any pending hide — card came back into range.
+                        if (hideDebounceTimer !== null) {
+                            clearTimeout(hideDebounceTimer)
+                            hideDebounceTimer = null
+                        }
+                        setIsVisible(true)
+                    } else {
+                        // Cache the current span before we potentially hide the card.
                         const span = parseInt(el.style.getPropertyValue('--row-span'))
                         if (span > 0) cachedRowSpanRef.current = span
+                        // Only hide after the card has been out of range for a
+                        // sustained period (i.e. the user actually scrolled away),
+                        // not just because the layout momentarily shifted.
+                        if (hideDebounceTimer === null) {
+                            hideDebounceTimer = setTimeout(() => {
+                                hideDebounceTimer = null
+                                setIsVisible(false)
+                            }, 300)
+                        }
                     }
-                    setIsVisible(entry.isIntersecting)
                 },
                 { rootMargin: '500px' }
             )
@@ -92,6 +113,7 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
         }, 150)
         return () => {
             clearTimeout(timerId)
+            if (hideDebounceTimer !== null) clearTimeout(hideDebounceTimer)
             observer?.disconnect()
         }
     }, [])
@@ -210,8 +232,8 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
 
     // Placeholder for off-screen cards — keeps the grid cell the right size
     // without rendering the full React subtree.
-    // No inline style needed: CSS uses --row-span (last measured value, or
-    // the default of 10) so the cell stays correctly sized with no JS override.
+    // --row-span is written directly via el.style.setProperty by useCardRowSpan
+    // and is NOT a React-managed prop, so it survives this render as-is.
     if (!isVisible) {
         return <div id={tourId} ref={cardRef} />
     }

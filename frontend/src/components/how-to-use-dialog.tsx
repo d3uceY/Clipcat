@@ -138,7 +138,7 @@ export default function HowToUseDialog({ platform, onOpen, hasSeenHowToUse = tru
             title: "Sound Effects",
             desc: (
                 <>
-                    Satisfying audio feedback on every action. Toggle with <Kbd>Alt</Kbd><Plus /><Kbd>S</Kbd> or in Settings -> System.
+                    Satisfying audio feedback on every action. Toggle with <Kbd>Alt</Kbd><Plus /><Kbd>S</Kbd> or in Settings {'->'} System.
                 </>
             ),
         },

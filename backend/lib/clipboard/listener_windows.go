@@ -95,8 +95,18 @@ func StartClipboardListener(onChange func(), onHotkey func()) {
 			panic("clipboard: failed to register clipboard format listener")
 		}
 
-		// Ctrl+Shift+V  global hotkey to show/hide Clipcat
-		procRegisterHotKey.Call(uintptr(hwnd), hotkeyID, MOD_CONTROL|MOD_SHIFT, VK_V)
+		// Ctrl+Shift+V global hotkey to show/hide Clipcat.
+		// Retry with exponential backoff: another app (e.g. Windows Clipboard
+		// History) may hold the registration briefly at startup.
+		for i := range 5 {
+			ret, _, _ := procRegisterHotKey.Call(uintptr(hwnd), hotkeyID, MOD_CONTROL|MOD_SHIFT, VK_V)
+			if ret != 0 {
+				break
+			}
+			// Unregister any stale registration from a previous run before retrying.
+			procUnregisterHotKey.Call(uintptr(hwnd), hotkeyID)
+			time.Sleep(time.Duration(1<<uint(i)) * time.Second)
+		}
 
 		var msg win.MSG
 		for win.GetMessage(&msg, 0, 0, 0) > 0 {

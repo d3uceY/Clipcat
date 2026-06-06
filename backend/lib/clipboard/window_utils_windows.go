@@ -22,7 +22,12 @@ var (
 	procSetForegroundWindow      = user32.NewProc("SetForegroundWindow")
 	procGetWindowThreadProcessId = user32.NewProc("GetWindowThreadProcessId")
 	procRegisterHotKey           = user32.NewProc("RegisterHotKey")
+	procUnregisterHotKey         = user32.NewProc("UnregisterHotKey")
 	procKeybdEvent               = user32.NewProc("keybd_event")
+	// AllowSetForegroundWindow must be called from the thread that currently
+	// holds the foreground lock so that a later SetForegroundWindow call from
+	// any other goroutine/process will succeed.
+	procAllowSetForegroundWindow = user32.NewProc("AllowSetForegroundWindow")
 
 	procOpenProcess       = kernel32.NewProc("OpenProcess")
 	procCloseHandle       = kernel32.NewProc("CloseHandle")
@@ -71,8 +76,13 @@ func StartFocusTracker() {
 	}()
 }
 
-// capturePreviousWindow is called by the hotkey handler; it does an immediate
-// snapshot that takes priority over the poller's last seen window.
+// capturePreviousWindow is called synchronously on the WM_HOTKEY message
+// thread, before the goroutine is spawned. This is the only moment we hold
+// the Windows foreground lock, so we:
+//  1. Snapshot the current foreground window as the paste target.
+//  2. Call AllowSetForegroundWindow(ASFW_ANY) to hand the foreground token to
+//     any process for one call — the goroutine that follows uses it to bring
+//     the Clipcat window to the front via WindowShow/SetForegroundWindow.
 func capturePreviousWindow() {
 	hwnd, _, _ := procGetForegroundWindow.Call()
 	if hwnd != 0 {
@@ -82,6 +92,8 @@ func capturePreviousWindow() {
 			prevHWND = hwnd
 		}
 	}
+	const ASFW_ANY = 0xFFFFFFFF
+	procAllowSetForegroundWindow.Call(ASFW_ANY)
 }
 
 // HasPreviousWindow reports whether a non-Clipcat window has been seen yet.

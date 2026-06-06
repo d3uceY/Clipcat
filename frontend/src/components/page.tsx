@@ -11,7 +11,7 @@ import { playSound } from "@/helpers/playSound";
 import WindowControls from "./window-controls";
 import { GetVersion } from "../../wailsjs/go/main/App";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { BrowserOpenURL } from "../../wailsjs/runtime/runtime";
+import { BrowserOpenURL, InitializeNotifications, IsNotificationAvailable, RequestNotificationAuthorization, SendNotification } from "../../wailsjs/runtime/runtime";
 import type { UpdateInfo } from "./about-dialog";
 
 const AboutDialog = lazy(() => import("./about-dialog"))
@@ -113,6 +113,13 @@ function PageContent() {
         GetVersion().then(setVersion).catch(err => console.error("Failed to get version:", err))
     }, [])
 
+    // Initialize notifications once on mount
+    useEffect(() => {
+        InitializeNotifications()
+            .then(() => RequestNotificationAuthorization())
+            .catch(() => {});
+    }, [])
+
     // Run the update check once version is loaded
     useEffect(() => {
         if (!version) return;
@@ -131,6 +138,15 @@ function PageContent() {
                     if (!localStorage.getItem(seenKey)) {
                         localStorage.setItem(seenKey, "1");
                         setShowUpdateDialog(true);
+                        // Fire a system notification
+                        IsNotificationAvailable().then(available => {
+                            if (!available) return;
+                            SendNotification({
+                                id: `clipcat-update-${latestVersion}`,
+                                title: 'Clipcat update available',
+                                body: `Version ${latestVersion} is ready to download.`,
+                            }).catch(() => {});
+                        }).catch(() => {});
                     }
                 }
             } catch { /* silently ignore */ }

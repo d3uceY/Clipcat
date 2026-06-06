@@ -278,7 +278,7 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
             </div>
 
             {/* Label editor – collapses to zero height when card is not hovered.
-                Uses the grid-template-rows trick (0fr → 1fr) so height can
+                Uses the grid-template-rows trick (0fr -> 1fr) so height can
                 transition smoothly without knowing the natural height in advance.
                 Hover is handled entirely via the parent `group` CSS class so
                 there are zero React rerenders on hover. */}

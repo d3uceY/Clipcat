@@ -66,7 +66,7 @@ const DIALOG_CONTENT = {
       'Click "More info" on the SmartScreen popup.',
       'Click "Run anyway".',
     ],
-    guideLabel: 'Full first-run guide →',
+    guideLabel: 'Full first-run guide ->',
     guideHash: '#windows--smartscreen',
   },
   mac: {
@@ -74,10 +74,10 @@ const DIALOG_CONTENT = {
     body: "Because Clipcat isn't code-signed yet, Gatekeeper will block it on first launch. The app is fully open source and safe.",
     steps: [
       'Open the downloaded .dmg file.',
-      'Right-click the app → Open.',
+      'Right-click the app -> Open.',
       'Click "Open" in the Gatekeeper dialog.',
     ],
-    guideLabel: 'Full first-run guide →',
+    guideLabel: 'Full first-run guide ->',
     guideHash: '#macos--gatekeeper',
   },
 };
@@ -363,7 +363,7 @@ function ShortcutsSection() {
             Fast by design. Everything important is one key combo away.
           </p>
           <Link className={styles.shortcutsLink} to="/docs/keyboard-shortcuts">
-            View all shortcuts →
+            View all shortcuts ->
           </Link>
         </div>
         <div className={styles.shortcutsList}>

@@ -9,6 +9,17 @@ import Heading from '@theme/Heading';
 
 import styles from './index.module.css';
 
+function useLatestVersion() {
+  const [version, setVersion] = useState<string | null>(null);
+  useEffect(() => {
+    fetch('https://api.github.com/repos/d3uceY/Clipcat/releases/latest')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => d?.tag_name && setVersion(d.tag_name))
+      .catch(() => {});
+  }, []);
+  return version;
+}
+
 const PLATFORMS = [
   {
     label: 'Windows',
@@ -229,6 +240,7 @@ const FEATURES = [
 function HeroSection() {
   const heroImg = useBaseUrl('/img/app-screenshot.png');
   const [dlDialog, setDlDialog] = useState<DialogInfo | null>(null);
+  const latestVersion = useLatestVersion();
 
   return (
     <section className={styles.heroWrapper}>
@@ -240,6 +252,19 @@ function HeroSection() {
           <span>Clipboard Manager</span>
           <span className={styles.heroBadgeDot} />
           <span>Windows · macOS · Linux</span>
+          {latestVersion && (
+            <>
+              <span className={styles.heroBadgeDot} />
+              <a
+                href="https://github.com/d3uceY/Clipcat/releases/latest"
+                className={styles.heroBadgeVersion}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {latestVersion}
+              </a>
+            </>
+          )}
         </div>
 
         <Heading as="h1" className={styles.heroTitle}>

@@ -1,7 +1,21 @@
 import type { ReactNode } from 'react';
+import { useState, useEffect } from 'react';
 import Layout from '@theme/Layout';
 import Heading from '@theme/Heading';
 import styles from './download.module.css';
+
+function useLatestVersion() {
+  const [version, setVersion] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    fetch('https://api.github.com/repos/d3uceY/Clipcat/releases/latest')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.tag_name) setVersion(d.tag_name); })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+  return { version, loading };
+}
 
 const RELEASES_BASE = 'https://github.com/d3uceY/Clipcat/releases/latest/download';
 
@@ -49,6 +63,8 @@ const PLATFORMS = [
 ];
 
 export default function DownloadPage(): ReactNode {
+  const { version, loading } = useLatestVersion();
+
   return (
     <Layout
       title="Download Clipcat"
@@ -57,6 +73,27 @@ export default function DownloadPage(): ReactNode {
       <main className={styles.page}>
         <div className={styles.hero}>
           <Heading as="h1" className={styles.title}>Download Clipcat</Heading>
+          {!loading && (
+            <div className={styles.versionBadge}>
+              <a
+                href="https://github.com/d3uceY/Clipcat/releases/latest"
+                className={styles.versionLink}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {version ? `Latest: ${version}` : 'View releases'}
+              </a>
+              <span className={styles.versionDivider}>·</span>
+              <a
+                href="https://github.com/d3uceY/Clipcat/releases"
+                className={styles.versionLink}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                All releases
+              </a>
+            </div>
+          )}
           <p className={styles.subtitle}>
             Free &amp; open source · No account · No cloud · No tracking
           </p>

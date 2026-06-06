@@ -93,7 +93,13 @@ export default function AboutDialog({ version, updateAvailable: updateAvailableP
                     <DialogTitle className="text-2xl font-serif italic">About Clipcat</DialogTitle>
                     <DialogDescription className="text-base pt-4 space-y-3">
                         <p>
-                            <strong>Clipcat</strong> is a creative clipboard manager that helps you keep track of your copied content with style.
+                            <strong>Clipcat</strong> is a creative clipboard manager that helps you keep track of your copied content with style.{' '}
+                            <button
+                                onClick={() => BrowserOpenURL('https://d3ucey.github.io/Clipcat/docs/intro')}
+                                className="text-blue-600 hover:underline cursor-pointer"
+                            >
+                                Read the docs
+                            </button>
                         </p>
                         <p>
                             Created with 💜 by <strong>Onyekwelu Jesse</strong> (

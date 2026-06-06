@@ -79,6 +79,17 @@
   opacity: 0.5;
 }
 
+.heroBadgeVersion {
+  font-weight: 700;
+  color: var(--ifm-color-primary) !important;
+  text-decoration: none;
+  font-size: 0.78rem;
+}
+
+.heroBadgeVersion:hover {
+  text-decoration: underline;
+}
+
 .heroTitle {
   font-size: clamp(2.6rem, 7vw, 4.5rem);
   font-weight: 800;

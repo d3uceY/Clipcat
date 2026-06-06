@@ -26,6 +26,28 @@
   letter-spacing: 0.02em;
 }
 
+.versionBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.85rem;
+}
+
+.versionLink {
+  font-weight: 700;
+  color: var(--ifm-color-primary);
+  text-decoration: none;
+}
+
+.versionLink:hover {
+  text-decoration: underline;
+}
+
+.versionDivider {
+  opacity: 0.4;
+}
+
 /* ── Platform cards ─────────────────────────────────────── */
 .cards {
   display: grid;

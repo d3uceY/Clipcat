@@ -11,6 +11,12 @@ A stylish clipboard manager that automatically saves everything you copy — tex
 
 
 
+## Documentation
+
+Full documentation, feature guides, and keyboard shortcuts are available at:
+**[d3ucey.github.io/Clipcat](https://d3ucey.github.io/Clipcat/)**
+
+
 ## Download
 
 ![Clipcat Banner](https://img.shields.io/badge/Made%20with-Wails-00ADD8?style=for-the-badge&logo=go)

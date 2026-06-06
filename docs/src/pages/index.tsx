@@ -363,7 +363,7 @@ function ShortcutsSection() {
             Fast by design. Everything important is one key combo away.
           </p>
           <Link className={styles.shortcutsLink} to="/docs/keyboard-shortcuts">
-            View all shortcuts ->
+            View all shortcuts {'->'}
           </Link>
         </div>
         <div className={styles.shortcutsList}>

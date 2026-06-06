@@ -208,7 +208,7 @@ function PageContent() {
                                 Later
                             </button>
                             <button
-                                onClick={() => { setShowUpdateDialog(false); updateInfo && BrowserOpenURL(updateInfo.releaseUrl); }}
+                                onClick={() => { setShowUpdateDialog(false); BrowserOpenURL('https://d3ucey.github.io/Clipcat/download'); }}
                                 className="rounded px-3 py-1 text-sm bg-foreground text-white hover:opacity-80 transition-opacity"
                             >
                                 ⬇︎ Download

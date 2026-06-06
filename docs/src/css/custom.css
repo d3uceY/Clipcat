@@ -129,7 +129,21 @@ kbd {
   border-color: var(--cc-border);
 }
 
-/* Doc sidebar */
+/* Doc sidebar — ensure it sits above page content stacking contexts */
+.theme-doc-sidebar-container {
+  z-index: 10;
+  position: relative;
+}
+
+/* Mobile navbar sidebar drawer */
+.navbar-sidebar {
+  z-index: 300 !important;
+}
+
+.navbar-sidebar__backdrop {
+  z-index: 299 !important;
+}
+
 .theme-doc-sidebar-item-link-level-1 > a {
   font-weight: 600;
 }

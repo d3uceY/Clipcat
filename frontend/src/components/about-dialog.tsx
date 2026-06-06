@@ -137,7 +137,7 @@ export default function AboutDialog({ version, updateAvailable: updateAvailableP
                                     Released {new Date(updateAvailable.releaseDate).toLocaleDateString()}
                                 </p>
                                 <button
-                                    onClick={() => BrowserOpenURL(updateAvailable.releaseUrl)}
+                                    onClick={() => BrowserOpenURL('https://d3ucey.github.io/Clipcat/download')}
                                     className="heartbeat hand-drawn-btn lined thin mt-3 px-3 py-1 text-base! font-bold hover:opacity-70 transition-opacity cursor-pointer"
                                 >
                                     ⬇︎ Download Update

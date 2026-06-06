@@ -86,7 +86,7 @@ const config: Config = {
           label: 'Docs',
         },
         {
-          href: 'https://github.com/d3uceY/Clipcat/releases/latest',
+          to: '/download',
           label: 'Download',
           position: 'left',
         },

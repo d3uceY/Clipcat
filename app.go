@@ -178,14 +178,19 @@ func (a *App) startup(ctx context.Context) {
 		}
 	}, func() {
 		// Hotkey (Ctrl+Shift+V) fired — show Clipcat and bring it to the front.
+		// capturePreviousWindow() already called AllowSetForegroundWindow on the
+		// message thread, so WindowShow can steal focus from the current app.
 		if a.ctx == nil {
 			return
 		}
 		tray.Activate()
 		runtime.WindowShow(a.ctx)
-		runtime.WindowSetAlwaysOnTop(a.ctx, true)
-		time.Sleep(150 * time.Millisecond)
-		runtime.WindowSetAlwaysOnTop(a.ctx, false)
+		// Restore the user's actual AlwaysOnTop preference. The old approach of
+		// set-true→sleep→set-false didn't reliably grant keyboard focus and
+		// incorrectly toggled the setting for users who had it enabled.
+		if alwaysOnTop, err := store.GetAlwaysOnTop(); err == nil {
+			runtime.WindowSetAlwaysOnTop(a.ctx, alwaysOnTop)
+		}
 	})
 }
 

@@ -294,7 +294,7 @@ function PageContent() {
 
                 {/* Sensitive clips indicator — only shown when auto-hide is on and there are hidden clips */}
                 {autoHideSensitive && hiddenCount > 0 && (
-                    <div className="mb-6 flex items-center gap-3 flex-wrap">
+                    <div className={`${!isMiniClip ? "mb-6" : "-mb-6 -mt-4"} flex items-center gap-3 flex-wrap`}>
                         {isMiniClip ? (
                             <button
                                 onClick={() => setShowSensitive(v => !v)}

@@ -30,7 +30,7 @@ const PLATFORMS = [
     variants: [
       { label: 'Windows (x64) Installer', href: `${RELEASES_BASE}/Clipcat-windows-amd64-installer.exe`, note: 'Recommended' },
     ],
-    warning: 'Windows SmartScreen may show a warning on first run. Click "More info" → "Run anyway".',
+    warning: 'Windows SmartScreen may show a warning on first run. Click "More info" -> "Run anyway".',
     guideHash: '/docs/intro#windows--smartscreen',
   },
   {
@@ -44,7 +44,7 @@ const PLATFORMS = [
       { label: 'Apple Silicon (.dmg)', href: `${RELEASES_BASE}/Clipcat-macos-arm64.dmg`, note: 'M1 / M2 / M3 / M4' },
       { label: 'Intel (.dmg)', href: `${RELEASES_BASE}/Clipcat-macos-amd64.dmg`, note: 'x86_64' },
     ],
-    warning: 'Gatekeeper will block the app on first launch. Right-click the app → Open → click "Open" in the dialog.',
+    warning: 'Gatekeeper will block the app on first launch. Right-click the app -> Open -> click "Open" in the dialog.',
     guideHash: '/docs/intro#macos--gatekeeper',
   },
   {
@@ -129,7 +129,7 @@ export default function DownloadPage(): ReactNode {
                     <line x1="12" y1="17" x2="12.01" y2="17"/>
                   </svg>
                   <span>{warning}</span>
-                  <a href={guideHash} className={styles.warningLink}>First-run guide →</a>
+                  <a href={guideHash} className={styles.warningLink}>First-run guide {'->'}</a>
                 </div>
               )}
             </div>
@@ -139,7 +139,7 @@ export default function DownloadPage(): ReactNode {
         <p className={styles.sourceNote}>
           All releases are built from source on GitHub.{' '}
           <a href="https://github.com/d3uceY/Clipcat/releases" className={styles.sourceLink}>
-            View all releases →
+            View all releases {'->'}
           </a>
         </p>
       </main>

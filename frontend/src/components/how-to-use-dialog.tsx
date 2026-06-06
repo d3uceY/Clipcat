@@ -102,7 +102,7 @@ export default function HowToUseDialog({ platform, onOpen, hasSeenHowToUse = tru
         {
             icon: <Ban size={14} />,
             title: "Blocked Apps",
-            desc: "Add a process name (e.g. 1password.exe) in Settings → Blocked Apps and Clipcat will never capture from that app.",
+            desc: "Add a process name (e.g. 1password.exe) in Settings -> Blocked Apps and Clipcat will never capture from that app.",
         },
         {
             icon: <ShieldAlert size={14} />,
@@ -121,31 +121,31 @@ export default function HowToUseDialog({ platform, onOpen, hasSeenHowToUse = tru
         {
             icon: <ArrowUpToLine size={14} />,
             title: "Always on Top",
-            desc: "Keep the Clipcat window above all other windows at all times. Enable in Settings → Window. (Unavailable while Quick Paste is on.)",
+            desc: "Keep the Clipcat window above all other windows at all times. Enable in Settings -> Window. (Unavailable while Quick Paste is on.)",
         },
         {
             icon: <Pause size={14} />,
             title: "Pause Capture",
-            desc: "Temporarily stop recording clipboard changes without closing the app. Toggle in Settings → Clipboard.",
+            desc: "Temporarily stop recording clipboard changes without closing the app. Toggle in Settings -> Clipboard.",
         },
         {
             icon: <Database size={14} />,
             title: "Clipboard Limit",
-            desc: "Choose how many clips to keep (100–500). Pinned clips are always preserved regardless of the limit. Adjust in Settings → Clipboard.",
+            desc: "Choose how many clips to keep (100–500). Pinned clips are always preserved regardless of the limit. Adjust in Settings -> Clipboard.",
         },
         {
             icon: <Volume2 size={14} />,
             title: "Sound Effects",
             desc: (
                 <>
-                    Satisfying audio feedback on every action. Toggle with <Kbd>Alt</Kbd><Plus /><Kbd>S</Kbd> or in Settings → System.
+                    Satisfying audio feedback on every action. Toggle with <Kbd>Alt</Kbd><Plus /><Kbd>S</Kbd> or in Settings {'->'} System.
                 </>
             ),
         },
         {
             icon: <Rocket size={14} />,
             title: "Load on Startup",
-            desc: "Optionally launch Clipcat automatically when your system starts. Toggle in Settings → System.",
+            desc: "Optionally launch Clipcat automatically when your system starts. Toggle in Settings -> System.",
         },
     ];
 

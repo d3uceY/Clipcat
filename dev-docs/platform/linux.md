@@ -81,6 +81,9 @@ gclip.Watch(ctx, FmtImage)   ├─ select loop
 | `FocusPreviousWindow()` | `xdotool windowactivate <id>` |
 | `SimulatePaste()` | `xdotool key ctrl+v` (after 80 ms sleep) |
 | `isForegroundProcessIgnored()` | Reads PID via `xdotool getactivewindow getwindowpid`, then `/proc/<pid>/comm` |
+| `GetCursorPos()` | `xdotool getmouselocation --shell` — parses `X=` / `Y=` from output |
+| `GetMonitorBoundsAt(px,py)` | Parses `xrandr` output for `WxH+X+Y` tokens; returns bounds of the monitor containing `(px,py)` |
+| `GetWindowMonitorWorkOrigin()` | Returns `(0, 0)` — Wails uses absolute screen coords on Linux |
 
 ### Paste flow
 

@@ -155,6 +155,10 @@ func GetMonitorBoundsAt(px, py int) (mx, my, mw, mh int) {
 	return int(cmx), int(cmy), int(cmw), int(cmh)
 }
 
+// GetWindowMonitorWorkOrigin returns (0, 0) on macOS because Wails uses
+// absolute screen coordinates for WindowSetPosition on this platform.
+func GetWindowMonitorWorkOrigin() (ox, oy int) { return 0, 0 }
+
 //
 // Process ignore list – macOS implementation
 //

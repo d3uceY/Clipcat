@@ -186,18 +186,32 @@ func (a *App) startup(ctx context.Context) {
 			return
 		}
 
-		// Smart Position: move the window near the cursor before revealing it
-		// so the user does not have to hunt for it across the screen.
-		if enabled, _ := store.GetCursorSnap(); enabled {
+		// Smart Position: move the window near the cursor before revealing it.
+		// Only activates when both cursor_snap AND Quick Paste are enabled —
+		// Quick Paste is the mode where the window is hidden and summoned via
+		// hotkey, which is the only context where Smart Position makes sense.
+		quickPaste, _ := store.GetQuickPaste()
+		if cursorSnap, _ := store.GetCursorSnap(); cursorSnap && quickPaste {
 			cx, cy := clipboard.GetCursorPos()
 			ww, wh := runtime.WindowGetSize(a.ctx)
+			// WindowGetSize can return 0×0 while the window is hidden on some
+			// platforms. Fall back to the mini-clip maximum dimensions so the
+			// position calculation always produces a sensible result.
+			if ww <= 0 || wh <= 0 {
+				ww, wh = 450, 650
+			}
 			mx, my, mw, mh := clipboard.GetMonitorBoundsAt(cx, cy)
 			pos := winpos.CalcWindowPos(
 				winpos.Point{X: cx, Y: cy},
 				winpos.Size{W: ww, H: wh},
 				winpos.Rect{X: mx, Y: my, W: mw, H: mh},
 			)
-			runtime.WindowSetPosition(a.ctx, pos.X, pos.Y)
+			// Wails' WindowSetPosition(x, y) adds the current window's monitor
+			// origin before calling SetWindowPos (Windows-specific behaviour).
+			// Subtract that origin so the absolute target position is preserved
+			// regardless of which monitor the window was last placed on.
+			ox, oy := clipboard.GetWindowMonitorWorkOrigin()
+			runtime.WindowSetPosition(a.ctx, pos.X-ox, pos.Y-oy)
 		}
 
 		tray.Activate()

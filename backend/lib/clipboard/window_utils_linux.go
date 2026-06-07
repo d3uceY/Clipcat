@@ -147,6 +147,10 @@ func GetMonitorBoundsAt(px, py int) (mx, my, mw, mh int) {
 	return 0, 0, 1920, 1080
 }
 
+// GetWindowMonitorWorkOrigin returns (0, 0) on Linux because Wails uses
+// absolute screen coordinates for WindowSetPosition on this platform.
+func GetWindowMonitorWorkOrigin() (ox, oy int) { return 0, 0 }
+
 //
 // Process ignore list – Linux implementation
 //

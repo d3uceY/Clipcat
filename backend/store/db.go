@@ -149,6 +149,12 @@ func MigrateMiniClipSetting() {
 	_, _ = DB.Exec(`ALTER TABLE settings ADD COLUMN mini_clip INTEGER NOT NULL DEFAULT 0`)
 }
 
+// MigrateCursorSnapSetting adds the cursor_snap column to settings.
+// Smart Position is enabled by default (value 1).
+func MigrateCursorSnapSetting() {
+	_, _ = DB.Exec(`ALTER TABLE settings ADD COLUMN cursor_snap INTEGER NOT NULL DEFAULT 1`)
+}
+
 func MigrateEncryptOldClips() {
 	type legacyRow struct {
 		id       int

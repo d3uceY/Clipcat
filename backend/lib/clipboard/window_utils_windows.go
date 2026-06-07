@@ -32,6 +32,10 @@ var (
 	procOpenProcess       = kernel32.NewProc("OpenProcess")
 	procCloseHandle       = kernel32.NewProc("CloseHandle")
 	procGetModuleBaseName = psapi.NewProc("GetModuleBaseNameW")
+
+	procGetCursorPos    = user32.NewProc("GetCursorPos")
+	procMonitorFromPoint = user32.NewProc("MonitorFromPoint")
+	procGetMonitorInfo  = user32.NewProc("GetMonitorInfoW")
 )
 
 const (
@@ -117,6 +121,54 @@ func SimulatePaste() {
 	procKeybdEvent.Call(VK_V, 0, 0, 0)
 	procKeybdEvent.Call(VK_V, 0, KEYEVENTF_KEYUP, 0)
 	procKeybdEvent.Call(VK_CONTROL, 0, KEYEVENTF_KEYUP, 0)
+}
+
+//
+// Cursor position and monitor bounds
+//
+
+// tagPOINT mirrors the Win32 POINT struct.
+type tagPOINT struct{ X, Y int32 }
+
+// tagRECT mirrors the Win32 RECT struct.
+type tagRECT struct{ Left, Top, Right, Bottom int32 }
+
+// tagMONITORINFO mirrors the Win32 MONITORINFO struct.
+type tagMONITORINFO struct {
+	CbSize    uint32
+	RcMonitor tagRECT
+	RcWork    tagRECT
+	DwFlags   uint32
+}
+
+// GetCursorPos returns the current cursor position in screen coordinates.
+func GetCursorPos() (x, y int) {
+	var pt tagPOINT
+	procGetCursorPos.Call(uintptr(unsafe.Pointer(&pt)))
+	return int(pt.X), int(pt.Y)
+}
+
+// GetMonitorBoundsAt returns the bounding rectangle of the monitor that
+// contains the screen point (px, py).  Falls back to a 1920×1080 screen
+// at origin when the Win32 call fails.
+func GetMonitorBoundsAt(px, py int) (mx, my, mw, mh int) {
+	// Pack the POINT struct into a single 64-bit integer as required by
+	// the Windows x64 calling convention (small structs pass by value).
+	pt := uintptr(uint32(int32(px))) | uintptr(uint32(int32(py)))<<32
+	const MONITOR_DEFAULTTONEAREST = 2
+	hmon, _, _ := procMonitorFromPoint.Call(pt, MONITOR_DEFAULTTONEAREST)
+	if hmon == 0 {
+		return 0, 0, 1920, 1080
+	}
+
+	var mi tagMONITORINFO
+	mi.CbSize = uint32(unsafe.Sizeof(mi))
+	procGetMonitorInfo.Call(hmon, uintptr(unsafe.Pointer(&mi)))
+
+	return int(mi.RcMonitor.Left),
+		int(mi.RcMonitor.Top),
+		int(mi.RcMonitor.Right-mi.RcMonitor.Left),
+		int(mi.RcMonitor.Bottom-mi.RcMonitor.Top)
 }
 
 //

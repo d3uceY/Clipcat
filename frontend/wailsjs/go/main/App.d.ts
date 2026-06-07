@@ -22,6 +22,10 @@ export function FocusAndPaste():Promise<void>;
 
 export function GetAlwaysOnTop():Promise<boolean>;
 
+export function GetCursorSnap():Promise<boolean>;
+
+export function SetCursorSnap(arg1:boolean):Promise<void>;
+
 export function GetAutoHideSensitive():Promise<boolean>;
 
 export function GetClipImage(arg1:number):Promise<string>;

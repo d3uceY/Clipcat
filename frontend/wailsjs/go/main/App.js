@@ -42,6 +42,14 @@ export function GetAlwaysOnTop() {
   return window['go']['main']['App']['GetAlwaysOnTop']();
 }
 
+export function GetCursorSnap() {
+  return window['go']['main']['App']['GetCursorSnap']();
+}
+
+export function SetCursorSnap(arg1) {
+  return window['go']['main']['App']['SetCursorSnap'](arg1);
+}
+
 export function GetAutoHideSensitive() {
   return window['go']['main']['App']['GetAutoHideSensitive']();
 }

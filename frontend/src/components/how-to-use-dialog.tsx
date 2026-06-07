@@ -21,6 +21,7 @@ import {
     Database,
     Volume2,
     Rocket,
+    Crosshair,
 } from "lucide-react";
 
 interface HowToUseDialogProps {
@@ -122,6 +123,11 @@ export default function HowToUseDialog({ platform, onOpen, hasSeenHowToUse = tru
             icon: <ArrowUpToLine size={14} />,
             title: "Always on Top",
             desc: "Keep the Clipcat window above all other windows at all times. Enable in Settings -> Window. (Unavailable while Quick Paste is on.)",
+        },
+        {
+            icon: <Crosshair size={14} />,
+            title: "Smart Position",
+            desc: "When Quick Paste summons the window, it pops up right next to your cursor so you never have to hunt for it. Always stays fully on-screen. Toggle in Settings -> Window. On by default.",
         },
         {
             icon: <Pause size={14} />,

@@ -4,6 +4,7 @@ import (
 	"Clipcat/backend/lib"
 	"Clipcat/backend/lib/clipboard"
 	"Clipcat/backend/lib/startup"
+	"Clipcat/backend/lib/winpos"
 	"Clipcat/backend/store"
 	"Clipcat/backend/tray"
 	"context"
@@ -94,6 +95,7 @@ func (a *App) startup(ctx context.Context) {
 	store.MigrateAutoHideSetting()
 	store.MigrateAlwaysOnTopSetting()
 	store.MigrateMiniClipSetting()
+	store.MigrateCursorSnapSetting()
 
 	// Enable launch-on-startup by default on first run.
 	// ClaimStartupDefault returns true only once — so if the user later
@@ -183,6 +185,21 @@ func (a *App) startup(ctx context.Context) {
 		if a.ctx == nil {
 			return
 		}
+
+		// Smart Position: move the window near the cursor before revealing it
+		// so the user does not have to hunt for it across the screen.
+		if enabled, _ := store.GetCursorSnap(); enabled {
+			cx, cy := clipboard.GetCursorPos()
+			ww, wh := runtime.WindowGetSize(a.ctx)
+			mx, my, mw, mh := clipboard.GetMonitorBoundsAt(cx, cy)
+			pos := winpos.CalcWindowPos(
+				winpos.Point{X: cx, Y: cy},
+				winpos.Size{W: ww, H: wh},
+				winpos.Rect{X: mx, Y: my, W: mw, H: mh},
+			)
+			runtime.WindowSetPosition(a.ctx, pos.X, pos.Y)
+		}
+
 		tray.Activate()
 		runtime.WindowShow(a.ctx)
 		// Restore the user's actual AlwaysOnTop preference. The old approach of
@@ -531,6 +548,18 @@ func (a *App) SetAlwaysOnTop(enabled bool) error {
 	}
 	runtime.WindowSetAlwaysOnTop(a.ctx, enabled)
 	return nil
+}
+
+// --------------------------------------------------------------------------------
+// Smart Position (cursor-aware window placement)
+// --------------------------------------------------------------------------------
+
+func (a *App) GetCursorSnap() (bool, error) {
+	return store.GetCursorSnap()
+}
+
+func (a *App) SetCursorSnap(enabled bool) error {
+	return store.SetCursorSnap(enabled)
 }
 
 //

@@ -42,14 +42,6 @@ export function GetAlwaysOnTop() {
   return window['go']['main']['App']['GetAlwaysOnTop']();
 }
 
-export function GetCursorSnap() {
-  return window['go']['main']['App']['GetCursorSnap']();
-}
-
-export function SetCursorSnap(arg1) {
-  return window['go']['main']['App']['SetCursorSnap'](arg1);
-}
-
 export function GetAutoHideSensitive() {
   return window['go']['main']['App']['GetAutoHideSensitive']();
 }
@@ -60,6 +52,10 @@ export function GetClipImage(arg1) {
 
 export function GetClips() {
   return window['go']['main']['App']['GetClips']();
+}
+
+export function GetCursorSnap() {
+  return window['go']['main']['App']['GetCursorSnap']();
 }
 
 export function GetDistinctLabels() {
@@ -136,6 +132,10 @@ export function SetAlwaysOnTop(arg1) {
 
 export function SetAutoHideSensitive(arg1) {
   return window['go']['main']['App']['SetAutoHideSensitive'](arg1);
+}
+
+export function SetCursorSnap(arg1) {
+  return window['go']['main']['App']['SetCursorSnap'](arg1);
 }
 
 export function SetQuickPaste(arg1) {

@@ -22,15 +22,13 @@ export function FocusAndPaste():Promise<void>;
 
 export function GetAlwaysOnTop():Promise<boolean>;
 
-export function GetCursorSnap():Promise<boolean>;
-
-export function SetCursorSnap(arg1:boolean):Promise<void>;
-
 export function GetAutoHideSensitive():Promise<boolean>;
 
 export function GetClipImage(arg1:number):Promise<string>;
 
 export function GetClips():Promise<Array<store.Clip>>;
+
+export function GetCursorSnap():Promise<boolean>;
 
 export function GetDistinctLabels():Promise<Array<string>>;
 
@@ -69,6 +67,8 @@ export function ResumeCapture():Promise<void>;
 export function SetAlwaysOnTop(arg1:boolean):Promise<void>;
 
 export function SetAutoHideSensitive(arg1:boolean):Promise<void>;
+
+export function SetCursorSnap(arg1:boolean):Promise<void>;
 
 export function SetQuickPaste(arg1:boolean):Promise<void>;
 

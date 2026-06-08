@@ -62,8 +62,7 @@ func (a *App) startup(ctx context.Context) {
 	store.SetAppCtx(ctx)
 
 	// initialize clipboard
-	err := gclip.Init()
-	if err != nil {
+	if err := gclip.Init(); err != nil {
 		panic(err)
 	}
 
@@ -72,35 +71,13 @@ func (a *App) startup(ctx context.Context) {
 		panic(err)
 	}
 
-	dbPath := filepath.Join(appDir, "gyatt.db")
-
-	err = store.InitDB(dbPath)
-	if err != nil {
+	if err := store.InitDB(filepath.Join(appDir, "gyatt.db")); err != nil {
 		panic(err)
 	}
 
-	// migrations and other startup tasks
-	store.CreateTables()
-	store.MigrateClipsTable()
-	store.MigrateSettingsTable()
-	store.MigrateStartupDefaultColumn()
-	store.MigrateEncryptionColumns()
-	store.MigrateIndexes()
-	store.MigrateThumbnailColumn()
-	if err := store.InitEncryption(); err != nil {
-		panic(err)
-	}
-	store.MigrateEncryptOldClips()
-	store.MigrateLabelColumn()
-	store.MigrateHiddenColumn()
-	store.MigrateAutoHideSetting()
-	store.MigrateAlwaysOnTopSetting()
-	store.MigrateMiniClipSetting()
-	store.MigrateCursorSnapSetting()
+	store.RunMigrations()
 
 	// Enable launch-on-startup by default on first run.
-	// ClaimStartupDefault returns true only once — so if the user later
-	// disables startup, this won't silently re-enable it on the next launch.
 	if store.ClaimStartupDefault() {
 		_ = startup.EnableStartupWindows()
 	}
@@ -121,109 +98,7 @@ func (a *App) startup(ctx context.Context) {
 	// Start the system-tray icon so the app is reachable while hidden.
 	a.startTray()
 
-	// start clipboard listener
-	var lastImage []byte
-	clipboard.StartClipboardListener(func() {
-		// Try image first
-
-		if img := gclip.Read(gclip.FmtImage); img != nil {
-			lastImagePtr := &lastImage
-
-			if string(*lastImagePtr) == string(img) {
-				// same image as before, skip
-				return
-			}
-
-			// new image, save it
-			*lastImagePtr = img
-			clip, prunedIDs, inserted, err := store.AddImageClip(img)
-			if err != nil {
-				fmt.Println("failed to save image:", err)
-			}
-			if a.ctx != nil && inserted {
-				if clip != nil {
-					runtime.EventsEmit(a.ctx, "clip:added", clip)
-				}
-				if len(prunedIDs) > 0 {
-					prunedStrs := make([]string, len(prunedIDs))
-					for i, pid := range prunedIDs {
-						prunedStrs[i] = fmt.Sprintf("clip_%03d", pid)
-					}
-					runtime.EventsEmit(a.ctx, "clip:pruned", prunedStrs)
-				}
-			}
-			return
-		}
-
-		// Fallback to text
-		text := string(gclip.Read(gclip.FmtText))
-		if text == "" {
-			return
-		}
-
-		clip, prunedIDs, inserted, err := store.AddClip(text, "text")
-		if err != nil {
-			fmt.Println("failed to save text:", err)
-			return
-		}
-
-		if a.ctx != nil && inserted {
-			if clip != nil {
-				runtime.EventsEmit(a.ctx, "clip:added", clip)
-			}
-			if len(prunedIDs) > 0 {
-				prunedStrs := make([]string, len(prunedIDs))
-				for i, pid := range prunedIDs {
-					prunedStrs[i] = fmt.Sprintf("clip_%03d", pid)
-				}
-				runtime.EventsEmit(a.ctx, "clip:pruned", prunedStrs)
-			}
-		}
-	}, func() {
-		// Hotkey (Ctrl+Shift+V) fired — show Clipcat and bring it to the front.
-		// capturePreviousWindow() already called AllowSetForegroundWindow on the
-		// message thread, so WindowShow can steal focus from the current app.
-		if a.ctx == nil {
-			return
-		}
-
-		// Smart Position: move the window near the cursor before revealing it.
-		// Only activates when both cursor_snap AND Quick Paste are enabled —
-		// Quick Paste is the mode where the window is hidden and summoned via
-		// hotkey, which is the only context where Smart Position makes sense.
-		quickPaste, _ := store.GetQuickPaste()
-		if cursorSnap, _ := store.GetCursorSnap(); cursorSnap && quickPaste {
-			cx, cy := clipboard.GetCursorPos()
-			ww, wh := runtime.WindowGetSize(a.ctx)
-			// WindowGetSize can return 0×0 while the window is hidden on some
-			// platforms. Fall back to the mini-clip maximum dimensions so the
-			// position calculation always produces a sensible result.
-			if ww <= 0 || wh <= 0 {
-				ww, wh = 450, 650
-			}
-			mx, my, mw, mh := clipboard.GetMonitorBoundsAt(cx, cy)
-			pos := winpos.CalcWindowPos(
-				winpos.Point{X: cx, Y: cy},
-				winpos.Size{W: ww, H: wh},
-				winpos.Rect{X: mx, Y: my, W: mw, H: mh},
-			)
-			// Wails' WindowSetPosition(x, y) adds the current window's monitor
-			// origin before calling SetWindowPos (Windows-specific behaviour).
-			// Subtract that origin so the absolute target position is preserved
-			// regardless of which monitor the window was last placed on.
-			ox, oy := clipboard.GetWindowMonitorWorkOrigin()
-			runtime.WindowSetPosition(a.ctx, pos.X-ox, pos.Y-oy)
-		}
-
-		tray.Activate()
-		runtime.WindowShow(a.ctx)
-		// Restore the user's actual AlwaysOnTop preference. The old approach of
-		// set-true→sleep→set-false didn't reliably grant keyboard focus and
-		// incorrectly toggled the setting for users who had it enabled.
-		if alwaysOnTop, err := store.GetAlwaysOnTop(); err == nil {
-			runtime.WindowSetAlwaysOnTop(a.ctx, alwaysOnTop)
-		}
-	})
+	clipboard.StartClipboardListener(a.onClipboardChange, a.onHotkeyFired)
 }
 
 func getAppDataDir() (string, error) {
@@ -231,11 +106,84 @@ func getAppDataDir() (string, error) {
 	if err != nil {
 		return "", err
 	}
+	return filepath.Join(dir, "clipussy/db"), os.MkdirAll(filepath.Join(dir, "clipussy/db"), 0755)
+}
 
-	appDir := filepath.Join(dir, "clipussy/db")
-	err = os.MkdirAll(appDir, 0755)
+// onClipboardChange is called by the clipboard listener whenever the system
+// clipboard contents change. It saves the new clip and notifies the frontend.
+func (a *App) onClipboardChange() {
+	if img := gclip.Read(gclip.FmtImage); img != nil {
+		a.handleImageClip(img)
+		return
+	}
+	if text := string(gclip.Read(gclip.FmtText)); text != "" {
+		a.handleTextClip(text)
+	}
+}
 
-	return appDir, err
+func (a *App) handleImageClip(img []byte) {
+	clip, prunedIDs, inserted, err := store.AddImageClip(img)
+	if err != nil {
+		fmt.Println("failed to save image:", err)
+	}
+	if a.ctx != nil && inserted {
+		a.emitClipAdded(clip, prunedIDs)
+	}
+}
+
+func (a *App) handleTextClip(text string) {
+	clip, prunedIDs, inserted, err := store.AddClip(text, "text")
+	if err != nil {
+		fmt.Println("failed to save text:", err)
+		return
+	}
+	if a.ctx != nil && inserted {
+		a.emitClipAdded(clip, prunedIDs)
+	}
+}
+
+func (a *App) emitClipAdded(clip *store.Clip, prunedIDs []int) {
+	if clip != nil {
+		runtime.EventsEmit(a.ctx, "clip:added", clip)
+	}
+	if len(prunedIDs) > 0 {
+		prunedStrs := make([]string, len(prunedIDs))
+		for i, pid := range prunedIDs {
+			prunedStrs[i] = fmt.Sprintf("clip_%03d", pid)
+		}
+		runtime.EventsEmit(a.ctx, "clip:pruned", prunedStrs)
+	}
+}
+
+// onHotkeyFired is called when the user presses Ctrl+Shift+V. It shows the
+// Clipcat window, optionally repositioning it near the cursor first.
+func (a *App) onHotkeyFired() {
+	if a.ctx == nil {
+		return
+	}
+
+	quickPaste, _ := store.GetQuickPaste()
+	if cursorSnap, _ := store.GetCursorSnap(); cursorSnap && quickPaste {
+		cx, cy := clipboard.GetCursorPos()
+		ww, wh := runtime.WindowGetSize(a.ctx)
+		if ww <= 0 || wh <= 0 {
+			ww, wh = 450, 650
+		}
+		mx, my, mw, mh := clipboard.GetMonitorBoundsAt(cx, cy)
+		pos := winpos.CalcWindowPos(
+			winpos.Point{X: cx, Y: cy},
+			winpos.Size{W: ww, H: wh},
+			winpos.Rect{X: mx, Y: my, W: mw, H: mh},
+		)
+		ox, oy := clipboard.GetWindowMonitorWorkOrigin()
+		runtime.WindowSetPosition(a.ctx, pos.X-ox, pos.Y-oy)
+	}
+
+	tray.Activate()
+	runtime.WindowShow(a.ctx)
+	if alwaysOnTop, err := store.GetAlwaysOnTop(); err == nil {
+		runtime.WindowSetAlwaysOnTop(a.ctx, alwaysOnTop)
+	}
 }
 
 // --------------------------------------------------------------------------------

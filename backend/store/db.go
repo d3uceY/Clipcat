@@ -69,6 +69,28 @@ func CreateTables() {
 	}
 }
 
+// RunMigrations runs all schema migrations and data migrations in order.
+// Safe to call on every startup — each migration is idempotent.
+func RunMigrations() {
+	CreateTables()
+	MigrateClipsTable()
+	MigrateSettingsTable()
+	MigrateStartupDefaultColumn()
+	MigrateEncryptionColumns()
+	MigrateIndexes()
+	MigrateThumbnailColumn()
+	if err := InitEncryption(); err != nil {
+		panic(err)
+	}
+	MigrateEncryptOldClips()
+	MigrateLabelColumn()
+	MigrateHiddenColumn()
+	MigrateAutoHideSetting()
+	MigrateAlwaysOnTopSetting()
+	MigrateMiniClipSetting()
+	MigrateCursorSnapSetting()
+}
+
 // MigrateIndexes creates performance indexes on the clips table.
 // Uses IF NOT EXISTS so it is safe to call on every startup.
 func MigrateIndexes() {

@@ -250,13 +250,24 @@ func AddClip(content string, clipType string) (*Clip, []int, bool, error) {
 	}
 	hash := hashContent([]byte(content))
 
-	// Scan for secrets and auto-hide if the setting is enabled.
+	// Scan for secrets: notify always, auto-hide only when the setting is on.
 	hidden := 0
 	autolabel := ""
-	if autoHide, _ := GetAutoHideSensitive(); autoHide {
-		if result := secretscan.Scan(content); result.IsSecret {
+	if scanResult := secretscan.Scan(content); scanResult.IsSecret {
+		autolabel = scanResult.Label
+		if autoHide, _ := GetAutoHideSensitive(); autoHide {
 			hidden = 1
-			autolabel = result.Label
+		}
+		if AppCtx != nil && runtime.IsNotificationAvailable(AppCtx) {
+			body := "A sensitive item was copied to your clipboard."
+			if autolabel != "" {
+				body = autolabel + " was copied to your clipboard."
+			}
+			_ = runtime.SendNotification(AppCtx, runtime.NotificationOptions{
+				ID:    fmt.Sprintf("clipcat-sensitive-%d", len(content)),
+				Title: "Sensitive content detected",
+				Body:  body,
+			})
 		}
 	}
 

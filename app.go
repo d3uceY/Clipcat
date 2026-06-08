@@ -51,7 +51,7 @@ func (a *App) domReady(ctx context.Context) {
 	if miniClip, err := store.GetMiniClip(); err == nil && miniClip {
 		a.makeMiniClip(true)
 	}
-	
+
 	runtime.WindowShow(a.ctx)
 }
 
@@ -59,6 +59,7 @@ func (a *App) domReady(ctx context.Context) {
 // so we can call the runtime methods
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
+	store.SetAppCtx(ctx)
 
 	// initialize clipboard
 	err := gclip.Init()

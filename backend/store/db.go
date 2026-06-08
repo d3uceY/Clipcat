@@ -1,6 +1,7 @@
 package store
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 
@@ -8,6 +9,15 @@ import (
 )
 
 var DB *sql.DB
+
+// AppCtx holds the Wails runtime context so store functions can call
+// runtime APIs (e.g. SendNotification) without threading it through every call.
+var AppCtx context.Context
+
+// SetAppCtx stores the Wails context for use by store functions.
+func SetAppCtx(ctx context.Context) {
+	AppCtx = ctx
+}
 
 func InitDB(path string) error {
 	var err error

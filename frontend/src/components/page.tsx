@@ -313,7 +313,7 @@ function PageContent() {
                         ) : (
                             <button
                                 onClick={() => setShowSensitive(v => !v)}
-                                className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs rounded-full border transition-colors ${
+                                className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs rounded-full border transition-colors shadow-md ${
                                     showSensitive
                                         ? "bg-amber-100 text-amber-800 border-amber-400/60"
                                         : "bg-amber-50/80 text-amber-700/80 border-amber-300/50 hover:bg-amber-100 hover:text-amber-800"

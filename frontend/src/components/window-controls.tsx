@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect, lazy, Suspense } from "react";
-import { WindowIsMaximised, WindowMinimise, WindowUnmaximise, WindowMaximise, Quit, WindowHide } from "../../wailsjs/runtime/runtime";
+import { WindowIsMaximised, WindowMinimise, WindowUnmaximise, WindowMaximise, WindowHide } from "../../wailsjs/runtime/runtime";
 import { BrowserOpenURL } from "../../wailsjs/runtime/runtime";
 import { useClips } from "@/context/ClipContext";
 import gsap from "gsap";
@@ -434,7 +434,7 @@ export default function WindowControls({ updateAvailable, onCheckUpdate }: Windo
                         <button onClick={() => handleWindowScreen()}>
                             <img src={fullScreen ? "/unmaximise.png" : "/maximize.png"} alt="maximize" className="h-5 shadow-md/30" />
                         </button>
-                        <button onClick={() => isQuickPaste ? WindowHide() : Quit()}>
+                        <button onClick={() => WindowHide()}>
                             <img src="/close.png" alt="close" className="h-5 shadow-md/30" />
                         </button>
                     </div>

@@ -12,14 +12,14 @@ function LabelFilterBar() {
         <div className="mb-6">
             <ScrollAreaPrimitive.Root className="w-full" type="hover">
                 <ScrollAreaPrimitive.Viewport className="w-full">
-                    <div className="flex items-center gap-2 pb-2">
+                    <div className="flex items-center gap-2 pb-4">
                         {distinctLabels.map(label => {
                             const active = activeLabels.includes(label)
                             return (
                                 <button
                                     key={label}
                                     onClick={() => toggleLabelFilter(label)}
-                                    className={`inline-flex shrink-0 items-center px-3 py-1 text-xs rounded-full border transition-colors shadow-lg ${
+                                    className={`inline-flex shrink-0 items-center px-3 py-1 text-xs rounded-full border transition-colors shadow-md ${
                                         active
                                             ? "bg-amber-200 text-amber-900 border-amber-500/70 font-medium"
                                             : "bg-amber-50 text-amber-800/75 border-amber-400/50 hover:bg-amber-100 hover:text-amber-900 hover:border-amber-500/60"

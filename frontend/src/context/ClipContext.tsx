@@ -23,6 +23,8 @@ import {
   HideClip,
   GetAlwaysOnTop,
   SetAlwaysOnTop,
+  GetCursorSnap,
+  SetCursorSnap,
 } from "../../wailsjs/go/main/App";
 import { EventsOn } from "../../wailsjs/runtime";
 import type { Clip } from "../../types/clip";
@@ -64,6 +66,9 @@ interface ClipContextType {
   // Always on Top
   isAlwaysOnTop: boolean;
   toggleAlwaysOnTop: () => Promise<void>;
+  // Smart Position (cursor-aware placement on Quick Paste summon)
+  isCursorSnap: boolean;
+  toggleCursorSnap: () => Promise<void>;
 }
 
 const ClipContext = createContext<ClipContextType | undefined>(undefined);
@@ -87,6 +92,7 @@ export function ClipProvider({ children }: { children: ReactNode }) {
   const [clipsLoaded, setClipsLoaded] = useState(false);
   const [autoHideSensitive, setAutoHideSensitive] = useState(true);
   const [isAlwaysOnTop, setIsAlwaysOnTop] = useState(false);
+  const [isCursorSnap, setIsCursorSnap] = useState(true);
 
   // Distinct labels derived from loaded clips — reactive, zero extra DB calls.
   const distinctLabels = useMemo(() => {
@@ -137,6 +143,16 @@ export function ClipProvider({ children }: { children: ReactNode }) {
     const next = !isAlwaysOnTop;
     await SetAlwaysOnTop(next);
     setIsAlwaysOnTop(next);
+  };
+
+  /* ===============================
+        SMART POSITION FUNCTIONS
+       ===============================
+    */
+  const toggleCursorSnap = async () => {
+    const next = !isCursorSnap;
+    await SetCursorSnap(next);
+    setIsCursorSnap(next);
   };
 
   /* ===============================
@@ -317,6 +333,9 @@ export function ClipProvider({ children }: { children: ReactNode }) {
     GetAlwaysOnTop()
       .then((v) => setIsAlwaysOnTop(v ?? false))
       .catch(() => {});
+    GetCursorSnap()
+      .then((v) => setIsCursorSnap(v ?? true))
+      .catch(() => {});
     IsMiniClip()
       .then((v) => setIsMiniClip(v ?? false))
       .catch(() => {});
@@ -485,6 +504,9 @@ export function ClipProvider({ children }: { children: ReactNode }) {
         // ALWAYS ON TOP
         isAlwaysOnTop,
         toggleAlwaysOnTop,
+        // SMART POSITION
+        isCursorSnap,
+        toggleCursorSnap,
       }}
     >
       {children}

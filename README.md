@@ -84,6 +84,7 @@ sudo apt install xdotool
 - **Bulk Delete** — Clear all clips, only pinned, or only unpinned in one click — always with a confirmation prompt
 - **Mini Clip Mode** — Compact always-on-top window that stays out of your way; toggle with `Alt+M`. State persists between sessions
 - **Always on Top** — Keep the Clipcat window above all other windows at all times. State persists between sessions
+- **Smart Position** — When Quick Paste summons the window, it pops up right next to your cursor so you never have to hunt for it. Always stays fully on-screen, even on multi-monitor setups. Toggle in Settings → Window (on by default)
 - **System Tray** — Lives quietly in your tray; summon or quit it any time
 - **Startup Support** — Optionally launch Clipcat on system startup
 - **Clickable Links** — URLs in clips are automatically detected and open in your browser with a click

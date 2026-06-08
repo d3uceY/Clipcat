@@ -78,6 +78,9 @@ All system calls use lazily-loaded DLL procs from `user32.dll`, `kernel32.dll`, 
 | `FocusPreviousWindow()` | `SetForegroundWindow(prevHWND)` |
 | `SimulatePaste()` | `keybd_event(VK_CONTROL down, VK_V down/up, VK_CONTROL up)` |
 | `isForegroundProcessIgnored()` | `GetForegroundWindow` → `GetWindowThreadProcessId` → `OpenProcess` → `GetModuleBaseNameW` |
+| `GetCursorPos()` | `GetCursorPos` — returns the current cursor screen position |
+| `GetMonitorBoundsAt(px,py)` | `MonitorFromPoint(NEAREST)` → `GetMonitorInfoW` — returns `rcWork` (taskbar excluded) of the containing monitor |
+| `GetWindowMonitorWorkOrigin()` | `FindWindowW("Clipcat")` → `MonitorFromWindow` → `GetMonitorInfoW` — returns the `rcWork.Left/Top` of the monitor the Wails window is currently on |
 
 ### Paste flow
 
@@ -90,6 +93,42 @@ app.PasteToWindow(content)
   ├─ time.Sleep(100ms)
   └─ clipboard.SimulatePaste()         →  keybd_event Ctrl+V sequence
 ```
+
+---
+
+### Smart Position (cursor-aware window placement)
+
+**Setting:** `cursor_snap` in the `settings` table (default 1/on).  
+**Active only when:** both `cursor_snap` and `quick_paste` are enabled.
+
+When the global hotkey fires, before `WindowShow` is called, the backend:
+
+1. Reads the current cursor position via `GetCursorPos`.
+2. Looks up the work-area rectangle of the monitor under the cursor via `MonitorFromPoint` + `GetMonitorInfoW` (`rcWork`, taskbar excluded).
+3. Calls `winpos.CalcWindowPos` (`backend/lib/winpos/winpos.go`) to compute an ideal position: below-right of the cursor, flipped when a screen edge would be clipped, then hard-clamped to stay fully inside `rcWork`.
+4. **Subtracts the Wails monitor origin offset** before calling `runtime.WindowSetPosition`.
+
+#### The Wails offset problem
+
+Wails' `WindowSetPosition(x, y)` is **not absolute**. In `winc/controlbase.go` it does:
+
+```go
+info := getMonitorInfo(cba.hwnd)   // monitor of the CURRENT window
+workRect := info.RcWork
+w32.SetWindowPos(hwnd, ..., workRect.Left + x, workRect.Top + y, ...)
+```
+
+So passing absolute screen coordinates directly causes the origin to be added twice on any monitor whose `rcWork.Left` or `rcWork.Top` is non-zero (i.e. every secondary monitor). The window flies off screen.
+
+**Fix:** `GetWindowMonitorWorkOrigin()` finds the Wails window via `FindWindowW("Clipcat")`, calls `MonitorFromWindow` to get the monitor it is currently on, and returns that monitor's `rcWork.Left/Top`. The hotkey handler subtracts this before passing to `WindowSetPosition`:
+
+```
+ox, oy := clipboard.GetWindowMonitorWorkOrigin()  // current window monitor origin
+runtime.WindowSetPosition(ctx, pos.X - ox, pos.Y - oy)
+// Wails adds ox,oy back  →  final position == pos.X, pos.Y  ✓
+```
+
+On macOS and Linux, `GetWindowMonitorWorkOrigin()` is a stub returning `(0, 0)` because Wails uses absolute coordinates on those platforms.
 
 ### Process name resolution
 

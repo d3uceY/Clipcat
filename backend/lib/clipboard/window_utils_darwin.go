@@ -7,6 +7,12 @@ package clipboard
 
 // Declared in clipboard_darwin.c
 extern void sendPasteDarwin(void);
+
+// Declared in winpos_darwin.c
+extern void clipcat_cursor_pos(int *outX, int *outY);
+extern void clipcat_monitor_bounds_at(int px, int py,
+                                      int *mx, int *my,
+                                      int *mw, int *mh);
 */
 import "C"
 import (
@@ -129,6 +135,29 @@ func FocusPreviousWindow() {
 func SimulatePaste() {
 	C.sendPasteDarwin()
 }
+
+//
+// Cursor position and monitor bounds (macOS)
+//
+
+// GetCursorPos returns the current cursor position in screen coordinates.
+func GetCursorPos() (x, y int) {
+	var cx, cy C.int
+	C.clipcat_cursor_pos(&cx, &cy)
+	return int(cx), int(cy)
+}
+
+// GetMonitorBoundsAt returns the bounding rectangle of the display that
+// contains the point (px, py).
+func GetMonitorBoundsAt(px, py int) (mx, my, mw, mh int) {
+	var cmx, cmy, cmw, cmh C.int
+	C.clipcat_monitor_bounds_at(C.int(px), C.int(py), &cmx, &cmy, &cmw, &cmh)
+	return int(cmx), int(cmy), int(cmw), int(cmh)
+}
+
+// GetWindowMonitorWorkOrigin returns (0, 0) on macOS because Wails uses
+// absolute screen coordinates for WindowSetPosition on this platform.
+func GetWindowMonitorWorkOrigin() (ox, oy int) { return 0, 0 }
 
 //
 // Process ignore list – macOS implementation

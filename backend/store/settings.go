@@ -84,3 +84,24 @@ func SetMiniClip(enabled bool) error {
 	_, err := DB.Exec(`UPDATE settings SET mini_clip = ? WHERE id = 0`, val)
 	return err
 }
+
+// GetCursorSnap returns whether Smart Position (cursor-aware window
+// placement) is enabled.  Defaults to true when the row is missing.
+func GetCursorSnap() (bool, error) {
+	var v int
+	err := DB.QueryRow(`SELECT cursor_snap FROM settings WHERE id = 0`).Scan(&v)
+	if err != nil {
+		return true, err // default on
+	}
+	return v == 1, nil
+}
+
+// SetCursorSnap persists the Smart Position preference.
+func SetCursorSnap(enabled bool) error {
+	val := 0
+	if enabled {
+		val = 1
+	}
+	_, err := DB.Exec(`UPDATE settings SET cursor_snap = ? WHERE id = 0`, val)
+	return err
+}

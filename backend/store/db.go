@@ -1,6 +1,7 @@
 package store
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 
@@ -8,6 +9,15 @@ import (
 )
 
 var DB *sql.DB
+
+// AppCtx holds the Wails runtime context so store functions can call
+// runtime APIs (e.g. SendNotification) without threading it through every call.
+var AppCtx context.Context
+
+// SetAppCtx stores the Wails context for use by store functions.
+func SetAppCtx(ctx context.Context) {
+	AppCtx = ctx
+}
 
 func InitDB(path string) error {
 	var err error
@@ -57,6 +67,28 @@ func CreateTables() {
 		fmt.Printf("SQL Error: %v\nQuery: %s\n", err, query)
 		panic(err)
 	}
+}
+
+// RunMigrations runs all schema migrations and data migrations in order.
+// Safe to call on every startup — each migration is idempotent.
+func RunMigrations() {
+	CreateTables()
+	MigrateClipsTable()
+	MigrateSettingsTable()
+	MigrateStartupDefaultColumn()
+	MigrateEncryptionColumns()
+	MigrateIndexes()
+	MigrateThumbnailColumn()
+	if err := InitEncryption(); err != nil {
+		panic(err)
+	}
+	MigrateEncryptOldClips()
+	MigrateLabelColumn()
+	MigrateHiddenColumn()
+	MigrateAutoHideSetting()
+	MigrateAlwaysOnTopSetting()
+	MigrateMiniClipSetting()
+	MigrateCursorSnapSetting()
 }
 
 // MigrateIndexes creates performance indexes on the clips table.
@@ -147,6 +179,12 @@ func MigrateAlwaysOnTopSetting() {
 // Defaults to 0 (off).
 func MigrateMiniClipSetting() {
 	_, _ = DB.Exec(`ALTER TABLE settings ADD COLUMN mini_clip INTEGER NOT NULL DEFAULT 0`)
+}
+
+// MigrateCursorSnapSetting adds the cursor_snap column to settings.
+// Smart Position is enabled by default (value 1).
+func MigrateCursorSnapSetting() {
+	_, _ = DB.Exec(`ALTER TABLE settings ADD COLUMN cursor_snap INTEGER NOT NULL DEFAULT 1`)
 }
 
 func MigrateEncryptOldClips() {

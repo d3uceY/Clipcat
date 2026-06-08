@@ -22,7 +22,7 @@ interface WindowControlsProps {
 export default function WindowControls({ updateAvailable, onCheckUpdate }: WindowControlsProps) {
     const [fullScreen, setFullScreen] = useState<boolean>(false);
     const [newIgnoreEntry, setNewIgnoreEntry] = useState("");
-    const { soundOn, toggleSound, isMiniClip, toggleMiniClip, toggleStartup, isStartup, hideContent, toggleHideContent, clips, isPaused, togglePause, ignoreList, addIgnoreEntry, removeIgnoreEntry, isQuickPaste, toggleQuickPaste, autoHideSensitive, toggleAutoHideSensitive, isAlwaysOnTop, toggleAlwaysOnTop } = useClips();
+    const { soundOn, toggleSound, isMiniClip, toggleMiniClip, toggleStartup, isStartup, hideContent, toggleHideContent, clips, isPaused, togglePause, ignoreList, addIgnoreEntry, removeIgnoreEntry, isQuickPaste, toggleQuickPaste, autoHideSensitive, toggleAutoHideSensitive, isAlwaysOnTop, toggleAlwaysOnTop, isCursorSnap, toggleCursorSnap } = useClips();
     const settingBtnRef = useRef<HTMLButtonElement>(null);
     const settingDialogRef = useRef<HTMLDivElement>(null);
     const settingDialogInnerRef = useRef<HTMLDivElement>(null);
@@ -276,6 +276,14 @@ export default function WindowControls({ updateAvailable, onCheckUpdate }: Windo
                                 </div>
                                 <span className="flex-1 border-b border-dashed border-current opacity-20  mb-1 mx-1" />
                                 {MenuSwitch(isAlwaysOnTop, toggleAlwaysOnTop, isQuickPaste)}
+                            </div>
+                            <div className="flex items-center gap-3 justify-between py-2" title="Move the window next to your cursor when Quick Paste summons it">
+                                <div className="flex flex-col">
+                                    <p className="sm:text-base text-sm p-0!">Smart Position</p>
+                                    {!isQuickPaste && <p className="text-[10px] opacity-50 p-0!">Requires Quick Paste</p>}
+                                </div>
+                                <span className="flex-1 border-b border-dashed border-current opacity-20  mb-1 mx-1" />
+                                {MenuSwitch(isCursorSnap, toggleCursorSnap, !isQuickPaste)}
                             </div>
 
                             <Separator />

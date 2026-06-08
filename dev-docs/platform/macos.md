@@ -92,6 +92,9 @@ macOS tracks the **bundle ID** of the frontmost app rather than a window handle.
 | `FocusPreviousWindow()` | `open -b <bundleID>` |
 | `SimulatePaste()` | `C.sendPasteDarwin()` — CGEvent Cmd+V |
 | `isForegroundProcessIgnored()` | `getForegroundAppNameDarwin()` (osascript bundle ID) vs ignore list |
+| `GetCursorPos()` | CGo `clipcat_cursor_pos` in `winpos_darwin.c` — `CGEventCreate(NULL)` → `CGEventGetLocation` |
+| `GetMonitorBoundsAt(px,py)` | CGo `clipcat_monitor_bounds_at` in `winpos_darwin.c` — `CGGetDisplaysWithPoint` → `CGDisplayBounds` |
+| `GetWindowMonitorWorkOrigin()` | Returns `(0, 0)` — Wails uses absolute screen coords on macOS |
 
 ### Own-app detection
 

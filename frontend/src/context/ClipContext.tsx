@@ -27,6 +27,7 @@ import {
   SetCursorSnap,
 } from "../../wailsjs/go/main/App";
 import { EventsOn } from "../../wailsjs/runtime";
+import { playSound } from "../helpers/playSound";
 import type { Clip } from "../../types/clip";
 
 interface ClipContextType {
@@ -420,6 +421,10 @@ export function ClipProvider({ children }: { children: ReactNode }) {
       });
     });
 
+    const offSensitive = EventsOn("sensitive:detected", () => {
+      playSound("/sounds/notification.wav", localStorage.getItem("soundOn") !== "false", 1);
+    });
+
     return () => {
       offAdded();
       offDeleted();
@@ -430,6 +435,7 @@ export function ClipProvider({ children }: { children: ReactNode }) {
       offLabels();
       offUnhidden();
       offHidden();
+      offSensitive();
     };
   }, []);
 

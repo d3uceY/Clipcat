@@ -268,6 +268,7 @@ func AddClip(content string, clipType string) (*Clip, []int, bool, error) {
 				Title: "Sensitive content detected",
 				Body:  body,
 			})
+			runtime.EventsEmit(AppCtx, "sensitive:detected")
 		}
 	}
 

@@ -141,6 +141,7 @@ function PageContent() {
                         // Fire a system notification
                         IsNotificationAvailable().then(available => {
                             if (!available) return;
+                            playSound("/sounds/notification.wav", localStorage.getItem("soundOn") !== "false", 1);
                             SendNotification({
                                 id: `clipcat-update-${latestVersion}`,
                                 title: 'Clipcat update available',

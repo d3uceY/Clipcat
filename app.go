@@ -122,9 +122,12 @@ func (a *App) onClipboardChange() {
 }
 
 func (a *App) handleImageClip(img []byte) {
-	clip, prunedIDs, inserted, err := store.AddImageClip(img)
+	clip, prunedIDs, deletedID, inserted, err := store.AddImageClip(img)
 	if err != nil {
 		fmt.Println("failed to save image:", err)
+	}
+	if a.ctx != nil && deletedID > 0 {
+		runtime.EventsEmit(a.ctx, "clip:deleted", fmt.Sprintf("clip_%03d", deletedID))
 	}
 	if a.ctx != nil && inserted {
 		a.emitClipAdded(clip, prunedIDs)
@@ -132,10 +135,13 @@ func (a *App) handleImageClip(img []byte) {
 }
 
 func (a *App) handleTextClip(text string) {
-	clip, prunedIDs, inserted, err := store.AddClip(text, "text")
+	clip, prunedIDs, deletedID, inserted, err := store.AddClip(text, "text")
 	if err != nil {
 		fmt.Println("failed to save text:", err)
 		return
+	}
+	if a.ctx != nil && deletedID > 0 {
+		runtime.EventsEmit(a.ctx, "clip:deleted", fmt.Sprintf("clip_%03d", deletedID))
 	}
 	if a.ctx != nil && inserted {
 		a.emitClipAdded(clip, prunedIDs)

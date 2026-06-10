@@ -213,40 +213,50 @@ func getClipByRowID(id int64) (*Clip, error) {
 	return &clip, nil
 }
 
-func clipExists(content string) (bool, error) {
+// findExistingClipID returns the row ID of a duplicate text clip, or 0 if none exists.
+func findExistingClipID(content string) (int64, error) {
 	hash := hashContent([]byte(content))
-	query := `SELECT COUNT(*) FROM clips WHERE content_hash = ? OR (encrypted = 0 AND content = ?)`
-	var count int
-	err := DB.QueryRow(query, hash, content).Scan(&count)
-	if err != nil {
-		return false, fmt.Errorf("failed to check if clip exists: %v", err)
+	query := `SELECT id FROM clips WHERE content_hash = ? OR (encrypted = 0 AND content = ?) LIMIT 1`
+	var id int64
+	err := DB.QueryRow(query, hash, content).Scan(&id)
+	if err == sql.ErrNoRows {
+		return 0, nil
 	}
-	return count > 0, nil
+	if err != nil {
+		return 0, fmt.Errorf("failed to check if clip exists: %v", err)
+	}
+	return id, nil
 }
 
-func imageClipExists(image []byte) (bool, error) {
+// findExistingImageClipID returns the row ID of a duplicate image clip, or 0 if none exists.
+func findExistingImageClipID(image []byte) (int64, error) {
 	hash := hashContent(image)
-	query := `SELECT COUNT(*) FROM clips WHERE content_hash = ? OR (encrypted = 0 AND image = ?)`
-	var count int
-	err := DB.QueryRow(query, hash, image).Scan(&count)
-	if err != nil {
-		return false, fmt.Errorf("failed to check if image clip exists: %v", err)
+	query := `SELECT id FROM clips WHERE content_hash = ? OR (encrypted = 0 AND image = ?) LIMIT 1`
+	var id int64
+	err := DB.QueryRow(query, hash, image).Scan(&id)
+	if err == sql.ErrNoRows {
+		return 0, nil
 	}
-	return count > 0, nil
+	if err != nil {
+		return 0, fmt.Errorf("failed to check if image clip exists: %v", err)
+	}
+	return id, nil
 }
 
-func AddClip(content string, clipType string) (*Clip, []int, bool, error) {
-	exists, err := clipExists(content)
+func AddClip(content string, clipType string) (*Clip, []int, int, bool, error) {
+	existingID, err := findExistingClipID(content)
 	if err != nil {
-		return nil, nil, false, fmt.Errorf("failed to check for duplicate: %v", err)
+		return nil, nil, 0, false, fmt.Errorf("failed to check for duplicate: %v", err)
 	}
-	if exists {
-		return nil, nil, false, nil
+	var deletedID int
+	if existingID > 0 {
+		_ = DeleteClip(int(existingID))
+		deletedID = int(existingID)
 	}
 
 	enc, err := encryptText(content)
 	if err != nil {
-		return nil, nil, false, fmt.Errorf("failed to encrypt clip: %v", err)
+		return nil, nil, 0, false, fmt.Errorf("failed to encrypt clip: %v", err)
 	}
 	hash := hashContent([]byte(content))
 
@@ -275,29 +285,29 @@ func AddClip(content string, clipType string) (*Clip, []int, bool, error) {
 	query := `INSERT INTO clips (content, content_hash, type, encrypted, hidden, label, created_at) VALUES (?, ?, ?, 1, ?, ?, datetime('now'))`
 	result, err := DB.Exec(query, enc, hash, clipType, hidden, autolabel)
 	if err != nil {
-		return nil, nil, false, fmt.Errorf("failed to insert clip: %v", err)
+		return nil, nil, deletedID, false, fmt.Errorf("failed to insert clip: %v", err)
 	}
 
 	insertID, err := result.LastInsertId()
 	if err != nil {
-		return nil, nil, false, fmt.Errorf("failed to get insert ID: %v", err)
+		return nil, nil, deletedID, false, fmt.Errorf("failed to get insert ID: %v", err)
 	}
 
 	prunedIDs, err := pruneExcessClips()
 	if err != nil {
-		return nil, nil, false, fmt.Errorf("failed to delete old clips: %v", err)
+		return nil, nil, deletedID, false, fmt.Errorf("failed to delete old clips: %v", err)
 	}
 
 	clip, _ := getClipByRowID(insertID)
-	return clip, prunedIDs, true, nil
+	return clip, prunedIDs, deletedID, true, nil
 }
 
 func AddManualClip(content string, pinned bool) (*Clip, []int, bool, error) {
-	exists, err := clipExists(content)
+	existingID, err := findExistingClipID(content)
 	if err != nil {
 		return nil, nil, false, fmt.Errorf("failed to check for duplicate: %v", err)
 	}
-	if exists {
+	if existingID > 0 {
 		return nil, nil, false, nil
 	}
 
@@ -328,18 +338,20 @@ func AddManualClip(content string, pinned bool) (*Clip, []int, bool, error) {
 	return clip, prunedIDs, true, nil
 }
 
-func AddImageClip(img []byte) (*Clip, []int, bool, error) {
-	exists, err := imageClipExists(img)
+func AddImageClip(img []byte) (*Clip, []int, int, bool, error) {
+	existingID, err := findExistingImageClipID(img)
 	if err != nil {
-		return nil, nil, false, fmt.Errorf("failed to check for duplicate image: %v", err)
+		return nil, nil, 0, false, fmt.Errorf("failed to check for duplicate image: %v", err)
 	}
-	if exists {
-		return nil, nil, false, nil
+	var deletedID int
+	if existingID > 0 {
+		_ = DeleteClip(int(existingID))
+		deletedID = int(existingID)
 	}
 
 	enc, err := encryptData(img)
 	if err != nil {
-		return nil, nil, false, fmt.Errorf("failed to encrypt image clip: %v", err)
+		return nil, nil, 0, false, fmt.Errorf("failed to encrypt image clip: %v", err)
 	}
 	hash := hashContent(img)
 
@@ -356,21 +368,21 @@ func AddImageClip(img []byte) (*Clip, []int, bool, error) {
 	query := `INSERT INTO clips (image, thumbnail, content_hash, type, encrypted, created_at) VALUES (?, ?, ?, ?, 1, datetime('now'))`
 	result, err := DB.Exec(query, enc, encThumb, hash, "image")
 	if err != nil {
-		return nil, nil, false, fmt.Errorf("failed to insert image clip: %v", err)
+		return nil, nil, deletedID, false, fmt.Errorf("failed to insert image clip: %v", err)
 	}
 
 	insertID, err := result.LastInsertId()
 	if err != nil {
-		return nil, nil, false, fmt.Errorf("failed to get insert ID: %v", err)
+		return nil, nil, deletedID, false, fmt.Errorf("failed to get insert ID: %v", err)
 	}
 
 	prunedIDs, err := pruneExcessClips()
 	if err != nil {
-		return nil, nil, false, fmt.Errorf("failed to delete old clips: %v", err)
+		return nil, nil, deletedID, false, fmt.Errorf("failed to delete old clips: %v", err)
 	}
 
 	clip, _ := getClipByRowID(insertID)
-	return clip, prunedIDs, true, nil
+	return clip, prunedIDs, deletedID, true, nil
 }
 
 // generateThumbnail resizes img to at most 200px wide (keeping aspect ratio)

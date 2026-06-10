@@ -7,11 +7,13 @@ import (
 	"Clipcat/backend/lib/winpos"
 	"Clipcat/backend/store"
 	"Clipcat/backend/tray"
+	"bytes"
 	"context"
 	"encoding/base64"
 	"fmt"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
@@ -22,6 +24,12 @@ import (
 type App struct {
 	ctx        context.Context
 	isMiniClip bool
+
+	// In-memory last-clip cache — avoids a DB round-trip for back-to-back
+	// identical copies.
+	lastMu    sync.Mutex
+	lastText  string
+	lastImage []byte
 }
 
 // NewApp creates a new App application struct
@@ -122,6 +130,15 @@ func (a *App) onClipboardChange() {
 }
 
 func (a *App) handleImageClip(img []byte) {
+	a.lastMu.Lock()
+	if bytes.Equal(a.lastImage, img) {
+		a.lastMu.Unlock()
+		return
+	}
+	a.lastImage = img
+	a.lastText = ""
+	a.lastMu.Unlock()
+
 	clip, prunedIDs, deletedID, inserted, err := store.AddImageClip(img)
 	if err != nil {
 		fmt.Println("failed to save image:", err)
@@ -135,6 +152,15 @@ func (a *App) handleImageClip(img []byte) {
 }
 
 func (a *App) handleTextClip(text string) {
+	a.lastMu.Lock()
+	if a.lastText == text {
+		a.lastMu.Unlock()
+		return
+	}
+	a.lastText = text
+	a.lastImage = nil
+	a.lastMu.Unlock()
+
 	clip, prunedIDs, deletedID, inserted, err := store.AddClip(text, "text")
 	if err != nil {
 		fmt.Println("failed to save text:", err)

@@ -21,6 +21,11 @@ const (
 	VK_V        = 0x56
 )
 
+// debounceTimer is reset on every WM_CLIPBOARDUPDATE. The callback fires
+// 40 ms after the *last* event in a burst, so rapid Ctrl+C presses are all
+// captured (the final copy in each quiet window wins) without hammering the DB.
+var debounceTimer *time.Timer
+
 // wndProc handles messages for the hidden clipboard + hotkey window.
 func wndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) uintptr {
 	switch msg {
@@ -33,17 +38,19 @@ func wndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) uintptr {
 			return 0
 		}
 
-		now := time.Now()
+		// Trailing-edge debounce: reset the timer on every event and fire the
+		// callback in a goroutine 40 ms after the burst ends. wndProc returns
+		// immediately so the message pump is never stalled.
 		clipboardMutex.Lock()
-		if now.Sub(lastClipboardChange) > 150*time.Millisecond {
-			lastClipboardChange = now
-			clipboardMutex.Unlock()
+		if debounceTimer != nil {
+			debounceTimer.Stop()
+		}
+		debounceTimer = time.AfterFunc(40*time.Millisecond, func() {
 			if onChangeCallback != nil {
 				onChangeCallback()
 			}
-		} else {
-			clipboardMutex.Unlock()
-		}
+		})
+		clipboardMutex.Unlock()
 		return 0
 
 	case WM_HOTKEY:

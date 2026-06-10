@@ -77,8 +77,25 @@ OutFile "..\..\bin\${INFO_PROJECTNAME}-${ARCH}-installer.exe" # Name of the inst
 InstallDir "$PROGRAMFILES64\${INFO_COMPANYNAME}\${INFO_PRODUCTNAME}" # Default installing folder ($PROGRAMFILES is Program Files folder).
 ShowInstDetails show # This will always show the installation details.
 
+Function closeRunningApp
+    FindWindow $0 "" "${INFO_PRODUCTNAME}"
+    StrCmp $0 0 notRunning
+        MessageBox MB_YESNO|MB_ICONQUESTION "${INFO_PRODUCTNAME} is currently running. It must be closed before installation can continue.$\n$\nClose ${INFO_PRODUCTNAME} now?" IDYES doClose
+        Abort ; User chose No, abort installation
+    doClose:
+        ; Ask the process to close gracefully, then force-kill if still running
+        DetailPrint "Closing ${INFO_PRODUCTNAME}..."
+        ExecWait 'taskkill /IM "${PRODUCT_EXECUTABLE}" /T'
+        Sleep 1500
+        ; Force-kill in case it did not exit cleanly
+        ExecWait 'taskkill /F /IM "${PRODUCT_EXECUTABLE}" /T'
+        Sleep 500
+    notRunning:
+FunctionEnd
+
 Function .onInit
    !insertmacro wails.checkArchitecture
+   Call closeRunningApp
 FunctionEnd
 
 Section

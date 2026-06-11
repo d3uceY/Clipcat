@@ -55,7 +55,10 @@ ManifestDPIAware true
 # !define MUI_WELCOMEFINISHPAGE_BITMAP "resources\leftimage.bmp" #Include this to add a bitmap on the left side of the Welcome Page. Must be a size of 164x314
 !define MUI_FINISHPAGE_NOAUTOCLOSE # Wait on the INSTFILES page so the user can take a look into the details of the installation steps
 !define MUI_ABORTWARNING # This will warn the user if they exit from the installer.
-!define MUI_FINISHPAGE_RUN "$INSTDIR\${PRODUCT_EXECUTABLE}"
+# Launch via explorer.exe so the app starts de-elevated (user token, not admin).
+# MUI_FINISHPAGE_RUN would inherit the installer's elevated token and break
+# the Ctrl+Shift+V global hotkey on non-elevated foreground windows.
+!define MUI_FINISHPAGE_RUN_FUNCTION LaunchAsUser
 !define MUI_FINISHPAGE_RUN_TEXT "Launch ${INFO_PRODUCTNAME}"
 
 !insertmacro MUI_PAGE_WELCOME # Welcome to the installer page.
@@ -76,6 +79,12 @@ Name "${INFO_PRODUCTNAME}"
 OutFile "..\..\bin\${INFO_PROJECTNAME}-${ARCH}-installer.exe" # Name of the installer's file.
 InstallDir "$PROGRAMFILES64\${INFO_COMPANYNAME}\${INFO_PRODUCTNAME}" # Default installing folder ($PROGRAMFILES is Program Files folder).
 ShowInstDetails show # This will always show the installation details.
+
+Function LaunchAsUser
+    # explorer.exe sheds the installer's admin token and starts the app as the
+    # current user, which is required for RegisterHotKey to work correctly.
+    Exec '"$WINDIR\explorer.exe" "$INSTDIR\${PRODUCT_EXECUTABLE}"'
+FunctionEnd
 
 Function closeRunningApp
     FindWindow $0 "" "${INFO_PRODUCTNAME}"

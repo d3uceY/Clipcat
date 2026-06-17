@@ -14,7 +14,7 @@
     !define INFO_PRODUCTNAME "Clipcat"
 !endif
 !ifndef INFO_PRODUCTVERSION
-    !define INFO_PRODUCTVERSION "0.10.9"
+    !define INFO_PRODUCTVERSION "0.10.10"
 !endif
 !ifndef INFO_COPYRIGHT
     !define INFO_COPYRIGHT "Copyright © 2026 d3uceY"

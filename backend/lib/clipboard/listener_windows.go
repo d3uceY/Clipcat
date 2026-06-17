@@ -3,6 +3,7 @@
 package clipboard
 
 import (
+	"runtime"
 	"syscall"
 	"time"
 	"unsafe"
@@ -75,50 +76,77 @@ func StartClipboardListener(onChange func(), onHotkey func()) {
 	onHotkeyCallback = onHotkey
 
 	go func() {
-		instance := win.GetModuleHandle(nil)
-		className, _ := syscall.UTF16PtrFromString("ClipcatClipboardWindow")
+		// Win32 windows are thread-affine: the message queue belongs to the OS
+		// thread that calls CreateWindowEx. Without this lock the Go scheduler
+		// can migrate the goroutine to a different OS thread between
+		// DispatchMessage and the next GetMessage, causing WM_CLIPBOARDUPDATE
+		// and WM_HOTKEY to pile up in the original thread's queue forever.
+		runtime.LockOSThread()
 
-		var wc win.WNDCLASSEX
-		wc.CbSize = uint32(unsafe.Sizeof(wc))
-		wc.LpfnWndProc = syscall.NewCallback(wndProc)
-		wc.HInstance = instance
-		wc.LpszClassName = className
-
-		if win.RegisterClassEx(&wc) == 0 {
-			panic("clipboard: failed to register window class")
-		}
-
-		hwnd := win.CreateWindowEx(
-			0, className, nil, 0,
-			0, 0, 0, 0,
-			win.HWND_MESSAGE, // hidden message-only window
-			0, instance, nil,
-		)
-		if hwnd == 0 {
-			panic("clipboard: failed to create message window")
-		}
-
-		if !win.AddClipboardFormatListener(hwnd) {
-			panic("clipboard: failed to register clipboard format listener")
-		}
-
-		// Ctrl+Shift+V global hotkey to show/hide Clipcat.
-		// Retry with exponential backoff: another app (e.g. Windows Clipboard
-		// History) may hold the registration briefly at startup.
-		for i := range 5 {
-			ret, _, _ := procRegisterHotKey.Call(uintptr(hwnd), hotkeyID, MOD_CONTROL|MOD_SHIFT, VK_V)
-			if ret != 0 {
-				break
-			}
-			// Unregister any stale registration from a previous run before retrying.
-			procUnregisterHotKey.Call(uintptr(hwnd), hotkeyID)
-			time.Sleep(time.Duration(1<<uint(i)) * time.Second)
-		}
-
-		var msg win.MSG
-		for win.GetMessage(&msg, 0, 0, 0) > 0 {
-			win.TranslateMessage(&msg)
-			win.DispatchMessage(&msg)
+		for {
+			runMessagePump()
+			// runMessagePump should never return under normal operation.
+			// If it does (e.g. GetMessage returns -1 on queue corruption),
+			// wait briefly then rebuild the window/hotkey registration so
+			// the app heals itself without requiring a Windows restart.
+			time.Sleep(500 * time.Millisecond)
 		}
 	}()
+}
+
+// runMessagePump creates the hidden clipboard+hotkey window and runs the Win32
+// message loop. It is called (and re-called on failure) from a goroutine that
+// has already called runtime.LockOSThread().
+func runMessagePump() {
+	instance := win.GetModuleHandle(nil)
+	className, _ := syscall.UTF16PtrFromString("ClipcatClipboardWindow")
+
+	// RegisterClassEx is idempotent across watchdog restarts — if the class is
+	// already registered (ERROR_CLASS_ALREADY_EXISTS = 1410) that is fine; we
+	// can still create a new window with it.
+	var wc win.WNDCLASSEX
+	wc.CbSize = uint32(unsafe.Sizeof(wc))
+	wc.LpfnWndProc = syscall.NewCallback(wndProc)
+	wc.HInstance = instance
+	wc.LpszClassName = className
+	win.RegisterClassEx(&wc) // ignore error — class may already be registered
+
+	hwnd := win.CreateWindowEx(
+		0, className, nil, 0,
+		0, 0, 0, 0,
+		win.HWND_MESSAGE, // hidden message-only window
+		0, instance, nil,
+	)
+	if hwnd == 0 {
+		return // will be retried by the watchdog
+	}
+
+	if !win.AddClipboardFormatListener(hwnd) {
+		win.DestroyWindow(hwnd)
+		return // will be retried by the watchdog
+	}
+
+	// Ctrl+Shift+V global hotkey to show/hide Clipcat.
+	// Retry with exponential backoff: another app (e.g. Windows Clipboard
+	// History) may hold the registration briefly at startup.
+	for i := range 5 {
+		ret, _, _ := procRegisterHotKey.Call(uintptr(hwnd), hotkeyID, MOD_CONTROL|MOD_SHIFT, VK_V)
+		if ret != 0 {
+			break
+		}
+		// Unregister any stale registration from a previous run before retrying.
+		procUnregisterHotKey.Call(uintptr(hwnd), hotkeyID)
+		time.Sleep(time.Duration(1<<uint(i)) * time.Second)
+	}
+
+	var msg win.MSG
+	for win.GetMessage(&msg, 0, 0, 0) > 0 {
+		win.TranslateMessage(&msg)
+		win.DispatchMessage(&msg)
+	}
+
+	// Clean up before the watchdog restarts the pump.
+	// DestroyWindow also automatically removes the clipboard format listener.
+	procUnregisterHotKey.Call(uintptr(hwnd), hotkeyID)
+	win.DestroyWindow(hwnd)
 }

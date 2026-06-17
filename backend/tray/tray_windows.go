@@ -3,6 +3,8 @@
 package tray
 
 import (
+	"runtime"
+
 	"github.com/getlantern/systray"
 )
 
@@ -23,7 +25,15 @@ type Options struct {
 
 // Start launches the system-tray icon in a background goroutine.
 func Start(opts Options) {
-	go systray.Run(func() { onReady(opts) }, func() {})
+	go func() {
+		// systray's nativeLoop creates a Win32 window whose message queue is
+		// bound to the creating OS thread. Without this lock the Go scheduler
+		// can migrate the goroutine to a different thread between
+		// DispatchMessage calls, causing the tray context menu to stop
+		// appearing when clicked.
+		runtime.LockOSThread()
+		systray.Run(func() { onReady(opts) }, func() {})
+	}()
 }
 
 func onReady(opts Options) {

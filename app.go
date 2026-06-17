@@ -117,9 +117,23 @@ func getAppDataDir() (string, error) {
 	return filepath.Join(dir, "clipussy/db"), os.MkdirAll(filepath.Join(dir, "clipussy/db"), 0755)
 }
 
+// clipChangeMu ensures only one clipboard read is in flight at a time.
+// gclip.Read on Windows calls runtime.LockOSThread internally; if many rapid
+// clipboard events fire while a read is already running, concurrent calls would
+// each hold a locked OS thread and could deplete the thread pool.
+var clipChangeMu sync.Mutex
+
 // onClipboardChange is called by the clipboard listener whenever the system
 // clipboard contents change. It saves the new clip and notifies the frontend.
 func (a *App) onClipboardChange() {
+	// Skip if a previous read is still in progress. The debounce timer in the
+	// clipboard listener already coalesces rapid copies, so dropping a
+	// duplicate event here is safe.
+	if !clipChangeMu.TryLock() {
+		return
+	}
+	defer clipChangeMu.Unlock()
+
 	if img := gclip.Read(gclip.FmtImage); img != nil {
 		a.handleImageClip(img)
 		return

@@ -1,10 +1,10 @@
-# Clipcat — Performance Optimizations
+# Clipcat - Performance Optimizations
 
 All changes were made to address three user-reported problems:
 
-1. **Card overlap on initial render** — masonry grid items stacking on top of each other at startup
-2. **High memory / CPU with many clips** — app became sluggish with 500–5 000 clips loaded
-3. **Scroll jitter** — grid layout jumping as cards entered the viewport
+1. **Card overlap on initial render** - masonry grid items stacking on top of each other at startup
+2. **High memory / CPU with many clips** - app became sluggish with 500–5 000 clips loaded
+3. **Scroll jitter** - grid layout jumping as cards entered the viewport
 
 A second batch of backend/runtime optimizations was added to keep clipboard operations cheap with encryption enabled and to keep image-heavy lists from pushing large payloads across the Go ↔ frontend bridge.
 
@@ -46,7 +46,7 @@ Every `ClipCard` created its own `ResizeObserver` instance. With 500 cards that 
 A single `ResizeObserver` instance is created once at module level and shared by every card in the app. Cards subscribe/unsubscribe by calling `sharedObserver.observe(el)` and `sharedObserver.unobserve(el)`.
 
 ```ts
-// One observer for ALL cards — created once when the module loads
+// One observer for ALL cards - created once when the module loads
 const sharedObserver = new ResizeObserver((entries) => {
   for (const entry of entries) {
     scheduleBatchUpdate(entry.target as HTMLElement);
@@ -77,7 +77,7 @@ This read-write-read-write interleaving is called **layout thrashing** and cause
 
 ### Fix
 
-All elements that need updating are accumulated in a `Set`. A single `requestAnimationFrame` then processes them all — reading every height first, then writing every span after.
+All elements that need updating are accumulated in a `Set`. A single `requestAnimationFrame` then processes them all - reading every height first, then writing every span after.
 
 ```ts
 const pendingElements = new Set<HTMLElement>();
@@ -88,13 +88,13 @@ function scheduleBatchUpdate(el: HTMLElement): void {
   if (batchRafId !== null) return; // already scheduled
   batchRafId = requestAnimationFrame(() => {
     batchRafId = null;
-    // PHASE 1 — all reads (one forced layout)
+    // PHASE 1 - all reads (one forced layout)
     const measurements: [HTMLElement, number][] = [];
     for (const el of pendingElements) {
       measurements.push([el, el.getBoundingClientRect().height]);
     }
     pendingElements.clear();
-    // PHASE 2 — all writes (no interleaved layouts)
+    // PHASE 2 - all writes (no interleaved layouts)
     for (const [el, height] of measurements) {
       const rowSpan = Math.ceil((height + ROW_GAP) / (ROW_HEIGHT + ROW_GAP));
       el.style.setProperty("--row-span", String(rowSpan));
@@ -183,7 +183,7 @@ The same change was applied to `.hand-drawn-btn`.
 
 ### Problem
 
-The CSS fallback for `--row-span` was `auto`, which makes `grid-row: span auto` — treated as `span 1` by the browser (a single 10px row). Before JavaScript measured a card, it rendered at 10px tall, causing visible card overlap.
+The CSS fallback for `--row-span` was `auto`, which makes `grid-row: span auto` - treated as `span 1` by the browser (a single 10px row). Before JavaScript measured a card, it rendered at 10px tall, causing visible card overlap.
 
 ### Fix
 
@@ -256,9 +256,9 @@ function subscribeToMinuteTick(fn: TickSubscriber): () => void {
 
 ### Problem
 
-With 5 000 clips, React rendered **100 000+ DOM nodes** immediately on load — every card, button, icon, and dialog fully materialized even if 95% of cards were off-screen and invisible to the user.
+With 5 000 clips, React rendered **100 000+ DOM nodes** immediately on load - every card, button, icon, and dialog fully materialized even if 95% of cards were off-screen and invisible to the user.
 
-### Fix — `page.tsx`
+### Fix - `page.tsx`
 
 Cards beyond index 25 in each section start as invisible placeholders:
 
@@ -275,7 +275,7 @@ Cards beyond index 25 in each section start as invisible placeholders:
 }
 ```
 
-### Fix — `clip-card.tsx`
+### Fix - `clip-card.tsx`
 
 Each card sets up an `IntersectionObserver` (with a 500px root margin so measurement happens well before the card enters view) and flips between full content and a lightweight placeholder div:
 
@@ -369,7 +369,7 @@ Conditionally mount the Dialog only when it is actually open:
 
 ### Problem
 
-`insertLinks(clip.content)` — which parses text and wraps URLs in anchor tags — was called on every render of every card, including re-renders triggered by unrelated state changes (copy button hover, context updates, etc.).
+`insertLinks(clip.content)` - which parses text and wraps URLs in anchor tags - was called on every render of every card, including re-renders triggered by unrelated state changes (copy button hover, context updates, etc.).
 
 ### Fix
 
@@ -434,7 +434,7 @@ export default memo(
 
 After virtualization (#7) was added, the `useCardRowSpan` hook was still observing invisible placeholder `<div>`s. A placeholder has zero height, so the observer would set `--row-span = 1` on it. When the card became visible, the CSS custom property was already `1`, so the card would briefly render at 10px tall before the observer could re-measure the full content. This caused a visible **layout jump (jitter)** each time a card entered the viewport.
 
-### Fix — `use-card-row-span.ts`
+### Fix - `use-card-row-span.ts`
 
 Added an `enabled` parameter. When `false`, the effect exits early and the observer never attaches to the placeholder element.
 
@@ -458,7 +458,7 @@ export function useCardRowSpan(
 }
 ```
 
-### Fix — `clip-card.tsx`
+### Fix - `clip-card.tsx`
 
 Pass `isVisible` as the `enabled` argument:
 
@@ -466,7 +466,7 @@ Pass `isVisible` as the `enabled` argument:
 useCardRowSpan(cardRef, isMiniClip, isVisible);
 ```
 
-The placeholder `<div>` also has no inline style — it relies entirely on the CSS custom property:
+The placeholder `<div>` also has no inline style - it relies entirely on the CSS custom property:
 
 ```tsx
 // Placeholder: CSS --row-span holds the last measured value (or defaults to 10)
@@ -494,8 +494,8 @@ if (!isVisible) {
 
 **Files:**
 
-- [backend/store/clips.go](../backend/store/clips.go) — function definition
-- [app.go](../app.go) — commented-out call site
+- [backend/store/clips.go](../backend/store/clips.go) - function definition
+- [app.go](../app.go) - commented-out call site
 
 ### Purpose
 
@@ -520,7 +520,7 @@ func SeedTestClips(n int) error {
 ```
 
 ```go
-// app.go — startup, keep COMMENTED OUT for production builds
+// app.go - startup, keep COMMENTED OUT for production builds
 // SeedTestClips(500) // PERF TEST: uncomment to insert 500 test clips on startup
 ```
 
@@ -691,7 +691,7 @@ The sound cache was kept, but eager preloading was removed. Sounds are now creat
 const soundCache = new Map<string, Howl>();
 
 export function preloadSounds() {
-  // Intentionally empty — keep the API, skip eager load
+  // Intentionally empty - keep the API, skip eager load
 }
 
 export function playSound(soundSrc: string, soundOn = true, volume = 0.1) {

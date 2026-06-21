@@ -1,8 +1,8 @@
-# macOS — Platform Architecture
+# macOS - Platform Architecture
 
 ## Overview
 
-The macOS build uses the **Carbon** framework for the global hotkey, **CoreGraphics CGEvents** for synthetic paste, **osascript** for app tracking, and a native **NSStatusItem** menu bar icon written in Objective-C. Because Wails wraps a WebKit `WKWebView` inside a Cocoa window, the app must always be launched inside an `.app` bundle — a special relaunch shim handles the terminal-launch edge case.
+The macOS build uses the **Carbon** framework for the global hotkey, **CoreGraphics CGEvents** for synthetic paste, **osascript** for app tracking, and a native **NSStatusItem** menu bar icon written in Objective-C. Because Wails wraps a WebKit `WKWebView` inside a Cocoa window, the app must always be launched inside an `.app` bundle - a special relaunch shim handles the terminal-launch edge case.
 
 ---
 
@@ -46,7 +46,7 @@ On macOS, Carbon hotkeys and the `NSStatusItem` menu bar icon only work correctl
 **File:** `backend/lib/clipboard/listener_darwin.go`  
 **C implementation:** `backend/lib/clipboard/clipboard_darwin.c`
 
-### Global hotkey — Carbon
+### Global hotkey - Carbon
 
 ```
 C.registerDarwinHotkey()          // clipboard_darwin.c (called after 500ms delay)
@@ -90,11 +90,11 @@ macOS tracks the **bundle ID** of the frontmost app rather than a window handle.
 | `capturePreviousAppDarwin()` | Immediate snapshot on hotkey fire |
 | `HasPreviousWindow()` | `prevAppBundleID != ""` |
 | `FocusPreviousWindow()` | `open -b <bundleID>` |
-| `SimulatePaste()` | `C.sendPasteDarwin()` — CGEvent Cmd+V |
+| `SimulatePaste()` | `C.sendPasteDarwin()` - CGEvent Cmd+V |
 | `isForegroundProcessIgnored()` | `getForegroundAppNameDarwin()` (osascript bundle ID) vs ignore list |
-| `GetCursorPos()` | CGo `clipcat_cursor_pos` in `winpos_darwin.c` — `CGEventCreate(NULL)` → `CGEventGetLocation` |
-| `GetMonitorBoundsAt(px,py)` | CGo `clipcat_monitor_bounds_at` in `winpos_darwin.c` — `CGGetDisplaysWithPoint` → `CGDisplayBounds` |
-| `GetWindowMonitorWorkOrigin()` | Returns `(0, 0)` — Wails uses absolute screen coords on macOS |
+| `GetCursorPos()` | CGo `clipcat_cursor_pos` in `winpos_darwin.c` - `CGEventCreate(NULL)` → `CGEventGetLocation` |
+| `GetMonitorBoundsAt(px,py)` | CGo `clipcat_monitor_bounds_at` in `winpos_darwin.c` - `CGGetDisplaysWithPoint` → `CGDisplayBounds` |
+| `GetWindowMonitorWorkOrigin()` | Returns `(0, 0)` - Wails uses absolute screen coords on macOS |
 
 ### Own-app detection
 

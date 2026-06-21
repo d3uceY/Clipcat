@@ -2,7 +2,7 @@ import { Howl } from "howler";
 
 let currentSound: Howl | null = null;
 
-// Preloaded sound cache — sounds are loaded lazily on first play.
+// Preloaded sound cache - sounds are loaded lazily on first play.
 const soundCache = new Map<string, Howl>();
 
 // Preload a single sound into memory. Called from the App mount effect

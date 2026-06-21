@@ -22,7 +22,7 @@ type Clip struct {
 	ID        string  `json:"id"`
 	Type      string  `json:"type"`
 	Content   *string `json:"content,omitempty"`
-	Image     *string `json:"image,omitempty"`     // base64 — thumbnail for list, full-res on demand
+	Image     *string `json:"image,omitempty"`     // base64 - thumbnail for list, full-res on demand
 	Length    int     `json:"length"`
 	Pinned    bool    `json:"isPinned"`
 	CreatedAt string  `json:"createdAt"`
@@ -317,7 +317,7 @@ func AddManualClip(content string, pinned bool) (*Clip, []int, bool, error) {
 	}
 	hash := hashContent([]byte(content))
 
-	// Manual clips are intentionally added by the user — do not auto-hide them.
+	// Manual clips are intentionally added by the user - do not auto-hide them.
 	query := `INSERT INTO clips (content, content_hash, type, pinned, encrypted, created_at) VALUES (?, ?, ?, ?, 1, datetime('now'))`
 	result, err := DB.Exec(query, enc, hash, "text", pinned)
 	if err != nil {
@@ -397,7 +397,7 @@ func generateThumbnail(img []byte) ([]byte, error) {
 	bounds := src.Bounds()
 	w, h := bounds.Dx(), bounds.Dy()
 	if w <= maxWidth {
-		// Already small enough — just re-encode as JPEG (usually smaller).
+		// Already small enough - just re-encode as JPEG (usually smaller).
 		var buf bytes.Buffer
 		if err := jpeg.Encode(&buf, src, &jpeg.Options{Quality: 75}); err != nil {
 			return nil, fmt.Errorf("thumbnail encode: %w", err)
@@ -482,7 +482,7 @@ func pruneExcessClips() ([]int, error) {
 }
 
 // GetClipImage returns the full-resolution base64-encoded image for a
-// single clip.  Use this for the detail dialog — never for the list view.
+// single clip.  Use this for the detail dialog - never for the list view.
 func GetClipImage(clipID int) (string, error) {
 	var (
 		image     []byte

@@ -35,9 +35,9 @@ void unregisterDarwinHotkey(void) {
 
 // sendPasteDarwin fires Cmd+V into the frontmost app.
 // Requires Accessibility permission (System Settings → Privacy → Accessibility).
-// Uses kCGSessionEventTap — the standard way for assistive applications.
+// Uses kCGSessionEventTap - the standard way for assistive applications.
 void sendPasteDarwin(void) {
-	usleep(80000); // 80 ms — let the target app come to front
+	usleep(80000); // 80 ms - let the target app come to front
 
 	CGEventSourceRef src = CGEventSourceCreate(kCGEventSourceStateHIDSystemState);
 	if (!src) return;

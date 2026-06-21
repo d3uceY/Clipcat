@@ -101,7 +101,7 @@ func runMessagePump() {
 	instance := win.GetModuleHandle(nil)
 	className, _ := syscall.UTF16PtrFromString("ClipcatClipboardWindow")
 
-	// RegisterClassEx is idempotent across watchdog restarts — if the class is
+	// RegisterClassEx is idempotent across watchdog restarts - if the class is
 	// already registered (ERROR_CLASS_ALREADY_EXISTS = 1410) that is fine; we
 	// can still create a new window with it.
 	var wc win.WNDCLASSEX
@@ -109,7 +109,7 @@ func runMessagePump() {
 	wc.LpfnWndProc = syscall.NewCallback(wndProc)
 	wc.HInstance = instance
 	wc.LpszClassName = className
-	win.RegisterClassEx(&wc) // ignore error — class may already be registered
+	win.RegisterClassEx(&wc) // ignore error - class may already be registered
 
 	hwnd := win.CreateWindowEx(
 		0, className, nil, 0,

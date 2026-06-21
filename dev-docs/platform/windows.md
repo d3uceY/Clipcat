@@ -1,8 +1,8 @@
-# Windows — Platform Architecture
+# Windows - Platform Architecture
 
 ## Overview
 
-The Windows build uses Win32 message-window APIs for both clipboard monitoring and global hotkey registration. All system calls go through `syscall.NewLazyDLL` — no external C code. The systray uses `github.com/getlantern/systray`. The installer is built with NSIS via `wails build -nsis`.
+The Windows build uses Win32 message-window APIs for both clipboard monitoring and global hotkey registration. All system calls go through `syscall.NewLazyDLL` - no external C code. The systray uses `github.com/getlantern/systray`. The installer is built with NSIS via `wails build -nsis`.
 
 ---
 
@@ -34,7 +34,7 @@ main.go
 
 A single goroutine creates a hidden **message-only window** (`HWND_MESSAGE`) and processes its message pump. Two Win32 mechanisms are registered on that window:
 
-### `WM_CLIPBOARDUPDATE` — clipboard monitoring
+### `WM_CLIPBOARDUPDATE` - clipboard monitoring
 
 ```
 AddClipboardFormatListener(hwnd)
@@ -49,7 +49,7 @@ wndProc(WM_CLIPBOARDUPDATE)
 
 The 150 ms debounce is enforced in the message handler itself using `lastClipboardChange` from `shared.go`.
 
-### `WM_HOTKEY` — global Ctrl+Shift+V
+### `WM_HOTKEY` - global Ctrl+Shift+V
 
 ```
 RegisterHotKey(hwnd, id=1, MOD_CONTROL|MOD_SHIFT, VK_V)
@@ -78,9 +78,9 @@ All system calls use lazily-loaded DLL procs from `user32.dll`, `kernel32.dll`, 
 | `FocusPreviousWindow()` | `SetForegroundWindow(prevHWND)` |
 | `SimulatePaste()` | `keybd_event(VK_CONTROL down, VK_V down/up, VK_CONTROL up)` |
 | `isForegroundProcessIgnored()` | `GetForegroundWindow` → `GetWindowThreadProcessId` → `OpenProcess` → `GetModuleBaseNameW` |
-| `GetCursorPos()` | `GetCursorPos` — returns the current cursor screen position |
-| `GetMonitorBoundsAt(px,py)` | `MonitorFromPoint(NEAREST)` → `GetMonitorInfoW` — returns `rcWork` (taskbar excluded) of the containing monitor |
-| `GetWindowMonitorWorkOrigin()` | `FindWindowW("Clipcat")` → `MonitorFromWindow` → `GetMonitorInfoW` — returns the `rcWork.Left/Top` of the monitor the Wails window is currently on |
+| `GetCursorPos()` | `GetCursorPos` - returns the current cursor screen position |
+| `GetMonitorBoundsAt(px,py)` | `MonitorFromPoint(NEAREST)` → `GetMonitorInfoW` - returns `rcWork` (taskbar excluded) of the containing monitor |
+| `GetWindowMonitorWorkOrigin()` | `FindWindowW("Clipcat")` → `MonitorFromWindow` → `GetMonitorInfoW` - returns the `rcWork.Left/Top` of the monitor the Wails window is currently on |
 
 ### Paste flow
 
@@ -158,7 +158,7 @@ GetForegroundWindow()
 
 **File:** `backend/platform/single_instance_windows.go`
 
-1. `CreateMutex(nil, false, "ClipcatSingleInstance")` — if `GetLastError()` returns `ERROR_ALREADY_EXISTS`, another instance is running.
+1. `CreateMutex(nil, false, "ClipcatSingleInstance")` - if `GetLastError()` returns `ERROR_ALREADY_EXISTS`, another instance is running.
 2. Finds the hidden clipboard window by class name `"ClipcatClipboardWindow"` via `FindWindow`.
 3. Calls `ShowWindow(SW_RESTORE)` + `SetForegroundWindow` to bring the existing instance to the front.
 4. `os.Exit(0)`.

@@ -25,7 +25,7 @@ Thanks for your interest in contributing! Below is everything you need to get th
 |---|---|---|
 | Go | ≥ 1.24 | https://go.dev/dl/ |
 | Node.js | ≥ 18 | https://nodejs.org |
-| npm | bundled with Node | — |
+| npm | bundled with Node | - |
 | Wails CLI | v2.12.0 | `go install github.com/wailsapp/wails/v2/cmd/wails@v2.12.0` |
 | NSIS (Windows installer only) | latest | https://nsis.sourceforge.io |
 
@@ -42,9 +42,9 @@ sudo apt install xdotool wmctrl
 
 ```
 Clipcat/
-├── app.go            # Wails App struct — startup, all frontend-exposed methods
-├── tray_windows.go   # Windows tray shim — embeds .ico, wires show/quit callbacks
-├── tray_other.go     # macOS + Linux tray shim — same interface, different icon embed
+├── app.go            # Wails App struct - startup, all frontend-exposed methods
+├── tray_windows.go   # Windows tray shim - embeds .ico, wires show/quit callbacks
+├── tray_other.go     # macOS + Linux tray shim - same interface, different icon embed
 ├── launch_darwin.go  # Relaunch shim: ensures the app always runs inside .app bundle
 ├── launch_other.go   # No-op on Windows/Linux
 ├── main.go           # Wails runtime entry point
@@ -52,19 +52,19 @@ Clipcat/
 ├── wails.json        # Wails configuration (name, output filename, frontend scripts)
 │
 ├── backend/
-│   ├── store/        # package store — all SQLite logic
+│   ├── store/        # package store - all SQLite logic
 │   │   ├── db.go         DB init, table creation, schema migrations
 │   │   ├── encrypt.go    AES-256-GCM encryption, key derivation, HMAC hashing
 │   │   ├── clips.go      Clip type, CRUD operations, storage-limit enforcement
 │   │   ├── settings.go   Persisted settings: Quick Paste / Ghost mode, always-on-top, mini-clip, auto-hide sensitive
 │   │   └── ignore.go     Blocked-app process list
-│   ├── tray/         # package tray — systray logic
+│   ├── tray/         # package tray - systray logic
 │   │   ├── tray_windows.go          systray setup for Windows
 │   │   ├── tray_linux.go            systray setup for Linux (ayatana-appindicator3)
 │   │   ├── tray_darwin.go           CGo bridge to Objective-C tray
 │   │   ├── tray_darwin.m            Native NSStatusItem menu bar icon
 │   │   └── tray_other_activation.go No-op Activate() for Windows/Linux
-│   ├── platform/     # package platform — OS-level utilities
+│   ├── platform/     # package platform - OS-level utilities
 │   │   ├── single_instance_windows.go  Named-mutex single-instance guard
 │   │   ├── single_instance_linux.go    PID lock file guard
 │   │   └── single_instance_darwin.go   PID lock file guard
@@ -88,7 +88,7 @@ Clipcat/
     ├── src/
     │   ├── App.tsx
     │   ├── components/   UI components (ClipCard, page, dialogs, etc.)
-    │   ├── context/      ClipContext — global React state
+    │   ├── context/      ClipContext - global React state
     │   ├── helpers/      Utility functions (formatTime, playSound, insertLinks…)
     │   ├── hooks/        Custom hooks (use-card-row-span, use-relative-time)
     │   └── types/        TypeScript interfaces (Clip)
@@ -133,15 +133,15 @@ Clipcat/
 
 ### Data Flow
 
-1. **Clipboard Monitoring** — Each platform registers its own listener. Windows uses a hidden `HWND_MESSAGE` window with `WM_CLIPBOARDUPDATE`. macOS and Linux use `golang.design/x/clipboard` watchers. A 150 ms debounce prevents duplicate saves. The ignore list filters blocked processes before anything is saved.
+1. **Clipboard Monitoring** - Each platform registers its own listener. Windows uses a hidden `HWND_MESSAGE` window with `WM_CLIPBOARDUPDATE`. macOS and Linux use `golang.design/x/clipboard` watchers. A 150 ms debounce prevents duplicate saves. The ignore list filters blocked processes before anything is saved.
 
-2. **Focus Tracking** — A background goroutine continuously tracks the last non-Clipcat window/app. On Windows this polls `GetForegroundWindow`; on Linux it polls `xdotool getactivewindow`; on macOS it polls the frontmost app bundle ID via osascript. This gives the paste button a valid target.
+2. **Focus Tracking** - A background goroutine continuously tracks the last non-Clipcat window/app. On Windows this polls `GetForegroundWindow`; on Linux it polls `xdotool getactivewindow`; on macOS it polls the frontmost app bundle ID via osascript. This gives the paste button a valid target.
 
-3. **Data Storage** — Clips are saved to SQLite with HMAC-based duplicate detection. Automatic cleanup keeps only the most recent N clips, always preserving pinned ones.
+3. **Data Storage** - Clips are saved to SQLite with HMAC-based duplicate detection. Automatic cleanup keeps only the most recent N clips, always preserving pinned ones.
 
-4. **Frontend Updates** — The backend emits `clipboard:changed` events; React context re-fetches and re-renders.
+4. **Frontend Updates** - The backend emits `clipboard:changed` events; React context re-fetches and re-renders.
 
-5. **User Actions** — Copy (browser clipboard API), paste to window (focus prev window + simulate platform-native paste keystroke), pin/delete (DB update + re-render), search (client-side filter).
+5. **User Actions** - Copy (browser clipboard API), paste to window (focus prev window + simulate platform-native paste keystroke), pin/delete (DB update + re-render), search (client-side filter).
 
 ---
 
@@ -172,7 +172,7 @@ A Carbon `EventHotKeyRef` handles `Ctrl+Shift+V` globally. Clipboard change even
 
 **Linux** (`backend/lib/clipboard/listener_linux.go` + `x11_hotkey_linux.c`)
 
-The hotkey is registered with `XGrabKey` on the root X11 window (C implementation in `x11_hotkey_linux.c` — kept in a separate file to avoid CGo multiple-definition linker errors). Clipboard events come from the same `golang.design/x/clipboard` watchers.
+The hotkey is registered with `XGrabKey` on the root X11 window (C implementation in `x11_hotkey_linux.c` - kept in a separate file to avoid CGo multiple-definition linker errors). Clipboard events come from the same `golang.design/x/clipboard` watchers.
 
 ### Focus Tracker (`backend/lib/clipboard/window_utils_<os>.go`)
 
@@ -239,8 +239,8 @@ All clip content is encrypted at rest with AES-256-GCM using a per-installation 
 
 The app uses `StartHidden: true` in Wails options so the window is invisible during initialization. The lifecycle is:
 
-1. **`startup(ctx)`** — DB init, migrations, clipboard listener, tray setup. No window operations happen here.
-2. **`domReady(ctx)`** — Called after React has fully rendered. Window state is restored here (always-on-top, mini-clip sizing), then `WindowShow` is called. This prevents the white-flash that would occur if window operations ran before the WebView2 finished rendering.
+1. **`startup(ctx)`** - DB init, migrations, clipboard listener, tray setup. No window operations happen here.
+2. **`domReady(ctx)`** - Called after React has fully rendered. Window state is restored here (always-on-top, mini-clip sizing), then `WindowShow` is called. This prevents the white-flash that would occur if window operations ran before the WebView2 finished rendering.
 
 ---
 
@@ -285,7 +285,7 @@ This launches the app with:
 `backend/store/clips.go` has two seeding functions for inserting large batches of test clips. To use them, uncomment the relevant call in `app.go`:
 
 ```go
-// app.go — inside startup(), after MigrateEncryptOldClips()
+// app.go - inside startup(), after MigrateEncryptOldClips()
 // store.SeedTestClips(500)      // PERF TEST: uncomment to insert 500 test text clips
 // store.SeedTestImageClips(500) // PERF TEST: duplicate the last image clip 500 times
 ```
@@ -296,30 +296,30 @@ This launches the app with:
 
 ## Building a Release Binary
 
-**Windows — Portable `.exe`**
+**Windows - Portable `.exe`**
 ```bash
 wails build -clean -o Clipcat-windows-amd64
 # Output: build/bin/Clipcat-windows-amd64.exe
 ```
 
-**Windows — NSIS installer** (requires NSIS installed and `makensis` on PATH)
+**Windows - NSIS installer** (requires NSIS installed and `makensis` on PATH)
 ```bash
 wails build -clean -nsis -o Clipcat-windows-amd64
 # Output: build/bin/Clipcat-windows-amd64-installer.exe
 ```
 
-**macOS — ARM64 (Apple Silicon)**
+**macOS - ARM64 (Apple Silicon)**
 ```bash
 wails build -clean -platform darwin/arm64 -o Clipcat-macos-arm64
 # Output: build/bin/Clipcat.app  (package into DMG with hdiutil)
 ```
 
-**macOS — AMD64 (Intel)**
+**macOS - AMD64 (Intel)**
 ```bash
 wails build -clean -platform darwin/amd64 -o Clipcat-macos-amd64
 ```
 
-**Linux — amd64** (requires `libgtk-3-dev`, `libwebkit2gtk-4.1-dev`, `libayatana-appindicator3-dev`)
+**Linux - amd64** (requires `libgtk-3-dev`, `libwebkit2gtk-4.1-dev`, `libayatana-appindicator3-dev`)
 ```bash
 wails build -clean -tags webkit2gtk_4_1 -o Clipcat-linux-amd64
 # Output: build/bin/Clipcat-linux-amd64
@@ -333,17 +333,17 @@ The CI release pipeline (`.github/workflows/release.yml`) runs all four builds a
 
 ### Go
 
-- Standard `gofmt` formatting — run `gofmt -w .` before committing
+- Standard `gofmt` formatting - run `gofmt -w .` before committing
 - Exported functions in `backend/` packages use `PascalCase`
 - Internal (package-private) helpers stay `camelCase`
-- Keep `app.go` as a thin coordinator — it should call `store.*` and `clipboard.*`, not contain business logic itself
+- Keep `app.go` as a thin coordinator - it should call `store.*` and `clipboard.*`, not contain business logic itself
 - Do not add direct database calls to `app.go`; put them in `backend/store/`
 
 ### TypeScript / React
 
 - Components use `.tsx`, pure utilities use `.ts`
 - `React.memo` with explicit comparators on any component that renders inside a large list
-- Avoid `useEffect` for derived state — prefer `useMemo`
+- Avoid `useEffect` for derived state - prefer `useMemo`
 - New hooks go in `frontend/src/hooks/`
 - New UI-only components go in `frontend/src/components/`
 

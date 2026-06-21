@@ -25,7 +25,7 @@ type App struct {
 	ctx        context.Context
 	isMiniClip bool
 
-	// In-memory last-clip cache — avoids a DB round-trip for back-to-back
+	// In-memory last-clip cache - avoids a DB round-trip for back-to-back
 	// identical copies.
 	lastMu    sync.Mutex
 	lastText  string
@@ -49,9 +49,9 @@ func (a *App) GetPlatform() string {
 
 // domReady is called after the frontend DOM is fully loaded.
 // We show the window here (instead of in startup) so it only
-// becomes visible once React has rendered — no white flash.
+// becomes visible once React has rendered - no white flash.
 func (a *App) domReady(ctx context.Context) {
-	// Restore window state before showing — applied while window is still hidden
+	// Restore window state before showing - applied while window is still hidden
 	// so there is no visible repaint or resize flash.
 	if alwaysOnTop, err := store.GetAlwaysOnTop(); err == nil && alwaysOnTop {
 		runtime.WindowSetAlwaysOnTop(a.ctx, true)

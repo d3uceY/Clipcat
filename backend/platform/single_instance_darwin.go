@@ -41,7 +41,7 @@ func EnsureSingleInstance() bool {
 						return false
 					}
 				}
-				// Stale lock file — process is dead.
+				// Stale lock file - process is dead.
 				os.Remove(lockPath)
 			}
 		}

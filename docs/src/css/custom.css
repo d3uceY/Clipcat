@@ -1,5 +1,5 @@
 /* ============================================================
-   Clipcat Design System — Docusaurus Theme
+   Clipcat Design System - Docusaurus Theme
    Paper / hand-drawn notebook aesthetic with warm ink tones
    ============================================================ */
 
@@ -7,7 +7,7 @@
 
 /* ── Light mode ─────────────────────────────────────────── */
 :root {
-  /* Infima primary palette — warm amber-brown */
+  /* Infima primary palette - warm amber-brown */
   --ifm-color-primary: #7C5C2E;
   --ifm-color-primary-dark: #6E5028;
   --ifm-color-primary-darker: #674B26;
@@ -129,7 +129,7 @@ kbd {
   border-color: var(--cc-border);
 }
 
-/* Doc sidebar — ensure it sits above page content stacking contexts */
+/* Doc sidebar - ensure it sits above page content stacking contexts */
 .theme-doc-sidebar-container {
   z-index: 10;
   position: relative;

@@ -6,7 +6,7 @@ description: How Clipcat handles your data and protects sensitive content.
 
 # Privacy & Security
 
-Clipcat is built with privacy as a first-class concern. Your clipboard data stays on your machine — always.
+Clipcat is built with privacy as a first-class concern. Your clipboard data stays on your machine - always.
 
 ---
 
@@ -28,12 +28,12 @@ You own the file. You can inspect it, move it, back it up, or delete it at any t
 
 Clipcat automatically scans captured text and **collapses clips** that match patterns for sensitive content:
 
-- **Passwords** — common credential patterns
-- **API keys** — common service prefixes (`sk-`, `ghp_`, `AIza`, etc.)
-- **Tokens** — OAuth and bearer tokens
-- **JWTs** — JSON Web Tokens (three base64 segments separated by `.`)
-- **Private keys** — PEM-format keys (`-----BEGIN ... KEY-----`)
-- **High-entropy strings** — short strings with unusually high Shannon entropy that are likely secrets
+- **Passwords** - common credential patterns
+- **API keys** - common service prefixes (`sk-`, `ghp_`, `AIza`, etc.)
+- **Tokens** - OAuth and bearer tokens
+- **JWTs** - JSON Web Tokens (three base64 segments separated by `.`)
+- **Private keys** - PEM-format keys (`-----BEGIN ... KEY-----`)
+- **High-entropy strings** - short strings with unusually high Shannon entropy that are likely secrets
 
 Sensitive clips are collapsed into a separate **"Sensitive"** section at the bottom of your clip list. They are not shown inline with normal clips.
 
@@ -41,7 +41,7 @@ Sensitive clips are collapsed into a separate **"Sensitive"** section at the bot
 
 ### Revealing a Sensitive Clip
 
-Click the **"Reveal"** button on a sensitive clip to temporarily show its content. You can also **mark it safe** if you know it isn't actually sensitive — this moves it back to your normal clip list permanently.
+Click the **"Reveal"** button on a sensitive clip to temporarily show its content. You can also **mark it safe** if you know it isn't actually sensitive - this moves it back to your normal clip list permanently.
 
 ### Toggling Auto-hide
 
@@ -57,9 +57,9 @@ Press <kbd>Alt</kbd>+<kbd>H</kbd> to blur **all clip content** in the UI instant
 - Working in a public space
 - Giving a presentation
 
-The blurred state is not saved between sessions — when you reopen Clipcat it will show clips normally.
+The blurred state is not saved between sessions - when you reopen Clipcat it will show clips normally.
 
-![Privacy Mode — all clip content blurred](/img/security-privacy-mode.png)
+![Privacy Mode - all clip content blurred](/img/security-privacy-mode.png)
 
 ---
 
@@ -87,6 +87,6 @@ Clipcat is fully open source. Every line of code is available at [github.com/d3u
 
 Key files to review:
 
-- `backend/lib/clipboard/` — clipboard listener per platform
-- `backend/lib/secretscan/` — sensitive content detection rules
-- `backend/store/` — database reads and writes
+- `backend/lib/clipboard/` - clipboard listener per platform
+- `backend/lib/secretscan/` - sensitive content detection rules
+- `backend/store/` - database reads and writes

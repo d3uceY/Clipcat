@@ -130,7 +130,7 @@ func GetMonitorBoundsAt(px, py int) (mx, my, mw, mh int) {
 		}
 	}
 
-	// Cursor not found in any monitor rect — fall back to the first one.
+	// Cursor not found in any monitor rect - fall back to the first one.
 	for _, line := range strings.Split(string(out), "\n") {
 		if !strings.Contains(line, " connected ") {
 			continue

@@ -95,7 +95,7 @@ export function ClipProvider({ children }: { children: ReactNode }) {
   const [isAlwaysOnTop, setIsAlwaysOnTop] = useState(false);
   const [isCursorSnap, setIsCursorSnap] = useState(true);
 
-  // Distinct labels derived from loaded clips — reactive, zero extra DB calls.
+  // Distinct labels derived from loaded clips - reactive, zero extra DB calls.
   const distinctLabels = useMemo(() => {
     const set = new Set<string>();
     for (const c of clips.pinned) { if (c.label) set.add(c.label); }
@@ -225,7 +225,7 @@ export function ClipProvider({ children }: { children: ReactNode }) {
       setIsMiniClip(res);
     });
 
-    // Quick paste requires mini clip — turn it off when mini clip is disabled
+    // Quick paste requires mini clip - turn it off when mini clip is disabled
     if (turningOff && isQuickPaste) {
       await SetQuickPaste(false);
       setIsQuickPaste(false);
@@ -276,7 +276,7 @@ export function ClipProvider({ children }: { children: ReactNode }) {
   const unhideClip = async (id: string) => {
     const clipId = Number(id.replace('clip_', ''));
     await UnhideClip(clipId);
-    // Optimistic update — the event also covers us.
+    // Optimistic update - the event also covers us.
     setClips((prev) => {
       const update = (clips: Clip[]) =>
         clips.map((c) => c.id === id ? { ...c, isHidden: false } : c);
@@ -401,7 +401,7 @@ export function ClipProvider({ children }: { children: ReactNode }) {
     // The useMemo already keeps labels in sync, but this handles edge cases
     // where a DB change originates outside the current frontend session.
     const offLabels = EventsOn("labels:updated", () => {
-      // Nothing to do — distinctLabels is derived reactively from clips state.
+      // Nothing to do - distinctLabels is derived reactively from clips state.
       // Kept here as an extension point for future cross-window sync.
     });
 

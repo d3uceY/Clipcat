@@ -243,24 +243,24 @@ jobs:
             echo ''
             echo '| Platform | Link | Note |'
             echo '|---|---|---|'
-            echo "| Windows (installer) | [Clipcat-windows-amd64-installer.exe](https://github.com/${{ github.repository }}/releases/download/${CURR_TAG}/Clipcat-windows-amd64-installer.exe) | ⚠️ SmartScreen will block it — see First-Run Notes below |"
-            echo "| macOS Apple Silicon | [Clipcat-macos-arm64.dmg](https://github.com/${{ github.repository }}/releases/download/${CURR_TAG}/Clipcat-macos-arm64.dmg) | ⚠️ Gatekeeper will block it — see First-Run Notes below |"
-            echo "| macOS Intel         | [Clipcat-macos-amd64.dmg](https://github.com/${{ github.repository }}/releases/download/${CURR_TAG}/Clipcat-macos-amd64.dmg) | ⚠️ Gatekeeper will block it — see First-Run Notes below |"
+            echo "| Windows (installer) | [Clipcat-windows-amd64-installer.exe](https://github.com/${{ github.repository }}/releases/download/${CURR_TAG}/Clipcat-windows-amd64-installer.exe) | ⚠️ SmartScreen will block it - see First-Run Notes below |"
+            echo "| macOS Apple Silicon | [Clipcat-macos-arm64.dmg](https://github.com/${{ github.repository }}/releases/download/${CURR_TAG}/Clipcat-macos-arm64.dmg) | ⚠️ Gatekeeper will block it - see First-Run Notes below |"
+            echo "| macOS Intel         | [Clipcat-macos-amd64.dmg](https://github.com/${{ github.repository }}/releases/download/${CURR_TAG}/Clipcat-macos-amd64.dmg) | ⚠️ Gatekeeper will block it - see First-Run Notes below |"
             echo "| Linux x86-64        | [Clipcat-linux-amd64](https://github.com/${{ github.repository }}/releases/download/${CURR_TAG}/Clipcat-linux-amd64) | |"
             echo ''
             echo 'SHA-256 checksums are in `SHA256SUMS.txt` attached below.'
             echo ''
             echo '## First-Run Notes'
             echo ''
-            echo 'Clipcat is not code-signed. Each platform may warn you on first launch — the app is safe and fully open source.'
+            echo 'Clipcat is not code-signed. Each platform may warn you on first launch - the app is safe and fully open source.'
             echo ''
-            echo '**Windows — SmartScreen**'
+            echo '**Windows - SmartScreen**'
             echo '1. Click **More info**'
             echo '2. Click **Run anyway**'
             echo ''
             echo 'Or right-click the `.exe` → **Properties** → check **Unblock** → **Apply**.'
             echo ''
-            echo '**macOS — Gatekeeper**'
+            echo '**macOS - Gatekeeper**'
             echo ''
             echo 'Right-click the `.dmg` → **Open** → click **Open** again. Or go to System Settings → Privacy & Security → **Open Anyway**.'
             echo ''
@@ -292,7 +292,7 @@ jobs:
               "https://api.github.com/repos/${{ github.repository }}/commits/${HASH}" \
               | jq -r '.author.login // empty' 2>/dev/null || echo "")
             if [ -n "$GH_LOGIN" ]; then
-              echo "- ${MSG} — @${GH_LOGIN}" >> "$COMMITS_FILE"
+              echo "- ${MSG} - @${GH_LOGIN}" >> "$COMMITS_FILE"
               echo "$GH_LOGIN" >> "$USERS_FILE"
             else
               echo "- ${MSG}" >> "$COMMITS_FILE"

@@ -59,14 +59,14 @@ function ClipListItem({ clip, revealed = false }: ClipListItemProps) {
 
     if (isDeleted) return null
 
-    // Sensitive clip — show a prominent icon-only block in mini/quickpaste mode.
+    // Sensitive clip - show a prominent icon-only block in mini/quickpaste mode.
     // Skip this guard when `revealed` is true (user explicitly expanded the sensitive section).
     if (clip.isHidden && !revealed) {
         return (
             <button
                 onClick={() => unhideClip(clip.id)}
                 className={`hand-drawn lined thin w-full flex items-center justify-center gap-2 p-3 bg-amber-100 border border-amber-400 text-amber-800 hover:bg-green-100 hover:text-green-800 hover:border-green-400 transition-colors cursor-pointer ${clip.isPinned ? "mt-4" : ""}`}
-                title="Sensitive clip — click to reveal"
+                title="Sensitive clip - click to reveal"
             >
                 <ShieldCheck className="h-4 w-4 shrink-0" />
                 <span className="text-xs font-medium">sensitive</span>
@@ -100,7 +100,7 @@ function ClipListItem({ clip, revealed = false }: ClipListItemProps) {
                 </p>
             )}
 
-            {/* Actions — shown on hover, top-right */}
+            {/* Actions - shown on hover, top-right */}
             <div
                 className="absolute top-2 right-2 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
                 onClick={(e) => e.stopPropagation()}

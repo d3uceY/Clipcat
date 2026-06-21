@@ -54,7 +54,7 @@ export default function HowToUseDialog({ platform, onOpen, hasSeenHowToUse = tru
         {
             icon: <ClipboardCopy size={14} />,
             title: "Auto-capture",
-            desc: "Everything you copy is saved instantly — text and images — with no setup needed.",
+            desc: "Everything you copy is saved instantly - text and images - with no setup needed.",
         },
         {
             icon: <Zap size={14} />,
@@ -91,7 +91,7 @@ export default function HowToUseDialog({ platform, onOpen, hasSeenHowToUse = tru
             title: "Privacy Mode",
             desc: (
                 <>
-                    <Kbd>Alt</Kbd><Plus /><Kbd>H</Kbd> blurs all clip content — handy for screen sharing or shoulder-surfing situations.
+                    <Kbd>Alt</Kbd><Plus /><Kbd>H</Kbd> blurs all clip content - handy for screen sharing or shoulder-surfing situations.
                 </>
             ),
         },
@@ -178,7 +178,7 @@ export default function HowToUseDialog({ platform, onOpen, hasSeenHowToUse = tru
                                     <span className="shrink-0 leading-snug mt-0.5 opacity-70">{icon}</span>
                                     <div>
                                         <strong>{title}</strong>
-                                        <span className="text-muted-foreground"> — </span>
+                                        <span className="text-muted-foreground"> - </span>
                                         <span className="text-xs text-muted-foreground leading-relaxed">{desc}</span>
                                     </div>
                                 </div>

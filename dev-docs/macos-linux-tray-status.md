@@ -1,4 +1,4 @@
-# Clipcat — macOS and Linux Tray Status
+# Clipcat - macOS and Linux Tray Status
 
 This note explains how the app currently behaves on macOS and Linux, how the tray integration is wired on each platform, and what work has already been done on the macOS side.
 

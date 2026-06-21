@@ -34,7 +34,7 @@ up the goroutine that calls `WindowShow`.
 
 ## Step-by-step flow
 
-### 1. App startup — `StartClipboardListener` (`listener_windows.go`)
+### 1. App startup - `StartClipboardListener` (`listener_windows.go`)
 
 ```go
 StartClipboardListener(onChange func(), onHotkey func())
@@ -43,7 +43,7 @@ StartClipboardListener(onChange func(), onHotkey func())
 Spawns a dedicated OS thread goroutine (Go pins it via the message loop) that:
 
 1. Registers a Win32 window class (`"ClipcatClipboardWindow"`).
-2. Creates a **message-only window** (`HWND_MESSAGE` parent) — invisible,
+2. Creates a **message-only window** (`HWND_MESSAGE` parent) - invisible,
    zero-size, just a message sink.
 3. Calls `AddClipboardFormatListener` so clipboard changes arrive as
    `WM_CLIPBOARDUPDATE`.
@@ -54,7 +54,7 @@ Spawns a dedicated OS thread goroutine (Go pins it via the message loop) that:
    clear any stale registration from a previous Clipcat run.
 5. Enters `GetMessage` / `TranslateMessage` / `DispatchMessage` loop forever.
 
-### 2. User presses Ctrl+Shift+V — `wndProc` receives `WM_HOTKEY`
+### 2. User presses Ctrl+Shift+V - `wndProc` receives `WM_HOTKEY`
 
 ```go
 case WM_HOTKEY:
@@ -66,11 +66,11 @@ case WM_HOTKEY:
     }
 ```
 
-This runs **synchronously on the message thread** — the thread that currently
+This runs **synchronously on the message thread** - the thread that currently
 holds the Windows foreground lock. Both actions before the goroutine is
 spawned are intentional.
 
-### 3. Snapshot + foreground unlock — `capturePreviousWindow` (`window_utils_windows.go`)
+### 3. Snapshot + foreground unlock - `capturePreviousWindow` (`window_utils_windows.go`)
 
 ```go
 func capturePreviousWindow() {
@@ -102,7 +102,7 @@ There is also a background poller (`StartFocusTracker`) that updates `prevHWND`
 every 150 ms, but `capturePreviousWindow` overwrites it with a more accurate
 snapshot taken at the exact instant of the keypress, which is preferred.
 
-### 4. Show Clipcat — hotkey callback in `app.go`
+### 4. Show Clipcat - hotkey callback in `app.go`
 
 ```go
 func() {
@@ -120,16 +120,16 @@ has already been called on the message thread, so `WindowShow` (which internally
 calls `SetForegroundWindow` / `BringWindowToTop`) succeeds and the Clipcat
 window actually takes focus.
 
-- **`tray.Activate()`** — tells the tray icon code that the window is being
+- **`tray.Activate()`** - tells the tray icon code that the window is being
   shown manually so it can update menu state.
-- **`runtime.WindowShow(a.ctx)`** — Wails runtime call; restores the window if
+- **`runtime.WindowShow(a.ctx)`** - Wails runtime call; restores the window if
   minimised and brings it to the front.
-- **`runtime.WindowSetAlwaysOnTop`** — re-applies the user's stored
+- **`runtime.WindowSetAlwaysOnTop`** - re-applies the user's stored
   AlwaysOnTop preference. Previously this was a `set-true → sleep(150ms) →
   set-false` hack intended to force focus; it was unreliable and broke the
   setting for users who had AlwaysOnTop enabled.
 
-### 5. After the user picks a clip — `FocusPreviousWindow` + `SimulatePaste`
+### 5. After the user picks a clip - `FocusPreviousWindow` + `SimulatePaste`
 
 When a clip is selected for pasting, the app calls:
 
@@ -138,7 +138,7 @@ clipboard.FocusPreviousWindow()  // SetForegroundWindow(prevHWND)
 clipboard.SimulatePaste()        // keybd_event Ctrl+V after 80 ms
 ```
 
-`prevHWND` is the handle captured in step 3 — the editor or browser the user
+`prevHWND` is the handle captured in step 3 - the editor or browser the user
 was in when they hit the hotkey.
 
 ---
@@ -157,7 +157,7 @@ This tried to exploit the fact that `WS_EX_TOPMOST` windows bypass some
 foreground restrictions. It failed for several reasons:
 
 1. By the time the goroutine ran, the message thread had already processed more
-   messages and the foreground lock had expired — `SetForegroundWindow` inside
+   messages and the foreground lock had expired - `SetForegroundWindow` inside
    Wails was silently ignored.
 2. `AlwaysOnTop` is a user preference. Toggling it and turning it off broke the
    window for any user who had it enabled.

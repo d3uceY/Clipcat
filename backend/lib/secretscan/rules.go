@@ -65,7 +65,7 @@ var rules = []rule{
 	{regexp.MustCompile(`(?i)bearer\s+[A-Za-z0-9\-._~+/]+=*`), "Bearer Token"},
 
 	// ── Cryptographic keys / identifiers ───────────────────────────────────
-	// UUID v4 — strict version/variant check keeps false-positive rate low.
+	// UUID v4 - strict version/variant check keeps false-positive rate low.
 	{regexp.MustCompile(`\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}\b`), "UUID"},
 	// 256-bit hex key (64 lowercase hex chars, standalone).
 	{regexp.MustCompile(`\b[a-f0-9]{64}\b`), "256-bit Hex Key"},

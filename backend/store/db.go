@@ -70,7 +70,7 @@ func CreateTables() {
 }
 
 // RunMigrations runs all schema migrations and data migrations in order.
-// Safe to call on every startup — each migration is idempotent.
+// Safe to call on every startup - each migration is idempotent.
 func RunMigrations() {
 	CreateTables()
 	MigrateClipsTable()

@@ -452,7 +452,7 @@ export default function WindowControls({ updateAvailable, onCheckUpdate }: Windo
                                 Clipcat will slip into the system tray and stay out of your way.
                             </p>
                             <ul className="text-sm mt-1 space-y-1.5">
-                                <li><span className="font-semibold">{platform === "darwin" ? "Cmd" : "Ctrl"}+Shift+V</span> — summon Clipcat from any window</li>
+                                <li><span className="font-semibold">{platform === "darwin" ? "Cmd" : "Ctrl"}+Shift+V</span> - summon Clipcat from any window</li>
                                 <li>Click the content on a clip to fire it into the last window you used</li>
                                 <li>The tray icon also brings Clipcat back whenever you need it (only supported on Windows)</li>
                             </ul>

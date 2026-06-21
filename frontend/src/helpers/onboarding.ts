@@ -41,7 +41,7 @@ export function startTour() {
                 popover: {
                     title: "➕ Add a clip manually",
                     description:
-                        "You can paste or type anything here to save it as a new clip — handy for snippets you want to keep on hand.",
+                        "You can paste or type anything here to save it as a new clip - handy for snippets you want to keep on hand.",
                     side: "bottom",
                 },
             },
@@ -59,7 +59,7 @@ export function startTour() {
                 popover: {
                     title: "⚙️ Settings",
                     description:
-                        "Tweak the app here — toggle Mini Clip mode, hide content for privacy, adjust your clipboard limit, manage blocked apps, and more.",
+                        "Tweak the app here - toggle Mini Clip mode, hide content for privacy, adjust your clipboard limit, manage blocked apps, and more.",
                     side: "left",
                 },
             },
@@ -68,7 +68,7 @@ export function startTour() {
                 popover: {
                     title: "ℹ️ About",
                     description:
-                        "See version info and check for updates here. That's all — you're ready to go!",
+                        "See version info and check for updates here. That's all - you're ready to go!",
                     side: "bottom",
                 },
             },

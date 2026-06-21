@@ -80,13 +80,13 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
         // continuously outside the rootMargin for 300 ms.
         let hideDebounceTimer: ReturnType<typeof setTimeout> | null = null
         // Delay setup so initial batch measurements (~41 ms) complete first.
-        // Cards that started invisible have no measurement race — they render
+        // Cards that started invisible have no measurement race - they render
         // as placeholders immediately and get measured when scrolled into view.
         const timerId = setTimeout(() => {
             observer = new IntersectionObserver(
                 ([entry]) => {
                     if (entry.isIntersecting) {
-                        // Cancel any pending hide — card came back into range.
+                        // Cancel any pending hide - card came back into range.
                         if (hideDebounceTimer !== null) {
                             clearTimeout(hideDebounceTimer)
                             hideDebounceTimer = null
@@ -230,7 +230,7 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
 
     if (isDeleted) return null
 
-    // Placeholder for off-screen cards — keeps the grid cell the right size
+    // Placeholder for off-screen cards - keeps the grid cell the right size
     // without rendering the full React subtree.
     // --row-span is written directly via el.style.setProperty by useCardRowSpan
     // and is NOT a React-managed prop, so it survives this render as-is.
@@ -244,7 +244,7 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
             ref={cardRef}
             className={`hand-drawn lined thin p-3 bg-[#F9F5E6] relative group${clip.isHidden ? " ring-1 ring-amber-500/30" : ""}${isEditingLabel ? " z-50" : ""}`}
         >   {/* Header with icon and timestamp */}
-            {/* Shield button — absolute top-right. Shows as a sensitive badge when hidden,
+            {/* Shield button - absolute top-right. Shows as a sensitive badge when hidden,
                 or as a faint hover-only shield icon when not hidden. */}
             {clip.isHidden ? (
                 <button

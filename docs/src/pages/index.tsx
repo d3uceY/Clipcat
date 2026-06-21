@@ -59,7 +59,7 @@ type DialogInfo = { platform: 'windows' | 'mac'; href: string; label: string };
 
 const DIALOG_CONTENT = {
   windows: {
-    title: 'Heads up — Windows SmartScreen',
+    title: 'Heads up - Windows SmartScreen',
     body: "Because Clipcat isn't code-signed yet, Windows will show a SmartScreen warning when you run the installer. The app is fully open source and safe.",
     steps: [
       'Run the downloaded installer.',
@@ -70,7 +70,7 @@ const DIALOG_CONTENT = {
     guideHash: '#windows--smartscreen',
   },
   mac: {
-    title: 'Heads up — macOS Gatekeeper',
+    title: 'Heads up - macOS Gatekeeper',
     body: "Because Clipcat isn't code-signed yet, Gatekeeper will block it on first launch. The app is fully open source and safe.",
     steps: [
       'Open the downloaded .dmg file.',
@@ -193,7 +193,7 @@ const FEATURES = [
   {
     icon: '📋',
     title: 'Auto-Capture',
-    desc: 'Everything you copy — text and images — is saved instantly with no setup needed.',
+    desc: 'Everything you copy - text and images - is saved instantly with no setup needed.',
   },
   {
     icon: '⚡',
@@ -273,7 +273,7 @@ function HeroSection() {
         </Heading>
 
         <p className={styles.heroSubtitle}>
-          Everything you copy — text and images — saved instantly.<br />
+          Everything you copy - text and images - saved instantly.<br />
           Find it, reuse it, and manage it without thinking about it.
         </p>
 
@@ -449,7 +449,7 @@ export default function Home(): ReactNode {
   return (
     <Layout
       title={siteConfig.tagline}
-      description="Clipcat — a stylish clipboard manager that automatically saves everything you copy. Text and images, instantly captured. Find it, reuse it, manage it.">
+      description="Clipcat - a stylish clipboard manager that automatically saves everything you copy. Text and images, instantly captured. Find it, reuse it, manage it.">
       <HeroSection />
       <main>
         <FeaturesSection />

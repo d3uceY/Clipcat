@@ -50,7 +50,7 @@ function PageContent() {
             onComplete: () => {
                 // Remove compositor layers: clear GSAP inline transforms from all
                 // animated elements so the browser can de-promote them, and remove
-                // the paper curtain images from the DOM entirely — they are full-
+                // the paper curtain images from the DOM entirely - they are full-
                 // viewport fixed layers that inflate GPU memory for the app's lifetime.
                 gsap.set('.pussy', { clearProps: 'transform' })
                 gsap.set('h1, .torn-input', { clearProps: 'all' })
@@ -290,10 +290,10 @@ function PageContent() {
                     </div>
                 </div>
 
-                {/* Label filter bar — only renders when at least one label exists */}
+                {/* Label filter bar - only renders when at least one label exists */}
                 <LabelFilterBar />
 
-                {/* Sensitive clips indicator — only shown when auto-hide is on and there are hidden clips */}
+                {/* Sensitive clips indicator - only shown when auto-hide is on and there are hidden clips */}
                 {autoHideSensitive && hiddenCount > 0 && (
                     <div className={`${!isMiniClip ? "mb-6" : "-mb-6 -mt-4"} flex items-center gap-3 flex-wrap`}>
                         {isMiniClip ? (
@@ -304,7 +304,7 @@ function PageContent() {
                                         ? "bg-amber-200 text-amber-900 border-amber-500"
                                         : "bg-amber-400 text-white border-amber-500 hover:bg-amber-500 animate-pulse"
                                 }`}
-                                title={`${hiddenCount} sensitive clip${hiddenCount !== 1 ? "s" : ""} hidden — click to ${showSensitive ? "hide" : "reveal"}`}
+                                title={`${hiddenCount} sensitive clip${hiddenCount !== 1 ? "s" : ""} hidden - click to ${showSensitive ? "hide" : "reveal"}`}
                             >
                                 <ShieldAlert className="h-4 w-4" />
                                 <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white leading-none">
@@ -327,7 +327,7 @@ function PageContent() {
                     </div>
                 )}
 
-                {/* Sensitive clips — miniclip/quickpaste list view */}
+                {/* Sensitive clips - miniclip/quickpaste list view */}
                 {isMiniClip && showSensitive && hiddenCount > 0 && (
                     <section className="mb-4 rounded border border-dashed border-amber-400/40 bg-amber-50/20 p-2">
                         <div className="flex flex-col gap-2">
@@ -338,7 +338,7 @@ function PageContent() {
                     </section>
                 )}
 
-                {/* Sensitive clips section — only shown when user expands it */}
+                {/* Sensitive clips section - only shown when user expands it */}
                 {!isMiniClip && showSensitive && hiddenCount > 0 && (
                     <section className="mb-10 p-4 rounded border border-dashed border-amber-400/40 bg-amber-50/20">
                         <div className="flex items-center gap-2 mb-4">
@@ -346,7 +346,7 @@ function PageContent() {
                             <h2 className="text-sm font-medium italic text-amber-800/70">
                                 Sensitive Clips ({hiddenCount})
                             </h2>
-                            <span className="text-xs text-muted-foreground/50 ml-1">— use the shield button on each card to mark as safe</span>
+                            <span className="text-xs text-muted-foreground/50 ml-1">- use the shield button on each card to mark as safe</span>
                         </div>
                         <div className="free-form-grid-container">
                             {[...filteredClips.hiddenPinned, ...filteredClips.hiddenRecent].map((clip, i) => (

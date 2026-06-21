@@ -69,7 +69,7 @@ export default function DownloadPage(): ReactNode {
   return (
     <Layout
       title="Download Clipcat"
-      description="Download Clipcat — a stylish clipboard manager for Windows, macOS, and Linux."
+      description="Download Clipcat - a stylish clipboard manager for Windows, macOS, and Linux."
     >
       <main className={styles.page}>
         <div className={styles.hero}>

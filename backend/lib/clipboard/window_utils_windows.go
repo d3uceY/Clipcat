@@ -87,7 +87,7 @@ func StartFocusTracker() {
 // the Windows foreground lock, so we:
 //  1. Snapshot the current foreground window as the paste target.
 //  2. Call AllowSetForegroundWindow(ASFW_ANY) to hand the foreground token to
-//     any process for one call — the goroutine that follows uses it to bring
+//     any process for one call - the goroutine that follows uses it to bring
 //     the Clipcat window to the front via WindowShow/SetForegroundWindow.
 func capturePreviousWindow() {
 	hwnd, _, _ := procGetForegroundWindow.Call()
@@ -155,7 +155,7 @@ func GetCursorPos() (x, y int) {
 // at the origin when the Win32 call fails.
 func GetMonitorBoundsAt(px, py int) (mx, my, mw, mh int) {
 	// Build a POINT on the stack and reinterpret its memory as a single
-	// uintptr so the x64 ABI receives the struct in one register — the
+	// uintptr so the x64 ABI receives the struct in one register - the
 	// correct calling convention for MonitorFromPoint.
 	pt := tagPOINT{X: int32(px), Y: int32(py)}
 	const MONITOR_DEFAULTTONEAREST = 2
@@ -174,7 +174,7 @@ func GetMonitorBoundsAt(px, py int) (mx, my, mw, mh int) {
 	// rcWork excludes the taskbar so the window is never placed behind it,
 	// which matters on secondary monitors that host the taskbar.
 	if mi.RcWork.Right == 0 && mi.RcWork.Bottom == 0 {
-		// GetMonitorInfoW failed — fall back to the raw monitor rect.
+		// GetMonitorInfoW failed - fall back to the raw monitor rect.
 		return int(mi.RcMonitor.Left),
 			int(mi.RcMonitor.Top),
 			int(mi.RcMonitor.Right-mi.RcMonitor.Left),
@@ -189,7 +189,7 @@ func GetMonitorBoundsAt(px, py int) (mx, my, mw, mh int) {
 // GetWindowMonitorWorkOrigin returns the top-left corner of the work area of
 // the monitor that currently contains the Clipcat main window.
 //
-// Wails' WindowSetPosition(x, y) is NOT absolute — it internally adds the
+// Wails' WindowSetPosition(x, y) is NOT absolute - it internally adds the
 // origin of the window's current monitor before calling SetWindowPos:
 //
 //	SetWindowPos(hwnd, ..., workRect.Left + x, workRect.Top + y, ...)

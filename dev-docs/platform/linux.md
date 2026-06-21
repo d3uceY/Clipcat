@@ -1,4 +1,4 @@
-# Linux — Platform Architecture
+# Linux - Platform Architecture
 
 ## Overview
 
@@ -65,7 +65,7 @@ gclip.Watch(ctx, FmtImage)   ├─ select loop
                               └─    fireChange()    →  150 ms debounce → onChangeCallback()
 ```
 
-`shouldSkip` and `fireChange` are defined locally in `listener_linux.go` (they mirror the macOS helpers — each platform file must define its own copy because Go build tags mean they live in separate compilation units).
+`shouldSkip` and `fireChange` are defined locally in `listener_linux.go` (they mirror the macOS helpers - each platform file must define its own copy because Go build tags mean they live in separate compilation units).
 
 ---
 
@@ -81,9 +81,9 @@ gclip.Watch(ctx, FmtImage)   ├─ select loop
 | `FocusPreviousWindow()` | `xdotool windowactivate <id>` |
 | `SimulatePaste()` | `xdotool key ctrl+v` (after 80 ms sleep) |
 | `isForegroundProcessIgnored()` | Reads PID via `xdotool getactivewindow getwindowpid`, then `/proc/<pid>/comm` |
-| `GetCursorPos()` | `xdotool getmouselocation --shell` — parses `X=` / `Y=` from output |
+| `GetCursorPos()` | `xdotool getmouselocation --shell` - parses `X=` / `Y=` from output |
 | `GetMonitorBoundsAt(px,py)` | Parses `xrandr` output for `WxH+X+Y` tokens; returns bounds of the monitor containing `(px,py)` |
-| `GetWindowMonitorWorkOrigin()` | Returns `(0, 0)` — Wails uses absolute screen coords on Linux |
+| `GetWindowMonitorWorkOrigin()` | Returns `(0, 0)` - Wails uses absolute screen coords on Linux |
 
 ### Paste flow
 

@@ -249,7 +249,13 @@ func AddClip(content string, clipType string) (*Clip, []int, int, bool, error) {
 		return nil, nil, 0, false, fmt.Errorf("failed to check for duplicate: %v", err)
 	}
 	var deletedID int
+	var oldPinned bool
+	var oldHidden int
+	var oldLabel string
 	if existingID > 0 {
+		// Read the existing clip's states before deleting so we can restore them.
+		_ = DB.QueryRow(`SELECT pinned, hidden, label FROM clips WHERE id = ?`, existingID).
+			Scan(&oldPinned, &oldHidden, &oldLabel)
 		_ = DeleteClip(int(existingID))
 		deletedID = int(existingID)
 	}
@@ -261,12 +267,15 @@ func AddClip(content string, clipType string) (*Clip, []int, int, bool, error) {
 	hash := hashContent([]byte(content))
 
 	// Scan for secrets: notify always, auto-hide only when the setting is on.
-	hidden := 0
-	autolabel := ""
+	hidden := oldHidden
+	autolabel := oldLabel
 	if scanResult := secretscan.Scan(content); scanResult.IsSecret {
 		autolabel = scanResult.Label
 		if autoHide, _ := GetAutoHideSensitive(); autoHide {
-			hidden = 1
+			hidden = 1 // auto-hide overrides any previous visible state
+		}
+		if autolabel == "" || scanResult.Label != "" {
+			autolabel = scanResult.Label
 		}
 		if AppCtx != nil && runtime.IsNotificationAvailable(AppCtx) {
 			body := "A sensitive item was copied to your clipboard."
@@ -282,8 +291,8 @@ func AddClip(content string, clipType string) (*Clip, []int, int, bool, error) {
 		}
 	}
 
-	query := `INSERT INTO clips (content, content_hash, type, encrypted, hidden, label, created_at) VALUES (?, ?, ?, 1, ?, ?, datetime('now'))`
-	result, err := DB.Exec(query, enc, hash, clipType, hidden, autolabel)
+	query := `INSERT INTO clips (content, content_hash, type, pinned, encrypted, hidden, label, created_at) VALUES (?, ?, ?, ?, 1, ?, ?, datetime('now'))`
+	result, err := DB.Exec(query, enc, hash, clipType, oldPinned, hidden, autolabel)
 	if err != nil {
 		return nil, nil, deletedID, false, fmt.Errorf("failed to insert clip: %v", err)
 	}
@@ -344,7 +353,12 @@ func AddImageClip(img []byte) (*Clip, []int, int, bool, error) {
 		return nil, nil, 0, false, fmt.Errorf("failed to check for duplicate image: %v", err)
 	}
 	var deletedID int
+	var oldImagePinned bool
+	var oldImageHidden int
 	if existingID > 0 {
+		// Read the existing clip's states before deleting so we can restore them.
+		_ = DB.QueryRow(`SELECT pinned, hidden FROM clips WHERE id = ?`, existingID).
+			Scan(&oldImagePinned, &oldImageHidden)
 		_ = DeleteClip(int(existingID))
 		deletedID = int(existingID)
 	}
@@ -365,8 +379,8 @@ func AddImageClip(img []byte) (*Clip, []int, int, bool, error) {
 		encThumb, _ = encryptData(thumb)
 	}
 
-	query := `INSERT INTO clips (image, thumbnail, content_hash, type, encrypted, created_at) VALUES (?, ?, ?, ?, 1, datetime('now'))`
-	result, err := DB.Exec(query, enc, encThumb, hash, "image")
+	query := `INSERT INTO clips (image, thumbnail, content_hash, type, pinned, encrypted, hidden, created_at) VALUES (?, ?, ?, ?, ?, 1, ?, datetime('now'))`
+	result, err := DB.Exec(query, enc, encThumb, hash, "image", oldImagePinned, oldImageHidden)
 	if err != nil {
 		return nil, nil, deletedID, false, fmt.Errorf("failed to insert image clip: %v", err)
 	}

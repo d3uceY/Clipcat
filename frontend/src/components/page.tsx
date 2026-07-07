@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect, useMemo, lazy, Suspense } from "react"
+import { useState, useRef, useEffect, lazy, Suspense } from "react"
+import type { FilteredClips } from '../workers/search.worker'
 import { startTour, hasSeenTour } from "@/helpers/onboarding"
 import { Search, ShieldAlert } from "lucide-react"
 import ClipCard from "./clip-card"
@@ -164,22 +165,33 @@ function PageContent() {
     }, [])
 
 
-    const filteredClips = useMemo(() => {
-        const query = searchQuery.toLowerCase()
+    const [filteredClips, setFilteredClips] = useState<FilteredClips>({
+        pinned: [],
+        recent: [],
+        hiddenPinned: [],
+        hiddenRecent: [],
+    })
+    const searchWorkerRef = useRef<Worker | null>(null)
 
-        const matchesLabel = (clip: { label?: string }) =>
-            activeLabels.length === 0 || activeLabels.includes(clip.label || "")
-
-        const matchesQuery = (clip: { content?: string }) =>
-            !query || clip?.content?.toLowerCase().includes(query)
-
-        return {
-            pinned: clips.pinned.filter(c => !c.isHidden && matchesLabel(c) && matchesQuery(c)),
-            recent: clips.recent.filter(c => !c.isHidden && matchesLabel(c) && matchesQuery(c)),
-            hiddenPinned: clips.pinned.filter(c => c.isHidden && matchesLabel(c) && matchesQuery(c)),
-            hiddenRecent: clips.recent.filter(c => c.isHidden && matchesLabel(c) && matchesQuery(c)),
+    // Spin up the search worker once and tear it down on unmount.
+    useEffect(() => {
+        const worker = new Worker(
+            new URL('../workers/search.worker.ts', import.meta.url),
+            { type: 'module' }
+        )
+        searchWorkerRef.current = worker
+        worker.onmessage = (e: MessageEvent<FilteredClips>) => setFilteredClips(e.data)
+        return () => {
+            worker.terminate()
+            searchWorkerRef.current = null
         }
-    }, [searchQuery, clips, activeLabels])
+    }, [])
+
+    // Re-filter whenever clips, the search query, or label filters change.
+    // Runs off the main thread so typing never blocks the UI.
+    useEffect(() => {
+        searchWorkerRef.current?.postMessage({ clips, searchQuery, activeLabels })
+    }, [clips, searchQuery, activeLabels])
 
     const hiddenCount = filteredClips.hiddenPinned.length + filteredClips.hiddenRecent.length
 

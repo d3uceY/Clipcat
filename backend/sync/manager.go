@@ -31,9 +31,12 @@ type Manager struct {
 // given passphrase.  Call Start to begin discovery and listening.
 func NewManager(passphrase string) *Manager {
 	return &Manager{
-		key:      DeriveKey(passphrase),
-		peerMap:  NewPeerMap(),
-		incoming: make(chan []byte, 100),
+		key:     DeriveKey(passphrase),
+		peerMap: NewPeerMap(),
+		// 10 deep is enough — the event loop drains each payload
+		// in micros. A full buffer means the listener is overwhelmed; better
+		// to drop than pile up 1GB of encrypted blobs.
+		incoming: make(chan []byte, 10),
 	}
 }
 
@@ -60,12 +63,10 @@ func (m *Manager) Start() error {
 	added := make(chan Peer, 10)
 
 	// Start mDNS announcement.
-	server, err := Announce(ctx, Port, "")
-	if err != nil {
+	if err := Announce(ctx, Port, ""); err != nil {
 		cancel()
 		return err
 	}
-	_ = server // kept alive by ctx cancellation
 
 	// Start TCP listener.
 	go func() {
@@ -191,31 +192,16 @@ func (m *Manager) eventLoop(ctx context.Context, added <-chan Peer) {
 		select {
 		case <-ctx.Done():
 			return
-		case payload := <-m.incoming:
-			m.handleIncoming(ctx, payload)
+		case ciphertext := <-m.incoming:
+			decrypted, err := Decrypt(ciphertext, m.key)
+			if err != nil {
+				log.Printf("[sync] decrypt failed (wrong key?): %v", err)
+			} else if m.onReceive != nil {
+				m.onReceive(decrypted)
+			}
 		case peer := <-added:
 			m.peerMap.AddOrUpdate(peer.ID, peer.Addr)
 		}
-	}
-}
-
-// handleIncoming decrypts a payload and calls the onReceive callback.
-// Decryption failures (wrong key, tampered data) are logged and silently
-// dropped.
-func (m *Manager) handleIncoming(ctx context.Context, ciphertext []byte) {
-	m.mu.Lock()
-	key := m.key
-	cb := m.onReceive
-	m.mu.Unlock()
-
-	decrypted, err := Decrypt(ciphertext, key)
-	if err != nil {
-		log.Printf("[sync] decrypt failed (wrong key?): %v", err)
-		return
-	}
-
-	if cb != nil {
-		cb(decrypted)
 	}
 }
 

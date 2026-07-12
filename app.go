@@ -159,13 +159,25 @@ func (a *App) onClipboardChange() {
 
 func (a *App) handleImageClip(img []byte) {
 	a.lastMu.Lock()
-	if bytes.Equal(a.lastImage, img) {
-		a.lastMu.Unlock()
-		return
-	}
+	isDup := bytes.Equal(a.lastImage, img)
 	a.lastImage = img
 	a.lastText = ""
 	a.lastMu.Unlock()
+
+	if isDup {
+		// Still add — AddImageClip handles re-insert at top.
+		// Skip broadcast since peers already have it.
+		clip, prunedIDs, deletedID, _, _ := store.AddImageClip(img)
+		if a.ctx != nil {
+			if deletedID > 0 {
+				runtime.EventsEmit(a.ctx, "clip:deleted", fmt.Sprintf("clip_%03d", deletedID))
+			}
+			if clip != nil {
+				a.emitClipAdded(clip, prunedIDs)
+			}
+		}
+		return
+	}
 
 	clip, prunedIDs, deletedID, inserted, err := store.AddImageClip(img)
 	if err != nil {
@@ -178,7 +190,6 @@ func (a *App) handleImageClip(img []byte) {
 		a.emitClipAdded(clip, prunedIDs)
 	}
 
-	// Broadcast to LAN peers if sync is enabled and this is a new local clip.
 	if inserted && clip != nil {
 		a.broadcastImageClip(img)
 	}
@@ -186,13 +197,23 @@ func (a *App) handleImageClip(img []byte) {
 
 func (a *App) handleTextClip(text string) {
 	a.lastMu.Lock()
-	if a.lastText == text {
-		a.lastMu.Unlock()
-		return
-	}
+	isDup := a.lastText == text
 	a.lastText = text
 	a.lastImage = nil
 	a.lastMu.Unlock()
+
+	if isDup {
+		clip, prunedIDs, deletedID, _, _ := store.AddClip(text, "text")
+		if a.ctx != nil {
+			if deletedID > 0 {
+				runtime.EventsEmit(a.ctx, "clip:deleted", fmt.Sprintf("clip_%03d", deletedID))
+			}
+			if clip != nil {
+				a.emitClipAdded(clip, prunedIDs)
+			}
+		}
+		return
+	}
 
 	clip, prunedIDs, deletedID, inserted, err := store.AddClip(text, "text")
 	if err != nil {
@@ -206,7 +227,6 @@ func (a *App) handleTextClip(text string) {
 		a.emitClipAdded(clip, prunedIDs)
 	}
 
-	// Broadcast to LAN peers if sync is enabled and this is a new local clip.
 	if inserted && clip != nil {
 		a.broadcastTextClip(text)
 	}

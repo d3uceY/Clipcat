@@ -32,14 +32,13 @@ func hostname() string {
 }
 
 // Announce registers this Clipcat instance on the LAN via mDNS so other
-// instances can discover it.  The goroutine runs until ctx is cancelled.
-// Returns the zeroconf server so the caller can wait for shutdown.
-func Announce(ctx context.Context, port int, instance string) (*zeroconf.Server, error) {
+// instances can discover it.  The server shuts down automatically when
+// ctx is cancelled.
+func Announce(ctx context.Context, port int, instance string) error {
 	if instance == "" {
 		instance = hostname()
 	}
 
-	// Register with no text fields — we don't want to leak anything.
 	server, err := zeroconf.Register(
 		instance,    // service instance name
 		serviceType, // service type: _clipcat._tcp
@@ -49,17 +48,16 @@ func Announce(ctx context.Context, port int, instance string) (*zeroconf.Server,
 		nil,         // all interfaces
 	)
 	if err != nil {
-		return nil, fmt.Errorf("sync mDNS announce: %w", err)
+		return fmt.Errorf("sync mDNS announce: %w", err)
 	}
 
-	// Shutdown when ctx is cancelled.
 	go func() {
 		<-ctx.Done()
 		server.Shutdown()
 	}()
 
 	log.Printf("[sync] announcing as %s (%s) on port %d", instance, serviceType, port)
-	return server, nil
+	return nil
 }
 
 // Browse discovers other Clipcat instances on the LAN.  It sends discovered
@@ -140,9 +138,8 @@ func resolveEntry(entry *zeroconf.ServiceEntry) *Peer {
 	}
 
 	return &Peer{
-		ID:       entry.Instance,
-		Addr:     addrStr,
-		LastSeen: time.Now(),
+		ID:   entry.Instance,
+		Addr: addrStr,
 	}
 }
 

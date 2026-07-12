@@ -145,11 +145,14 @@ func (a *App) onClipboardChange() {
 	}
 	defer clipChangeMu.Unlock()
 
-	if img := gclip.Read(gclip.FmtImage); img != nil {
+	// Use clipboard.Read* which are safe across all platforms:
+	// - Linux: uses own X11 select()-based read with 5s timeout
+	// - macOS/Windows: uses gclip.Read (safe on those platforms)
+	if img := clipboard.ReadImage(); img != nil {
 		a.handleImageClip(img)
 		return
 	}
-	if text := string(gclip.Read(gclip.FmtText)); text != "" {
+	if text := clipboard.ReadText(); text != "" {
 		a.handleTextClip(text)
 	}
 }

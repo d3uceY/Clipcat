@@ -24,12 +24,12 @@ Every Clipcat instance with sync enabled and the same passphrase automatically d
 
 ### Component stack
 
-| Layer         | Technology                              | Purpose                                 |
-| ------------- | --------------------------------------- | --------------------------------------- |
-| Discovery     | mDNS via `github.com/grandcat/zeroconf` | Find other Clipcat instances on the LAN |
-| Transport     | TCP, length-prefixed payloads           | Reliable delivery of clipboard data     |
-| Encryption    | AES-256-GCM, PBKDF2 key derivation      | Confidentiality & authentication        |
-| Peer tracking | In-memory `PeerMap` with TTL eviction   | Track alive peers, evict stale ones     |
+| Layer         | Technology                                                                        | Purpose                                 |
+| ------------- | --------------------------------------------------------------------------------- | --------------------------------------- |
+| Discovery     | mDNS via `github.com/grandcat/zeroconf`                                           | Find other Clipcat instances on the LAN |
+| Transport     | TCP, length-prefixed payloads                                                     | Reliable delivery of clipboard data     |
+| Encryption    | AES-256-GCM, PBKDF2 key derivation                                                | Confidentiality & authentication        |
+| Peer tracking | In-memory `PeerMap` with TCP heartbeat (60s) + failure-based eviction (3 strikes) | Track alive peers, evict dead ones      |
 
 ### Wire protocol
 
@@ -96,7 +96,7 @@ Windows may prompt on first run — click **Allow access**. Or add a rule manual
 | **Wrong key**      | GCM auth failure → payload silently dropped (logged)                                                        |
 | **Max payload**    | 10 MB (larger clips are silently skipped)                                                                   |
 | **Discovery**      | mDNS advertises the service type `_clipcat._tcp` with the machine hostname — leaks no sensitive information |
-| **Peer eviction**  | Peers not seen in 2 minutes are evicted from the peer map                                                   |
+| **Peer eviction**  | Peers are evicted after 3 consecutive TCP failures (via heartbeat probe or failed send)                     |
 
 ## Limitations
 
@@ -104,7 +104,8 @@ Windows may prompt on first run — click **Allow access**. Or add a rule manual
 - **mDNS required** — Linux requires `avahi-daemon` (or another mDNS responder) to be running. macOS has Bonjour built-in.
 - **Firewall required** — TCP port 47821 must be open on each machine (see above).
 - **No encryption in transit indicator** — there is no visual indicator that a specific clip arrived encrypted vs. unencrypted; all sync traffic is always encrypted.
-- **No peer list UI** — v1 only shows the peer count. Individual peer addresses are not displayed.
+- **mDNS for discovery only** — once a peer is found, liveness is tracked by TCP heartbeat (60s interval). mDNS can go silent without losing peers.
+- **Peer count indicator** — shown in the main UI as a green/gray badge next to the search bar when sync is enabled.
 
 ## Privacy
 

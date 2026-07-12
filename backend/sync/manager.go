@@ -116,7 +116,7 @@ func (m *Manager) Restart(passphrase string) error {
 	m.mu.Lock()
 	m.key = DeriveKey(passphrase)
 	m.peerMap = NewPeerMap()
-	m.incoming = make(chan []byte, 100)
+	m.incoming = make(chan []byte, 10)
 	m.mu.Unlock()
 
 	return m.Start()

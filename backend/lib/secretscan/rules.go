@@ -27,6 +27,12 @@ var rules = []rule{
 	{regexp.MustCompile(`glpat-[A-Za-z0-9\-_]{20,}`), "GitLab Personal Access Token"},
 	{regexp.MustCompile(`npm_[A-Za-z0-9]{36}`), "NPM Token"},
 
+	// ── Credit cards ───────────────────────────────────────────────────────
+	{regexp.MustCompile(`\b4[0-9]{3}[- ]?[0-9]{4}[- ]?[0-9]{4}[- ]?[0-9]{4}\b`), "Visa Card Number"},
+	{regexp.MustCompile(`\b(?:5[1-5][0-9]{2}|222[1-9]|22[3-9][0-9]|2[3-6][0-9]{2}|27[01][0-9]|2720)[- ]?[0-9]{4}[- ]?[0-9]{4}[- ]?[0-9]{4}\b`), "Mastercard Number"},
+	{regexp.MustCompile(`\b3[47][0-9]{2}[- ]?[0-9]{6}[- ]?[0-9]{5}\b`), "Amex Card Number"},
+	{regexp.MustCompile(`\b6(?:011|5[0-9]{2})[- ]?[0-9]{4}[- ]?[0-9]{4}[- ]?[0-9]{4}\b`), "Discover Card Number"},
+
 	// ── Payments ───────────────────────────────────────────────────────────
 	{regexp.MustCompile(`sk_live_[0-9A-Za-z]{24,}`), "Stripe Live Secret Key"},
 	{regexp.MustCompile(`sk_test_[0-9A-Za-z]{24,}`), "Stripe Test Secret Key"},

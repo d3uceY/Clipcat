@@ -14,11 +14,12 @@ const (
 	// Port is the TCP port used for clipboard sync traffic.
 	Port = 47821
 
-	// maxPayloadSize is the maximum allowed payload in bytes (10 MB).
-	maxPayloadSize = 10 * 1024 * 1024
+	// maxPayloadSize is the maximum allowed payload in bytes (25 MB).
+	maxPayloadSize = 25 * 1024 * 1024
 
-	// sendTimeout is the timeout for a single Send operation.
-	sendTimeout = 10 * time.Second
+	// sendTimeout is the timeout for a single Send operation (LAN, should
+	// complete in <1s even for 25MB; 5s is generous).
+	sendTimeout = 5 * time.Second
 )
 
 // Send dials a peer and sends a length-prefixed payload.  The wire format is:
@@ -103,7 +104,11 @@ func handleConnection(conn net.Conn, incoming chan<- []byte) {
 	// Read 4-byte length prefix.
 	header := make([]byte, 4)
 	if _, err := io.ReadFull(conn, header); err != nil {
-		log.Printf("[sync] read header: %v", err)
+		// EOF is expected — it's the heartbeat closing the connection
+		// or a keepalive probe.  No need to log it.
+		if err != io.EOF {
+			log.Printf("[sync] read header: %v", err)
+		}
 		return
 	}
 

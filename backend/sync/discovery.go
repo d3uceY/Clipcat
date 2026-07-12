@@ -83,9 +83,6 @@ func Browse(ctx context.Context, added chan<- Peer) error {
 		return fmt.Errorf("sync mDNS browse: %w", err)
 	}
 
-	// Track known entries so we detect duplicates.
-	known := make(map[string]bool)
-
 	for {
 		select {
 		case <-ctx.Done():
@@ -95,12 +92,8 @@ func Browse(ctx context.Context, added chan<- Peer) error {
 				return nil
 			}
 
-			log.Printf("[sync] browse got entry Instance=%q Host=%q Port=%d IPv4=%v IPv6=%v",
-				entry.Instance, entry.HostName, entry.Port, entry.AddrIPv4, entry.AddrIPv6)
-
 			// Skip ourselves.
 			if entry.Instance == hostname() {
-				known[entry.Instance] = true
 				continue
 			}
 
@@ -111,15 +104,13 @@ func Browse(ctx context.Context, added chan<- Peer) error {
 				continue
 			}
 
-			if !known[entry.Instance] {
-				known[entry.Instance] = true
-				log.Printf("[sync] discovered peer %s at %s", peer.ID, peer.Addr)
-
-				select {
-				case added <- *peer:
-				case <-ctx.Done():
-					return nil
-				}
+			// Forward every entry to the added channel. The PeerMap's
+			// AddOrUpdate handles dedup by ID and refreshes LastSeen, which
+			// prevents the eviction ticker from dropping alive peers.
+			select {
+			case added <- *peer:
+			case <-ctx.Done():
+				return nil
 			}
 		}
 	}

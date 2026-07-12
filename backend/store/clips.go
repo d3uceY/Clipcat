@@ -22,12 +22,13 @@ type Clip struct {
 	ID        string  `json:"id"`
 	Type      string  `json:"type"`
 	Content   *string `json:"content,omitempty"`
-	Image     *string `json:"image,omitempty"`     // base64 - thumbnail for list, full-res on demand
+	Image     *string `json:"image,omitempty"` // base64 - thumbnail for list, full-res on demand
 	Length    int     `json:"length"`
 	Pinned    bool    `json:"isPinned"`
 	CreatedAt string  `json:"createdAt"`
 	Label     string  `json:"label"`
 	Hidden    bool    `json:"isHidden"`
+	Source    string  `json:"source,omitempty"` // "local" (default) or "network"
 }
 
 func GetStorageLimit() (int, error) {
@@ -59,7 +60,7 @@ func UpdateStorageLimit(newLimit int) error {
 
 func GetClips() ([]Clip, error) {
 	query := `
-		SELECT id, content, image, thumbnail, type, pinned, created_at, encrypted, label, hidden
+		SELECT id, content, image, thumbnail, type, pinned, created_at, encrypted, label, hidden, source
 		FROM clips
 		ORDER BY pinned DESC, created_at DESC
 	`
@@ -84,9 +85,10 @@ func GetClips() ([]Clip, error) {
 			encrypted bool
 			label     string
 			hidden    bool
+			source    string
 		)
 
-		err := rows.Scan(&id, &content, &image, &thumbnail, &clipType, &pinned, &createdAt, &encrypted, &label, &hidden)
+		err := rows.Scan(&id, &content, &image, &thumbnail, &clipType, &pinned, &createdAt, &encrypted, &label, &hidden, &source)
 		if err != nil {
 			return nil, err
 		}
@@ -98,6 +100,7 @@ func GetClips() ([]Clip, error) {
 			CreatedAt: createdAt,
 			Label:     label,
 			Hidden:    hidden,
+			Source:    source,
 		}
 
 		if clipType == "text" && content.Valid {
@@ -157,10 +160,11 @@ func getClipByRowID(id int64) (*Clip, error) {
 		encrypted bool
 		label     string
 		hidden    bool
+		source    string
 	)
 	err := DB.QueryRow(
-		`SELECT id, content, image, thumbnail, type, pinned, created_at, encrypted, label, hidden FROM clips WHERE id = ?`, id,
-	).Scan(&rowID, &content, &img, &thumbnail, &clipType, &pinned, &createdAt, &encrypted, &label, &hidden)
+		`SELECT id, content, image, thumbnail, type, pinned, created_at, encrypted, label, hidden, source FROM clips WHERE id = ?`, id,
+	).Scan(&rowID, &content, &img, &thumbnail, &clipType, &pinned, &createdAt, &encrypted, &label, &hidden, &source)
 	if err != nil {
 		return nil, err
 	}
@@ -172,6 +176,7 @@ func getClipByRowID(id int64) (*Clip, error) {
 		CreatedAt: createdAt,
 		Label:     label,
 		Hidden:    hidden,
+		Source:    source,
 	}
 
 	if clipType == "text" && content.Valid {
@@ -816,4 +821,70 @@ func SeedTestClips(n int) error {
 	return tx.Commit()
 }
 
+// AddNetworkClip inserts a clip received from the LAN.  No secret scanning
+// is performed (trusted peers).  The source is always 'network' so the
+// manager can avoid re-broadcasting it.
+func AddNetworkClip(content string, clipType string, img []byte) (*Clip, error) {
+	switch clipType {
+	case "text":
+		enc, err := encryptText(content)
+		if err != nil {
+			return nil, fmt.Errorf("failed to encrypt network clip: %v", err)
+		}
+		hash := hashContent([]byte(content))
 
+		query := `INSERT INTO clips (content, content_hash, type, pinned, encrypted, source, created_at) VALUES (?, ?, ?, 0, 1, 'network', datetime('now'))`
+		result, err := DB.Exec(query, enc, hash, clipType)
+		if err != nil {
+			return nil, fmt.Errorf("failed to insert network clip: %v", err)
+		}
+
+		insertID, err := result.LastInsertId()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get insert ID: %v", err)
+		}
+
+		clip, err := getClipByRowID(insertID)
+		if err != nil {
+			return nil, err
+		}
+		return clip, nil
+
+	case "image":
+		enc, err := encryptData(img)
+		if err != nil {
+			return nil, fmt.Errorf("failed to encrypt network image: %v", err)
+		}
+		hash := hashContent(img)
+
+		// Generate a thumbnail.
+		thumb, err := generateThumbnail(img)
+		if err != nil {
+			thumb = nil
+		}
+		var encThumb []byte
+		if len(thumb) > 0 {
+			encThumb, _ = encryptData(thumb)
+		}
+
+		query := `INSERT INTO clips (image, thumbnail, content_hash, type, pinned, encrypted, source, created_at) VALUES (?, ?, ?, ?, 0, 1, 'network', datetime('now'))`
+		result, err := DB.Exec(query, enc, encThumb, hash, clipType)
+		if err != nil {
+			return nil, fmt.Errorf("failed to insert network image clip: %v", err)
+		}
+
+		insertID, err := result.LastInsertId()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get insert ID: %v", err)
+		}
+
+		clip, err := getClipByRowID(insertID)
+		if err != nil {
+			return nil, err
+		}
+		return clip, nil
+
+	default:
+		return nil, fmt.Errorf("unknown clip type: %s", clipType)
+	}
+}

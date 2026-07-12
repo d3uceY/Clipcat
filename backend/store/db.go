@@ -89,6 +89,8 @@ func RunMigrations() {
 	MigrateAlwaysOnTopSetting()
 	MigrateMiniClipSetting()
 	MigrateCursorSnapSetting()
+	MigrateSyncSourceColumn()
+	MigrateSyncSettings()
 }
 
 // MigrateIndexes creates performance indexes on the clips table.
@@ -239,4 +241,17 @@ func MigrateEncryptOldClips() {
 			)
 		}
 	}
+}
+
+// MigrateSyncSourceColumn adds the source column to the clips table so we can
+// distinguish locally-captured clips from network-synced ones.
+func MigrateSyncSourceColumn() {
+	_, _ = DB.Exec(`ALTER TABLE clips ADD COLUMN source TEXT NOT NULL DEFAULT 'local'`)
+}
+
+// MigrateSyncSettings adds the sync_enabled and sync_passphrase columns to the
+// settings table.  Both default to disabled/empty.
+func MigrateSyncSettings() {
+	_, _ = DB.Exec(`ALTER TABLE settings ADD COLUMN sync_enabled INTEGER NOT NULL DEFAULT 0`)
+	_, _ = DB.Exec(`ALTER TABLE settings ADD COLUMN sync_passphrase TEXT NOT NULL DEFAULT ''`)
 }

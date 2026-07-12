@@ -3,8 +3,12 @@ package sync
 import (
 	"context"
 	"log"
+	"net"
 	"sync"
+	"time"
 )
+
+const heartbeatInterval = 30 * time.Second
 
 // OnReceiveCallback is called when a decrypted payload arrives from a peer.
 type OnReceiveCallback func(payload []byte)
@@ -85,6 +89,10 @@ func (m *Manager) Start() error {
 	m.wg.Add(1)
 	go m.eventLoop(ctx, added)
 
+	// Heartbeat — checks peer liveness every 30 seconds.
+	m.wg.Add(1)
+	go m.heartbeatLoop(ctx)
+
 	m.mu.Lock()
 	m.running = true
 	m.cancel = cancel
@@ -152,6 +160,11 @@ func (m *Manager) Broadcast(payload []byte) {
 		ctx, cancel := context.WithTimeout(context.Background(), sendTimeout)
 		if err := Send(ctx, p.Addr, ciphertext); err != nil {
 			log.Printf("[sync] send to %s (%s) failed: %v", p.ID, p.Addr, err)
+			if m.peerMap.RecordFailure(p.ID) {
+				log.Printf("[sync] evicted peer %s after 3 consecutive send failures", p.ID)
+			}
+		} else {
+			m.peerMap.ResetFailures(p.ID)
 		}
 		cancel()
 	}
@@ -203,5 +216,47 @@ func (m *Manager) handleIncoming(ctx context.Context, ciphertext []byte) {
 
 	if cb != nil {
 		cb(decrypted)
+	}
+}
+
+// heartbeatLoop periodically checks all known peers for liveness.
+// Peers that fail 3 consecutive heartbeats are evicted.
+func (m *Manager) heartbeatLoop(ctx context.Context) {
+	defer m.wg.Done()
+	ticker := time.NewTicker(heartbeatInterval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			m.checkPeers(ctx)
+		}
+	}
+}
+
+// checkPeers dials each known peer with a short timeout.  Failed peers
+// count toward eviction; successful peers reset their failure counter.
+func (m *Manager) checkPeers(ctx context.Context) {
+	peers := m.peerMap.GetPeers()
+	if len(peers) == 0 {
+		return
+	}
+
+	var d net.Dialer
+	for _, p := range peers {
+		dialCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
+		conn, err := d.DialContext(dialCtx, "tcp", p.Addr)
+		cancel()
+
+		if err != nil {
+			if m.peerMap.RecordFailure(p.ID) {
+				log.Printf("[sync] evicted peer %s after 3 consecutive heartbeat failures", p.ID)
+			}
+		} else {
+			conn.Close()
+			m.peerMap.ResetFailures(p.ID)
+		}
 	}
 }

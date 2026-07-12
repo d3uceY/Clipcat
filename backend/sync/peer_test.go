@@ -55,23 +55,71 @@ func TestPeerMapRemove(t *testing.T) {
 	}
 }
 
-func TestPeerMapEviction(t *testing.T) {
-	// Use a very short TTL by testing the evictStale method directly.
+func TestPeerMapRecordFailureEvictsAfterThree(t *testing.T) {
 	pm := NewPeerMap()
 	defer pm.Stop()
 
-	pm.mu.Lock()
-	pm.peers["stale"] = &Peer{
-		ID:       "stale",
-		Addr:     "192.168.1.99:47821",
-		LastSeen: time.Now().Add(-10 * time.Minute), // definitely stale
-	}
-	pm.mu.Unlock()
+	pm.AddOrUpdate("peer1", "192.168.1.10:47821")
 
-	pm.evictStale()
+	// First two failures should not evict.
+	if pm.RecordFailure("peer1") {
+		t.Fatal("first failure should not evict")
+	}
+	if pm.RecordFailure("peer1") {
+		t.Fatal("second failure should not evict")
+	}
+
+	// Third failure should evict.
+	if !pm.RecordFailure("peer1") {
+		t.Fatal("third failure should evict")
+	}
 
 	if pm.Len() != 0 {
-		t.Fatal("expected stale peer to be evicted")
+		t.Fatal("expected 0 peers after 3 failures")
+	}
+}
+
+func TestPeerMapResetFailures(t *testing.T) {
+	pm := NewPeerMap()
+	defer pm.Stop()
+
+	pm.AddOrUpdate("peer1", "192.168.1.10:47821")
+
+	pm.RecordFailure("peer1")
+	pm.RecordFailure("peer1")
+	pm.ResetFailures("peer1")
+
+	// After reset, should need 3 more failures to evict.
+	if pm.RecordFailure("peer1") {
+		t.Fatal("first failure after reset should not evict")
+	}
+	if pm.RecordFailure("peer1") {
+		t.Fatal("second failure after reset should not evict")
+	}
+	if !pm.RecordFailure("peer1") {
+		t.Fatal("third failure after reset should evict")
+	}
+}
+
+func TestPeerMapAddOrUpdateResetsFailures(t *testing.T) {
+	pm := NewPeerMap()
+	defer pm.Stop()
+
+	pm.AddOrUpdate("peer1", "192.168.1.10:47821")
+	pm.RecordFailure("peer1")
+	pm.RecordFailure("peer1")
+
+	// Re-announcement via mDNS should reset failures.
+	pm.AddOrUpdate("peer1", "192.168.1.10:47821")
+
+	if pm.RecordFailure("peer1") {
+		t.Fatal("first failure after re-announce should not evict")
+	}
+	if pm.RecordFailure("peer1") {
+		t.Fatal("second failure after re-announce should not evict")
+	}
+	if !pm.RecordFailure("peer1") {
+		t.Fatal("third failure after re-announce should evict")
 	}
 }
 

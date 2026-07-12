@@ -1,81 +1,43 @@
 package sync
 
 import (
-	"context"
 	"log"
 	"sync"
 	"time"
 )
 
 const (
-	// peerTTL is how long a peer is considered alive without a heartbeat.
-	peerTTL = 2 * time.Minute
-
-	// evictionInterval is how often the eviction ticker runs.
-	evictionInterval = 60 * time.Second
+	// maxFailCount is the number of consecutive TCP failures before a peer
+	// is evicted.  Reset to 0 on any successful send or heartbeat.
+	maxFailCount = 3
 )
 
 // Peer represents a single Clipcat instance discovered on the LAN.
 type Peer struct {
-	ID       string    `json:"id"`
-	Addr     string    `json:"addr"`
-	LastSeen time.Time `json:"lastSeen"`
+	ID        string    `json:"id"`
+	Addr      string    `json:"addr"`
+	LastSeen  time.Time `json:"lastSeen"`
+	failCount int       // consecutive TCP failures (internal, not exported)
 }
 
-// PeerMap is a concurrency-safe map of peers with automatic eviction of
-// peers that have not been seen within peerTTL.
+// PeerMap is a concurrency-safe map of peers.  Peers are only removed when
+// RecordFailure reaches maxFailCount — there is no TTL-based eviction.
+// Re-discovery via mDNS will re-add evicted peers when they come back.
 type PeerMap struct {
-	mu     sync.RWMutex
-	peers  map[string]*Peer
-	cancel context.CancelFunc
-	wg     sync.WaitGroup
+	mu    sync.RWMutex
+	peers map[string]*Peer
 }
 
-// NewPeerMap creates a PeerMap and starts the eviction loop in a background
-// goroutine.  Call Stop to shut down the eviction loop.
+// NewPeerMap creates an empty PeerMap.  No background goroutines.
 func NewPeerMap() *PeerMap {
-	ctx, cancel := context.WithCancel(context.Background())
-	pm := &PeerMap{
-		peers:  make(map[string]*Peer),
-		cancel: cancel,
-	}
-	pm.wg.Add(1)
-	go pm.evictionLoop(ctx)
-	return pm
-}
-
-// evictionLoop runs until ctx is cancelled, evicting stale peers every
-// evictionInterval.
-func (pm *PeerMap) evictionLoop(ctx context.Context) {
-	defer pm.wg.Done()
-	ticker := time.NewTicker(evictionInterval)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-ticker.C:
-			pm.evictStale()
-		}
-	}
-}
-
-func (pm *PeerMap) evictStale() {
-	pm.mu.Lock()
-	defer pm.mu.Unlock()
-
-	now := time.Now()
-	for id, p := range pm.peers {
-		if now.Sub(p.LastSeen) > peerTTL {
-			log.Printf("[sync] evicting stale peer %s (%s)", id, p.Addr)
-			delete(pm.peers, id)
-		}
+	return &PeerMap{
+		peers: make(map[string]*Peer),
 	}
 }
 
 // AddOrUpdate records or refreshes a peer.  If a peer with the same ID
-// already exists its address and LastSeen are updated.
+// already exists its address and LastSeen are updated and its failure
+// count is reset (a new mDNS announcement means the peer is alive).
 func (pm *PeerMap) AddOrUpdate(id, addr string) {
 	pm.mu.Lock()
 	defer pm.mu.Unlock()
@@ -83,6 +45,7 @@ func (pm *PeerMap) AddOrUpdate(id, addr string) {
 	if existing, ok := pm.peers[id]; ok {
 		existing.Addr = addr
 		existing.LastSeen = time.Now()
+		existing.failCount = 0 // fresh announcement = alive
 		return
 	}
 
@@ -92,6 +55,35 @@ func (pm *PeerMap) AddOrUpdate(id, addr string) {
 		LastSeen: time.Now(),
 	}
 	log.Printf("[sync] new peer %s at %s", id, addr)
+}
+
+// RecordFailure increments a peer's failure counter.  Returns true when
+// the counter reaches maxFailCount, signalling the caller to evict.
+func (pm *PeerMap) RecordFailure(id string) bool {
+	pm.mu.Lock()
+	defer pm.mu.Unlock()
+
+	p, ok := pm.peers[id]
+	if !ok {
+		return false
+	}
+	p.failCount++
+	if p.failCount >= maxFailCount {
+		log.Printf("[sync] evicting peer %s after %d consecutive failures", id, p.failCount)
+		delete(pm.peers, id)
+		return true
+	}
+	return false
+}
+
+// ResetFailures resets a peer's failure counter to zero.
+func (pm *PeerMap) ResetFailures(id string) {
+	pm.mu.Lock()
+	defer pm.mu.Unlock()
+
+	if p, ok := pm.peers[id]; ok {
+		p.failCount = 0
+	}
 }
 
 // GetPeers returns a snapshot of all currently known peers.
@@ -106,8 +98,7 @@ func (pm *PeerMap) GetPeers() []Peer {
 	return result
 }
 
-// Remove deletes a peer by ID.  Called when mDNS signals a service
-// disappearance.
+// Remove deletes a peer by ID.
 func (pm *PeerMap) Remove(id string) {
 	pm.mu.Lock()
 	defer pm.mu.Unlock()
@@ -121,8 +112,6 @@ func (pm *PeerMap) Len() int {
 	return len(pm.peers)
 }
 
-// Stop shuts down the eviction loop and waits for it to finish.
-func (pm *PeerMap) Stop() {
-	pm.cancel()
-	pm.wg.Wait()
-}
+// Stop is a no-op kept for interface compatibility.  No background
+// goroutines to shut down.
+func (pm *PeerMap) Stop() {}

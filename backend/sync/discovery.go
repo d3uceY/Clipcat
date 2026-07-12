@@ -71,11 +71,18 @@ func Browse(ctx context.Context, added chan<- Peer) error {
 	}
 
 	entries := make(chan *zeroconf.ServiceEntry, 10)
+	browseDone := make(chan struct{})
 
 	go func() {
-		defer close(entries)
+		defer close(browseDone)
+		// NOTE: do NOT close(entries) here — the zeroconf library's internal
+		// mainloop goroutine may still send on entries after Browse returns,
+		// which would panic on a closed channel.  ctx cancellation is the
+		// sole shutdown signal for the entries channel.
 		if err := resolver.Browse(ctx, serviceType, domain, entries); err != nil {
-			log.Printf("[sync] mDNS browse error: %v", err)
+			if ctx.Err() == nil {
+				log.Printf("[sync] mDNS browse error: %v", err)
+			}
 		}
 	}()
 
@@ -85,6 +92,8 @@ func Browse(ctx context.Context, added chan<- Peer) error {
 	for {
 		select {
 		case <-ctx.Done():
+			return nil
+		case <-browseDone:
 			return nil
 		case entry, ok := <-entries:
 			if !ok {

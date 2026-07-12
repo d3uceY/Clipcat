@@ -64,6 +64,11 @@ func Announce(ctx context.Context, port int, instance string) (*zeroconf.Server,
 
 // Browse discovers other Clipcat instances on the LAN.  It sends discovered
 // peers to the added channel.  The goroutine runs until ctx is cancelled.
+//
+// IMPORTANT: resolver.Browse is non-blocking — it starts background
+// goroutines and returns immediately.  We must NOT use a "browse done"
+// signal to exit the loop; entries arrive asynchronously on the channel
+// until ctx is cancelled.
 func Browse(ctx context.Context, added chan<- Peer) error {
 	resolver, err := zeroconf.NewResolver()
 	if err != nil {
@@ -71,34 +76,27 @@ func Browse(ctx context.Context, added chan<- Peer) error {
 	}
 
 	entries := make(chan *zeroconf.ServiceEntry, 10)
-	browseDone := make(chan struct{})
 
-	go func() {
-		defer close(browseDone)
-		// NOTE: do NOT close(entries) here — the zeroconf library's internal
-		// mainloop goroutine may still send on entries after Browse returns,
-		// which would panic on a closed channel.  ctx cancellation is the
-		// sole shutdown signal for the entries channel.
-		if err := resolver.Browse(ctx, serviceType, domain, entries); err != nil {
-			if ctx.Err() == nil {
-				log.Printf("[sync] mDNS browse error: %v", err)
-			}
-		}
-	}()
+	// Start Browse in background — it launches internal goroutines that
+	// send entries to the channel and returns right away.
+	if err := resolver.Browse(ctx, serviceType, domain, entries); err != nil {
+		return fmt.Errorf("sync mDNS browse: %w", err)
+	}
 
-	// Track known entries so we can detect removals.
+	// Track known entries so we detect duplicates.
 	known := make(map[string]bool)
 
 	for {
 		select {
 		case <-ctx.Done():
 			return nil
-		case <-browseDone:
-			return nil
 		case entry, ok := <-entries:
 			if !ok {
 				return nil
 			}
+
+			log.Printf("[sync] browse got entry Instance=%q Host=%q Port=%d IPv4=%v IPv6=%v",
+				entry.Instance, entry.HostName, entry.Port, entry.AddrIPv4, entry.AddrIPv6)
 
 			// Skip ourselves.
 			if entry.Instance == hostname() {
@@ -109,6 +107,7 @@ func Browse(ctx context.Context, added chan<- Peer) error {
 			// Resolve the entry if we don't have IPs yet.
 			peer := resolveEntry(entry)
 			if peer == nil {
+				log.Printf("[sync] failed to resolve entry %q to a peer (no IPs)", entry.Instance)
 				continue
 			}
 
@@ -168,21 +167,29 @@ func resolveInstance(instance string) (*zeroconf.ServiceEntry, error) {
 	}
 
 	entries := make(chan *zeroconf.ServiceEntry, 1)
+	lookupDone := make(chan struct{})
 
 	go func() {
+		defer close(lookupDone)
+		// NOTE: do NOT close(entries) — same reason as Browse: the zeroconf
+		// library's internal goroutines may still send after Lookup returns.
 		if err := resolver.Lookup(ctx, instance, serviceType, domain, entries); err != nil {
-			log.Printf("[sync] mDNS lookup %s: %v", instance, err)
+			if ctx.Err() == nil {
+				log.Printf("[sync] mDNS lookup %s: %v", instance, err)
+			}
 		}
-		close(entries)
 	}()
 
 	select {
 	case entry, ok := <-entries:
 		if !ok {
+			<-lookupDone
 			return nil, fmt.Errorf("no mDNS entry for %s", instance)
 		}
+		log.Printf("[sync] resolved %s -> %s IPv4=%v", instance, entry.HostName, entry.AddrIPv4)
 		return entry, nil
 	case <-ctx.Done():
+		<-lookupDone
 		return nil, ctx.Err()
 	}
 }

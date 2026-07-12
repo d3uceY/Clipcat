@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-const heartbeatInterval = 30 * time.Second
+const heartbeatInterval = 60 * time.Second
 
 // OnReceiveCallback is called when a decrypted payload arrives from a peer.
 type OnReceiveCallback func(payload []byte)

@@ -1,7 +1,6 @@
 package sync
 
 import (
-	"log"
 	"sync"
 	"time"
 )
@@ -54,7 +53,6 @@ func (pm *PeerMap) AddOrUpdate(id, addr string) {
 		Addr:     addr,
 		LastSeen: time.Now(),
 	}
-	log.Printf("[sync] new peer %s at %s", id, addr)
 }
 
 // RecordFailure increments a peer's failure counter.  Returns true when
@@ -69,7 +67,6 @@ func (pm *PeerMap) RecordFailure(id string) bool {
 	}
 	p.failCount++
 	if p.failCount >= maxFailCount {
-		log.Printf("[sync] evicting peer %s after %d consecutive failures", id, p.failCount)
 		delete(pm.peers, id)
 		return true
 	}

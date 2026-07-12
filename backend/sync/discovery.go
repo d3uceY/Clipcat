@@ -56,7 +56,6 @@ func Announce(ctx context.Context, port int, instance string) error {
 		server.Shutdown()
 	}()
 
-	log.Printf("[sync] announcing as %s (%s) on port %d", instance, serviceType, port)
 	return nil
 }
 
@@ -75,8 +74,6 @@ func Browse(ctx context.Context, added chan<- Peer) error {
 
 	entries := make(chan *zeroconf.ServiceEntry, 10)
 
-	// Start Browse in background — it launches internal goroutines that
-	// send entries to the channel and returns right away.
 	if err := resolver.Browse(ctx, serviceType, domain, entries); err != nil {
 		return fmt.Errorf("sync mDNS browse: %w", err)
 	}
@@ -95,16 +92,11 @@ func Browse(ctx context.Context, added chan<- Peer) error {
 				continue
 			}
 
-			// Resolve the entry if we don't have IPs yet.
 			peer := resolveEntry(entry)
 			if peer == nil {
-				log.Printf("[sync] failed to resolve entry %q to a peer (no IPs)", entry.Instance)
 				continue
 			}
 
-			// Forward every entry to the added channel. The PeerMap's
-			// AddOrUpdate handles dedup by ID and refreshes LastSeen, which
-			// prevents the eviction ticker from dropping alive peers.
 			select {
 			case added <- *peer:
 			case <-ctx.Done():
@@ -163,7 +155,9 @@ func resolveInstance(instance string) (*zeroconf.ServiceEntry, error) {
 		// library's internal goroutines may still send after Lookup returns.
 		if err := resolver.Lookup(ctx, instance, serviceType, domain, entries); err != nil {
 			if ctx.Err() == nil {
-				log.Printf("[sync] mDNS lookup %s: %v", instance, err)
+				if ctx.Err() == nil {
+					log.Printf("[sync] mDNS lookup %s: %v", instance, err)
+				}
 			}
 		}
 	}()
@@ -174,7 +168,6 @@ func resolveInstance(instance string) (*zeroconf.ServiceEntry, error) {
 			<-lookupDone
 			return nil, fmt.Errorf("no mDNS entry for %s", instance)
 		}
-		log.Printf("[sync] resolved %s -> %s IPv4=%v", instance, entry.HostName, entry.AddrIPv4)
 		return entry, nil
 	case <-ctx.Done():
 		<-lookupDone

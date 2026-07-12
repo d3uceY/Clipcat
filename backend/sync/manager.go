@@ -59,16 +59,13 @@ func (m *Manager) Start() error {
 
 	ctx, cancel := context.WithCancel(context.Background())
 
-	// Channel for discovered peers from mDNS browse.
 	added := make(chan Peer, 10)
 
-	// Start mDNS announcement.
 	if err := Announce(ctx, Port, ""); err != nil {
 		cancel()
 		return err
 	}
 
-	// Start TCP listener.
 	go func() {
 		if err := Listen(ctx, Port, m.incoming); err != nil {
 			if ctx.Err() == nil {
@@ -77,7 +74,6 @@ func (m *Manager) Start() error {
 		}
 	}()
 
-	// Start mDNS browse.
 	go func() {
 		if err := Browse(ctx, added); err != nil {
 			if ctx.Err() == nil {
@@ -86,7 +82,6 @@ func (m *Manager) Start() error {
 		}
 	}()
 
-	// Event loop — processes incoming payloads and peer discoveries.
 	m.wg.Add(1)
 	go m.eventLoop(ctx, added)
 
@@ -99,7 +94,6 @@ func (m *Manager) Start() error {
 	m.cancel = cancel
 	m.mu.Unlock()
 
-	log.Printf("[sync] manager started")
 	return nil
 }
 
@@ -121,7 +115,6 @@ func (m *Manager) Stop() {
 	cancel()
 	m.wg.Wait()
 	m.peerMap.Stop()
-	log.Printf("[sync] manager stopped")
 }
 
 // Restart stops the manager with a new passphrase and starts it again.
@@ -162,7 +155,7 @@ func (m *Manager) Broadcast(payload []byte) {
 		if err := Send(ctx, p.Addr, ciphertext); err != nil {
 			log.Printf("[sync] send to %s (%s) failed: %v", p.ID, p.Addr, err)
 			if m.peerMap.RecordFailure(p.ID) {
-				log.Printf("[sync] evicted peer %s after 3 consecutive send failures", p.ID)
+				log.Printf("[sync] evicted peer %s (send failures)", p.ID)
 			}
 		} else {
 			m.peerMap.ResetFailures(p.ID)
@@ -183,8 +176,6 @@ func (m *Manager) Running() bool {
 	return m.running
 }
 
-// eventLoop processes incoming payloads and peer discoveries until ctx is
-// cancelled.
 func (m *Manager) eventLoop(ctx context.Context, added <-chan Peer) {
 	defer m.wg.Done()
 
@@ -238,7 +229,7 @@ func (m *Manager) checkPeers(ctx context.Context) {
 
 		if err != nil {
 			if m.peerMap.RecordFailure(p.ID) {
-				log.Printf("[sync] evicted peer %s after 3 consecutive heartbeat failures", p.ID)
+				log.Printf("[sync] evicted peer %s (heartbeat failures)", p.ID)
 			}
 		} else {
 			conn.Close()

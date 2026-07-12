@@ -77,8 +77,6 @@ func Listen(ctx context.Context, port int, incoming chan<- []byte) error {
 		listener.Close()
 	}()
 
-	log.Printf("[sync] listening on :%d", port)
-
 	for {
 		conn, err := listener.Accept()
 		if err != nil {

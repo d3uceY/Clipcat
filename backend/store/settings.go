@@ -105,3 +105,39 @@ func SetCursorSnap(enabled bool) error {
 	_, err := DB.Exec(`UPDATE settings SET cursor_snap = ? WHERE id = 0`, val)
 	return err
 }
+
+// GetSyncEnabled returns whether LAN sync is enabled.
+func GetSyncEnabled() (bool, error) {
+	var v int
+	err := DB.QueryRow(`SELECT sync_enabled FROM settings WHERE id = 0`).Scan(&v)
+	if err != nil {
+		return false, err
+	}
+	return v == 1, nil
+}
+
+// SetSyncEnabled persists the LAN sync enabled state.
+func SetSyncEnabled(enabled bool) error {
+	val := 0
+	if enabled {
+		val = 1
+	}
+	_, err := DB.Exec(`UPDATE settings SET sync_enabled = ? WHERE id = 0`, val)
+	return err
+}
+
+// GetSyncPassphrase returns the stored sync passphrase (empty string if none).
+func GetSyncPassphrase() (string, error) {
+	var v string
+	err := DB.QueryRow(`SELECT sync_passphrase FROM settings WHERE id = 0`).Scan(&v)
+	if err != nil {
+		return "", err
+	}
+	return v, nil
+}
+
+// SetSyncPassphrase persists the LAN sync passphrase.
+func SetSyncPassphrase(passphrase string) error {
+	_, err := DB.Exec(`UPDATE settings SET sync_passphrase = ? WHERE id = 0`, passphrase)
+	return err
+}

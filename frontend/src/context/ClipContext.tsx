@@ -1,4 +1,11 @@
-import { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+} from "react";
 import type { ReactNode } from "react";
 import {
   GetClips,
@@ -25,6 +32,9 @@ import {
   SetAlwaysOnTop,
   GetCursorSnap,
   SetCursorSnap,
+  GetSyncSettings,
+  SaveSyncSettings,
+  GetSyncPeerCount,
 } from "../../wailsjs/go/main/App";
 import { EventsOn } from "../../wailsjs/runtime";
 import { playSound } from "../helpers/playSound";
@@ -70,6 +80,10 @@ interface ClipContextType {
   // Smart Position (cursor-aware placement on Quick Paste summon)
   isCursorSnap: boolean;
   toggleCursorSnap: () => Promise<void>;
+  // LAN Sync
+  syncSettings: { enabled: boolean; passphrase: string; peerCount: number };
+  loadSyncSettings: () => Promise<void>;
+  saveSyncSettings: (enabled: boolean, passphrase: string) => Promise<void>;
 }
 
 const ClipContext = createContext<ClipContextType | undefined>(undefined);
@@ -94,12 +108,25 @@ export function ClipProvider({ children }: { children: ReactNode }) {
   const [autoHideSensitive, setAutoHideSensitive] = useState(true);
   const [isAlwaysOnTop, setIsAlwaysOnTop] = useState(false);
   const [isCursorSnap, setIsCursorSnap] = useState(true);
+  const [syncSettings, setSyncSettings] = useState<{
+    enabled: boolean;
+    passphrase: string;
+    peerCount: number;
+  }>({
+    enabled: false,
+    passphrase: "",
+    peerCount: 0,
+  });
 
   // Distinct labels derived from loaded clips - reactive, zero extra DB calls.
   const distinctLabels = useMemo(() => {
     const set = new Set<string>();
-    for (const c of clips.pinned) { if (c.label) set.add(c.label); }
-    for (const c of clips.recent) { if (c.label) set.add(c.label); }
+    for (const c of clips.pinned) {
+      if (c.label) set.add(c.label);
+    }
+    for (const c of clips.recent) {
+      if (c.label) set.add(c.label);
+    }
     return Array.from(set).sort();
   }, [clips]);
 
@@ -107,15 +134,15 @@ export function ClipProvider({ children }: { children: ReactNode }) {
 
   // Prune selected filters when their label no longer exists.
   useEffect(() => {
-    setActiveLabels(prev => {
-      const next = prev.filter(l => distinctLabels.includes(l));
+    setActiveLabels((prev) => {
+      const next = prev.filter((l) => distinctLabels.includes(l));
       return next.length === prev.length ? prev : next;
     });
   }, [distinctLabels]);
 
   const toggleLabelFilter = useCallback((label: string) => {
-    setActiveLabels(prev =>
-      prev.includes(label) ? prev.filter(l => l !== label) : [...prev, label]
+    setActiveLabels((prev) =>
+      prev.includes(label) ? prev.filter((l) => l !== label) : [...prev, label],
     );
   }, []);
 
@@ -154,6 +181,28 @@ export function ClipProvider({ children }: { children: ReactNode }) {
     const next = !isCursorSnap;
     await SetCursorSnap(next);
     setIsCursorSnap(next);
+  };
+
+  /* ===============================
+        LAN SYNC FUNCTIONS
+       ===============================
+    */
+  const loadSyncSettings = async () => {
+    try {
+      const settings = await GetSyncSettings();
+      setSyncSettings({
+        enabled: settings.enabled,
+        passphrase: settings.passphrase,
+        peerCount: settings.peerCount,
+      });
+    } catch (err) {
+      console.error("Failed to load sync settings:", err);
+    }
+  };
+
+  const saveSyncSettings = async (enabled: boolean, passphrase: string) => {
+    await SaveSyncSettings(enabled, passphrase);
+    await loadSyncSettings();
   };
 
   /* ===============================
@@ -256,13 +305,11 @@ export function ClipProvider({ children }: { children: ReactNode }) {
   };
 
   const renameClip = async (id: string, label: string) => {
-    const clipId = Number(id.replace('clip_', ''));
+    const clipId = Number(id.replace("clip_", ""));
     await RenameClip(clipId, label);
     setClips((prev) => {
       const update = (clips: Clip[]) =>
-        clips.map((c) =>
-          c.id === id ? { ...c, label } : c
-        );
+        clips.map((c) => (c.id === id ? { ...c, label } : c));
       return { pinned: update(prev.pinned), recent: update(prev.recent) };
     });
   };
@@ -274,22 +321,22 @@ export function ClipProvider({ children }: { children: ReactNode }) {
   };
 
   const unhideClip = async (id: string) => {
-    const clipId = Number(id.replace('clip_', ''));
+    const clipId = Number(id.replace("clip_", ""));
     await UnhideClip(clipId);
     // Optimistic update - the event also covers us.
     setClips((prev) => {
       const update = (clips: Clip[]) =>
-        clips.map((c) => c.id === id ? { ...c, isHidden: false } : c);
+        clips.map((c) => (c.id === id ? { ...c, isHidden: false } : c));
       return { pinned: update(prev.pinned), recent: update(prev.recent) };
     });
   };
 
   const hideClip = async (id: string) => {
-    const clipId = Number(id.replace('clip_', ''));
+    const clipId = Number(id.replace("clip_", ""));
     await HideClip(clipId);
     setClips((prev) => {
       const update = (clips: Clip[]) =>
-        clips.map((c) => c.id === id ? { ...c, isHidden: true } : c);
+        clips.map((c) => (c.id === id ? { ...c, isHidden: true } : c));
       return { pinned: update(prev.pinned), recent: update(prev.recent) };
     });
   };
@@ -340,6 +387,7 @@ export function ClipProvider({ children }: { children: ReactNode }) {
     IsMiniClip()
       .then((v) => setIsMiniClip(v ?? false))
       .catch(() => {});
+    loadSyncSettings();
 
     const offAdded = EventsOn("clip:added", (clip: Clip) => {
       setClips((prev) => {
@@ -364,33 +412,43 @@ export function ClipProvider({ children }: { children: ReactNode }) {
       }));
     });
 
-    const offUpdated = EventsOn("clip:updated", (data: { id: string; content: string; length: number }) => {
-      setClips((prev) => {
-        const update = (clips: Clip[]) =>
-          clips.map((c) =>
-            c.id === data.id ? { ...c, content: data.content, length: data.length } : c
-          );
-        return { pinned: update(prev.pinned), recent: update(prev.recent) };
-      });
-    });
+    const offUpdated = EventsOn(
+      "clip:updated",
+      (data: { id: string; content: string; length: number }) => {
+        setClips((prev) => {
+          const update = (clips: Clip[]) =>
+            clips.map((c) =>
+              c.id === data.id
+                ? { ...c, content: data.content, length: data.length }
+                : c,
+            );
+          return { pinned: update(prev.pinned), recent: update(prev.recent) };
+        });
+      },
+    );
 
-    const offPinToggled = EventsOn("clip:pinToggled", (data: { id: string; isPinned: boolean }) => {
-      setClips((prev) => {
-        const clip = prev.pinned.find((c) => c.id === data.id) ?? prev.recent.find((c) => c.id === data.id);
-        if (!clip) return prev;
-        const updated = { ...clip, isPinned: data.isPinned };
-        if (data.isPinned) {
+    const offPinToggled = EventsOn(
+      "clip:pinToggled",
+      (data: { id: string; isPinned: boolean }) => {
+        setClips((prev) => {
+          const clip =
+            prev.pinned.find((c) => c.id === data.id) ??
+            prev.recent.find((c) => c.id === data.id);
+          if (!clip) return prev;
+          const updated = { ...clip, isPinned: data.isPinned };
+          if (data.isPinned) {
+            return {
+              pinned: [updated, ...prev.pinned.filter((c) => c.id !== data.id)],
+              recent: prev.recent.filter((c) => c.id !== data.id),
+            };
+          }
           return {
-            pinned: [updated, ...prev.pinned.filter((c) => c.id !== data.id)],
-            recent: prev.recent.filter((c) => c.id !== data.id),
+            pinned: prev.pinned.filter((c) => c.id !== data.id),
+            recent: [updated, ...prev.recent.filter((c) => c.id !== data.id)],
           };
-        }
-        return {
-          pinned: prev.pinned.filter((c) => c.id !== data.id),
-          recent: [updated, ...prev.recent.filter((c) => c.id !== data.id)],
-        };
-      });
-    });
+        });
+      },
+    );
 
     // Fallback for bulk operations (delete all, etc.)
     const offChanged = EventsOn("clipboard:changed", () => {
@@ -408,7 +466,7 @@ export function ClipProvider({ children }: { children: ReactNode }) {
     const offUnhidden = EventsOn("clip:unhidden", (id: string) => {
       setClips((prev) => {
         const update = (clips: Clip[]) =>
-          clips.map((c) => c.id === id ? { ...c, isHidden: false } : c);
+          clips.map((c) => (c.id === id ? { ...c, isHidden: false } : c));
         return { pinned: update(prev.pinned), recent: update(prev.recent) };
       });
     });
@@ -416,13 +474,17 @@ export function ClipProvider({ children }: { children: ReactNode }) {
     const offHidden = EventsOn("clip:hidden", (id: string) => {
       setClips((prev) => {
         const update = (clips: Clip[]) =>
-          clips.map((c) => c.id === id ? { ...c, isHidden: true } : c);
+          clips.map((c) => (c.id === id ? { ...c, isHidden: true } : c));
         return { pinned: update(prev.pinned), recent: update(prev.recent) };
       });
     });
 
     const offSensitive = EventsOn("sensitive:detected", () => {
-      playSound("/sounds/notification.wav", localStorage.getItem("soundOn") !== "false", 1);
+      playSound(
+        "/sounds/notification.wav",
+        localStorage.getItem("soundOn") !== "false",
+        1,
+      );
     });
 
     return () => {
@@ -465,6 +527,28 @@ export function ClipProvider({ children }: { children: ReactNode }) {
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [toggleMiniClip, toggleSound, toggleHideContent]);
+
+  /* ===============================
+        LAN SYNC PEER COUNT POLLING
+       ===============================
+    */
+  useEffect(() => {
+    if (!syncSettings.enabled) return;
+
+    const poll = async () => {
+      try {
+        const count = await GetSyncPeerCount();
+        setSyncSettings((prev) => ({ ...prev, peerCount: count }));
+      } catch {
+        // silently skip
+      }
+    };
+
+    const interval = setInterval(poll, 5000);
+    poll(); // immediate first poll
+
+    return () => clearInterval(interval);
+  }, [syncSettings.enabled]);
 
   return (
     <ClipContext.Provider
@@ -513,6 +597,10 @@ export function ClipProvider({ children }: { children: ReactNode }) {
         // SMART POSITION
         isCursorSnap,
         toggleCursorSnap,
+        // LAN SYNC
+        syncSettings,
+        loadSyncSettings,
+        saveSyncSettings,
       }}
     >
       {children}

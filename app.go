@@ -6,6 +6,7 @@ import (
 	"Clipcat/backend/lib/startup"
 	"Clipcat/backend/lib/winpos"
 	"Clipcat/backend/store"
+	lansync "Clipcat/backend/sync"
 	"Clipcat/backend/tray"
 	"bytes"
 	"context"
@@ -30,6 +31,9 @@ type App struct {
 	lastMu    sync.Mutex
 	lastText  string
 	lastImage []byte
+
+	// LAN sync
+	syncManager *lansync.Manager
 }
 
 // NewApp creates a new App application struct
@@ -107,6 +111,13 @@ func (a *App) startup(ctx context.Context) {
 	a.startTray()
 
 	clipboard.StartClipboardListener(a.onClipboardChange, a.onHotkeyFired)
+
+	// Start LAN sync if enabled.
+	if enabled, _ := store.GetSyncEnabled(); enabled {
+		if passphrase, _ := store.GetSyncPassphrase(); passphrase != "" {
+			a.startSyncManager(passphrase)
+		}
+	}
 }
 
 func getAppDataDir() (string, error) {
@@ -134,24 +145,39 @@ func (a *App) onClipboardChange() {
 	}
 	defer clipChangeMu.Unlock()
 
-	if img := gclip.Read(gclip.FmtImage); img != nil {
+	// Use clipboard.Read* which are safe across all platforms:
+	// - Linux: uses own X11 select()-based read with 5s timeout
+	// - macOS/Windows: uses gclip.Read (safe on those platforms)
+	if img := clipboard.ReadImage(); img != nil {
 		a.handleImageClip(img)
 		return
 	}
-	if text := string(gclip.Read(gclip.FmtText)); text != "" {
+	if text := clipboard.ReadText(); text != "" {
 		a.handleTextClip(text)
 	}
 }
 
 func (a *App) handleImageClip(img []byte) {
 	a.lastMu.Lock()
-	if bytes.Equal(a.lastImage, img) {
-		a.lastMu.Unlock()
-		return
-	}
+	isDup := bytes.Equal(a.lastImage, img)
 	a.lastImage = img
 	a.lastText = ""
 	a.lastMu.Unlock()
+
+	if isDup {
+		// Still add — AddImageClip handles re-insert at top.
+		// Skip broadcast since peers already have it.
+		clip, prunedIDs, deletedID, _, _ := store.AddImageClip(img)
+		if a.ctx != nil {
+			if deletedID > 0 {
+				runtime.EventsEmit(a.ctx, "clip:deleted", fmt.Sprintf("clip_%03d", deletedID))
+			}
+			if clip != nil {
+				a.emitClipAdded(clip, prunedIDs)
+			}
+		}
+		return
+	}
 
 	clip, prunedIDs, deletedID, inserted, err := store.AddImageClip(img)
 	if err != nil {
@@ -163,17 +189,31 @@ func (a *App) handleImageClip(img []byte) {
 	if a.ctx != nil && inserted {
 		a.emitClipAdded(clip, prunedIDs)
 	}
+
+	if inserted && clip != nil {
+		a.broadcastImageClip(img)
+	}
 }
 
 func (a *App) handleTextClip(text string) {
 	a.lastMu.Lock()
-	if a.lastText == text {
-		a.lastMu.Unlock()
-		return
-	}
+	isDup := a.lastText == text
 	a.lastText = text
 	a.lastImage = nil
 	a.lastMu.Unlock()
+
+	if isDup {
+		clip, prunedIDs, deletedID, _, _ := store.AddClip(text, "text")
+		if a.ctx != nil {
+			if deletedID > 0 {
+				runtime.EventsEmit(a.ctx, "clip:deleted", fmt.Sprintf("clip_%03d", deletedID))
+			}
+			if clip != nil {
+				a.emitClipAdded(clip, prunedIDs)
+			}
+		}
+		return
+	}
 
 	clip, prunedIDs, deletedID, inserted, err := store.AddClip(text, "text")
 	if err != nil {
@@ -185,6 +225,10 @@ func (a *App) handleTextClip(text string) {
 	}
 	if a.ctx != nil && inserted {
 		a.emitClipAdded(clip, prunedIDs)
+	}
+
+	if inserted && clip != nil {
+		a.broadcastTextClip(text)
 	}
 }
 
@@ -199,6 +243,136 @@ func (a *App) emitClipAdded(clip *store.Clip, prunedIDs []int) {
 		}
 		runtime.EventsEmit(a.ctx, "clip:pruned", prunedStrs)
 	}
+}
+
+// ── LAN Sync Helpers ──────────────────────────────────────────────────────
+
+// startSyncManager creates and starts the LAN sync manager with the given
+// passphrase.  The onReceive callback inserts incoming clips from the
+// network (with source='network') and emits a clip:added event so the
+// frontend picks them up.
+func (a *App) startSyncManager(passphrase string) {
+	mgr := lansync.NewManager(passphrase)
+	mgr.SetOnReceive(func(payload []byte) {
+		a.onReceiveClip(payload)
+	})
+	if err := mgr.Start(); err != nil {
+		fmt.Println("[sync] failed to start:", err)
+		return
+	}
+	a.syncManager = mgr
+}
+
+// onReceiveClip handles a decrypted payload from the network.  The first
+// byte is the clip type (0=text, 1=image), the rest is the content.
+func (a *App) onReceiveClip(payload []byte) {
+	if len(payload) == 0 {
+		return
+	}
+
+	switch payload[0] {
+	case 0: // text
+		text := string(payload[1:])
+		clip, err := store.AddNetworkClip(text, "text", nil)
+		if err != nil {
+			fmt.Println("[sync] failed to save network text:", err)
+			return
+		}
+		if a.ctx != nil {
+			runtime.EventsEmit(a.ctx, "clip:added", clip)
+		}
+
+	case 1: // image
+		img := payload[1:]
+		clip, err := store.AddNetworkClip("", "image", img)
+		if err != nil {
+			fmt.Println("[sync] failed to save network image:", err)
+			return
+		}
+		if a.ctx != nil {
+			runtime.EventsEmit(a.ctx, "clip:added", clip)
+		}
+	}
+}
+
+// broadcastTextClip sends a text clip to all LAN peers.
+func (a *App) broadcastTextClip(text string) {
+	if a.syncManager == nil {
+		return
+	}
+	envelope := append([]byte{0}, []byte(text)...)
+	a.syncManager.Broadcast(envelope)
+}
+
+// broadcastImageClip sends an image clip to all LAN peers.
+func (a *App) broadcastImageClip(img []byte) {
+	if a.syncManager == nil {
+		return
+	}
+	envelope := append([]byte{1}, img...)
+	a.syncManager.Broadcast(envelope)
+}
+
+// ── LAN Sync Bindings ─────────────────────────────────────────────────────
+
+// SyncSettings holds the frontend-facing LAN sync configuration.
+type SyncSettings struct {
+	Enabled    bool   `json:"enabled"`
+	Passphrase string `json:"passphrase"`
+	PeerCount  int    `json:"peerCount"`
+}
+
+// GetSyncSettings returns the current sync configuration.
+func (a *App) GetSyncSettings() (SyncSettings, error) {
+	enabled, err := store.GetSyncEnabled()
+	if err != nil {
+		return SyncSettings{}, err
+	}
+	passphrase, err := store.GetSyncPassphrase()
+	if err != nil {
+		return SyncSettings{}, err
+	}
+	peerCount := 0
+	if a.syncManager != nil {
+		peerCount = a.syncManager.PeerCount()
+	}
+	return SyncSettings{
+		Enabled:    enabled,
+		Passphrase: passphrase,
+		PeerCount:  peerCount,
+	}, nil
+}
+
+// SaveSyncSettings persists the sync configuration and starts or stops the
+// sync manager accordingly.
+func (a *App) SaveSyncSettings(enabled bool, passphrase string) error {
+	if err := store.SetSyncEnabled(enabled); err != nil {
+		return err
+	}
+	if err := store.SetSyncPassphrase(passphrase); err != nil {
+		return err
+	}
+
+	// Stop the current manager if running.
+	if a.syncManager != nil {
+		a.syncManager.Stop()
+		a.syncManager = nil
+	}
+
+	// Start a new manager if enabled and a passphrase is set.
+	if enabled && passphrase != "" {
+		a.startSyncManager(passphrase)
+	}
+
+	return nil
+}
+
+// GetSyncPeerCount returns the number of currently connected LAN peers.
+func (a *App) GetSyncPeerCount() int {
+	if a.syncManager == nil {
+		return 0
+	}
+	return a.syncManager.PeerCount()
 }
 
 // onHotkeyFired is called when the user presses Ctrl+Shift+V. It shows the

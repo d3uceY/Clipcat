@@ -1,11 +1,12 @@
 export interface Clip {
-  id: string
-  content?: string
-  length: number
-  isPinned: boolean
-  createdAt: string
-  image?: string
-  type: string
-  label: string
-  isHidden: boolean
+  id: string;
+  content?: string;
+  length: number;
+  isPinned: boolean;
+  createdAt: string;
+  image?: string;
+  type: string;
+  label: string;
+  isHidden: boolean;
+  source?: string; // "local" (default) or "network"
 }

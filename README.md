@@ -9,13 +9,10 @@ A stylish clipboard manager that automatically saves everything you copy - text 
 
 <img width="1917" height="1026" alt="image" src="https://github.com/user-attachments/assets/b836545a-0bdd-496f-b3da-f722199357e4" />
 
-
-
 ## Documentation
 
 Full documentation, feature guides, and keyboard shortcuts are available at:
 **[d3ucey.github.io/Clipcat](https://d3ucey.github.io/Clipcat/)**
-
 
 ## Download
 
@@ -38,6 +35,7 @@ Full documentation, feature guides, and keyboard shortcuts are available at:
 Clipcat is not code-signed, so each platform may warn you on first launch. The app is safe and fully open source - you can read every line of code here.
 
 **Windows - SmartScreen**
+
 1. Click **More info**
 2. Click **Run anyway**
 
@@ -52,15 +50,24 @@ Clipcat also requires **Accessibility** permission to simulate paste (Cmd+V). Gr
 **Linux**
 
 Make the binary executable before running:
+
 ```bash
 chmod +x Clipcat-linux-amd64
 ./Clipcat-linux-amd64
 ```
+
 Requires `xdotool` at runtime for window focus and paste simulation:
+
 ```bash
 sudo apt install xdotool
 ```
 
+Clipcat bundles its own clipboard monitoring — XFixes extension on X11 (event-driven) and wl-clipboard on Wayland (polling).
+
+If you're on **Wayland** (e.g. COSMIC, GNOME on Wayland), also install:
+```bash
+sudo apt install wl-clipboard
+```
 
 ## Features
 
@@ -101,28 +108,25 @@ sudo apt install xdotool
 
 - **Unique Paper Aesthetic** - Hand-drawn notebook-style UI with GSAP animations and a paper curtain reveal on launch
 
-
 ## Keyboard Shortcuts
 
-| Shortcut | Action |
-|---|---|
+| Shortcut           | Action                                            |
+| ------------------ | ------------------------------------------------- |
 | `Ctrl + Shift + V` | Summon Clipcat from any application (system-wide) |
-| `Ctrl + F` | Focus the search bar |
-| `Alt + M` | Toggle Mini Clip mode |
-| `Alt + H` | Toggle Privacy Mode |
-| `Alt + S` | Toggle sound effects |
-
+| `Ctrl + F`         | Focus the search bar                              |
+| `Alt + M`          | Toggle Mini Clip mode                             |
+| `Alt + H`          | Toggle Privacy Mode                               |
+| `Alt + S`          | Toggle sound effects                              |
 
 ## Your Clips Are Stored Here
 
-| Platform | Path |
-|---|---|
-| Windows | `%APPDATA%\clipussy\db\gyatt.db` |
-| macOS | `~/Library/Application Support/clipussy/db/gyatt.db` |
-| Linux | `~/.config/clipussy/db/gyatt.db` |
+| Platform | Path                                                 |
+| -------- | ---------------------------------------------------- |
+| Windows  | `%APPDATA%\clipussy\db\gyatt.db`                     |
+| macOS    | `~/Library/Application Support/clipussy/db/gyatt.db` |
+| Linux    | `~/.config/clipussy/db/gyatt.db`                     |
 
 It's a local SQLite file - no cloud, no account, no tracking.
-
 
 ## Built With
 
@@ -130,23 +134,19 @@ It's a local SQLite file - no cloud, no account, no tracking.
 
 **Frontend:** React 18 · TypeScript · Tailwind CSS · shadcn/ui · GSAP
 
-
 ## Contributing
 
 Have an idea or found a bug? Contributions are welcome.
 
 See **[CONTRIBUTING.md](./CONTRIBUTING.md)** for how to set up the project locally, the code structure, and how to submit a PR.
 
-
 ## Author
 
 **Onyekwelu Jesse** ([@d3uceY](https://github.com/d3uceY))
 
-
 ## License
 
 MIT
-
 
 ## Acknowledgments
 

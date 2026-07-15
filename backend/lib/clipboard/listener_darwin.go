@@ -29,6 +29,17 @@ func darwinHotkeyFired() {
 	}
 }
 
+// ReadText reads the current clipboard text. Uses gclip.Read which is safe
+// on macOS (uses Carbon pasteboard change count, no risk of hanging).
+func ReadText() string {
+	return string(gclip.Read(gclip.FmtText))
+}
+
+// ReadImage reads the current clipboard image. Returns nil if no image.
+func ReadImage() []byte {
+	return gclip.Read(gclip.FmtImage)
+}
+
 // StartClipboardListener starts clipboard monitoring and registers a global
 // Cmd+Shift+V hotkey via Carbon. The hotkey registration is best-effort;
 // clipboard monitoring works regardless.

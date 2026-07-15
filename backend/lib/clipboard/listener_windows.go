@@ -9,6 +9,7 @@ import (
 	"unsafe"
 
 	"github.com/lxn/win"
+	gclip "golang.design/x/clipboard"
 )
 
 const (
@@ -149,4 +150,15 @@ func runMessagePump() {
 	// DestroyWindow also automatically removes the clipboard format listener.
 	procUnregisterHotKey.Call(uintptr(hwnd), hotkeyID)
 	win.DestroyWindow(hwnd)
+}
+
+// ReadText reads the current clipboard text. Uses gclip.Read which is safe
+// on Windows (uses GetClipboardSequenceNumber, no risk of hanging).
+func ReadText() string {
+	return string(gclip.Read(gclip.FmtText))
+}
+
+// ReadImage reads the current clipboard image. Returns nil if no image.
+func ReadImage() []byte {
+	return gclip.Read(gclip.FmtImage)
 }

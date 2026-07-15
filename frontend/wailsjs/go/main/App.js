@@ -78,6 +78,14 @@ export function GetStorageLimit() {
   return window['go']['main']['App']['GetStorageLimit']();
 }
 
+export function GetSyncPeerCount() {
+  return window['go']['main']['App']['GetSyncPeerCount']();
+}
+
+export function GetSyncSettings() {
+  return window['go']['main']['App']['GetSyncSettings']();
+}
+
 export function GetVersion() {
   return window['go']['main']['App']['GetVersion']();
 }
@@ -124,6 +132,10 @@ export function RenameClip(arg1, arg2) {
 
 export function ResumeCapture() {
   return window['go']['main']['App']['ResumeCapture']();
+}
+
+export function SaveSyncSettings(arg1, arg2) {
+  return window['go']['main']['App']['SaveSyncSettings'](arg1, arg2);
 }
 
 export function SetAlwaysOnTop(arg1) {

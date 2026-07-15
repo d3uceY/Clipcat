@@ -1,7 +1,7 @@
 import { Pin, Trash2, ShieldCheck } from "lucide-react"
 import { useState, memo } from "react"
 import type { Clip } from '../../types/clip'
-import { TogglePin, Delete, PasteToWindow, FocusAndPaste, GetClipImage } from "../../wailsjs/go/main/App"
+import { TogglePin, Delete, PasteToWindow, FocusAndPaste, GetClipImage } from "../../bindings/Clipcat/app"
 import { useClips } from "@/context/ClipContext"
 import { playSound } from "@/helpers/playSound"
 

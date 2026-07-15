@@ -6,8 +6,6 @@ import (
 	_ "embed"
 
 	"Clipcat/backend/tray"
-
-	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 //go:embed build/appicon.png
@@ -17,16 +15,12 @@ func (a *App) startTray() {
 	tray.Start(
 		trayIcon,
 		func() {
-			if a.ctx != nil {
-				runtime.WindowShow(a.ctx)
-				runtime.WindowSetAlwaysOnTop(a.ctx, true)
-				runtime.WindowSetAlwaysOnTop(a.ctx, false)
-			}
+			a.window.Show()
+			a.window.SetAlwaysOnTop(true)
+			a.window.SetAlwaysOnTop(false)
 		},
 		func() {
-			if a.ctx != nil {
-				runtime.Quit(a.ctx)
-			}
+			a.app.Quit()
 		},
 	)
 }

@@ -53,14 +53,14 @@ jobs:
           echo "PKG_CONFIG_PATH=/usr/local/lib/pkgconfig" >> "$GITHUB_ENV"
 
       - name: Install Wails
-        run: go install github.com/wailsapp/wails/v2/cmd/wails@v2.12.0
+        run: go install github.com/wailsapp/wails/v3/cmd/wails3@latest
 
       - name: Install frontend dependencies
         run: npm install
         working-directory: frontend
 
       - name: Build
-        run: wails build -clean -tags webkit2gtk_4_1 -o Clipcat-linux-amd64
+        run: wails3 build -clean -tags webkit2gtk_4_1 -o Clipcat-linux-amd64
 
       - name: Rename Linux binary
         run: |
@@ -95,14 +95,14 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install Wails
-        run: go install github.com/wailsapp/wails/v2/cmd/wails@v2.12.0
+        run: go install github.com/wailsapp/wails/v3/cmd/wails3@latest
 
       - name: Install frontend dependencies
         run: npm install
         working-directory: frontend
 
       - name: Build macOS ARM64
-        run: wails build -clean -platform darwin/arm64 -o Clipcat-macos-arm64
+        run: wails3 build -clean -platform darwin/arm64 -o Clipcat-macos-arm64
 
       - name: Package ARM64 DMG
         run: |
@@ -120,7 +120,7 @@ jobs:
             artifacts/Clipcat-macos-arm64.dmg
 
       - name: Build macOS AMD64
-        run: wails build -clean -platform darwin/amd64 -o Clipcat-macos-amd64
+        run: wails3 build -clean -platform darwin/amd64 -o Clipcat-macos-amd64
 
       - name: Package AMD64 DMG
         run: |
@@ -182,14 +182,14 @@ jobs:
           Write-Host "Using makensis at $($makensis.Source)"
 
       - name: Install Wails
-        run: go install github.com/wailsapp/wails/v2/cmd/wails@v2.12.0
+        run: go install github.com/wailsapp/wails/v3/cmd/wails3@latest
 
       - name: Install frontend dependencies
         run: npm install
         working-directory: frontend
 
       - name: Build
-        run: wails build -clean -nsis -o Clipcat-windows-amd64
+        run: wails3 build -clean -nsis -o Clipcat-windows-amd64
 
       - name: Rename Windows outputs
         shell: pwsh

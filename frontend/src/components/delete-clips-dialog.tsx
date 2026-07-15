@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { createPortal } from "react-dom";
 import DeleteButton from "./delete-button";
-import { DeleteAllClips, DeletePinnedClips, DeleteUnpinnedClips } from "../../wailsjs/go/main/App";
+import { DeleteAllClips, DeletePinnedClips, DeleteUnpinnedClips } from "../../bindings/Clipcat/app";
 import { useGSAP } from "@gsap/react";
 import { gsap } from "gsap";
 import { useClips } from "@/context/ClipContext";

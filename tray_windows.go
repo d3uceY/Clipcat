@@ -8,8 +8,6 @@ import (
 	"Clipcat/backend/lib/clipboard"
 	"Clipcat/backend/store"
 	"Clipcat/backend/tray"
-
-	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 //go:embed build/windows/icon.ico
@@ -19,16 +17,12 @@ func (a *App) startTray() {
 	tray.Start(tray.Options{
 		IconBytes: trayIcon,
 		OnShow: func() {
-			if a.ctx != nil {
-				runtime.WindowShow(a.ctx)
-				runtime.WindowSetAlwaysOnTop(a.ctx, true)
-				runtime.WindowSetAlwaysOnTop(a.ctx, false)
-			}
+			a.window.Show()
+			a.window.SetAlwaysOnTop(true)
+			a.window.SetAlwaysOnTop(false)
 		},
 		OnQuit: func() {
-			if a.ctx != nil {
-				runtime.Quit(a.ctx)
-			}
+			a.app.Quit()
 		},
 		GetQuickPaste: func() bool {
 			v, _ := store.GetQuickPaste()

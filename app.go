@@ -17,13 +17,17 @@ import (
 	"sync"
 	"time"
 
-	"github.com/wailsapp/wails/v2/pkg/runtime"
+	"github.com/wailsapp/wails/v3/pkg/application"
+	"github.com/wailsapp/wails/v3/pkg/services/notifications"
 	gclip "golang.design/x/clipboard"
 )
 
 // App struct
 type App struct {
-	ctx        context.Context
+	app    *application.App
+	window *application.WebviewWindow
+	notif  *notifications.NotificationService
+
 	isMiniClip bool
 
 	// In-memory last-clip cache - avoids a DB round-trip for back-to-back
@@ -37,8 +41,8 @@ type App struct {
 }
 
 // NewApp creates a new App application struct
-func NewApp() *App {
-	return &App{}
+func NewApp(app *application.App, window *application.WebviewWindow, notif *notifications.NotificationService) *App {
+	return &App{app: app, window: window, notif: notif}
 }
 
 // exposes app version to frontend
@@ -51,27 +55,10 @@ func (a *App) GetPlatform() string {
 	return lib.GetPlatform()
 }
 
-// domReady is called after the frontend DOM is fully loaded.
-// We show the window here (instead of in startup) so it only
-// becomes visible once React has rendered - no white flash.
-func (a *App) domReady(ctx context.Context) {
-	// Restore window state before showing - applied while window is still hidden
-	// so there is no visible repaint or resize flash.
-	if alwaysOnTop, err := store.GetAlwaysOnTop(); err == nil && alwaysOnTop {
-		runtime.WindowSetAlwaysOnTop(a.ctx, true)
-	}
-	if miniClip, err := store.GetMiniClip(); err == nil && miniClip {
-		a.makeMiniClip(true)
-	}
-
-	runtime.WindowShow(a.ctx)
-}
-
-// startup is called when the app starts. The context is saved
-// so we can call the runtime methods
-func (a *App) startup(ctx context.Context) {
-	a.ctx = ctx
-	store.SetAppCtx(ctx)
+// ServiceStartup is called when the app starts. It replaces the v2 startup+domReady callbacks.
+func (a *App) ServiceStartup(ctx context.Context, options application.ServiceOptions) error {
+	store.SetAppInstance(a.app)
+	store.SetNotifService(a.notif)
 
 	// initialize clipboard
 	if err := gclip.Init(); err != nil {
@@ -118,6 +105,16 @@ func (a *App) startup(ctx context.Context) {
 			a.startSyncManager(passphrase)
 		}
 	}
+
+	// Restore window state before the event loop shows it.
+	if alwaysOnTop, err := store.GetAlwaysOnTop(); err == nil && alwaysOnTop {
+		a.window.SetAlwaysOnTop(true)
+	}
+	if miniClip, err := store.GetMiniClip(); err == nil && miniClip {
+		a.makeMiniClip(true)
+	}
+
+	return nil
 }
 
 func getAppDataDir() (string, error) {
@@ -168,13 +165,11 @@ func (a *App) handleImageClip(img []byte) {
 		// Still add — AddImageClip handles re-insert at top.
 		// Skip broadcast since peers already have it.
 		clip, prunedIDs, deletedID, _, _ := store.AddImageClip(img)
-		if a.ctx != nil {
-			if deletedID > 0 {
-				runtime.EventsEmit(a.ctx, "clip:deleted", fmt.Sprintf("clip_%03d", deletedID))
-			}
-			if clip != nil {
-				a.emitClipAdded(clip, prunedIDs)
-			}
+		if deletedID > 0 {
+			a.app.Event.Emit("clip:deleted", fmt.Sprintf("clip_%03d", deletedID))
+		}
+		if clip != nil {
+			a.emitClipAdded(clip, prunedIDs)
 		}
 		return
 	}
@@ -183,10 +178,10 @@ func (a *App) handleImageClip(img []byte) {
 	if err != nil {
 		fmt.Println("failed to save image:", err)
 	}
-	if a.ctx != nil && deletedID > 0 {
-		runtime.EventsEmit(a.ctx, "clip:deleted", fmt.Sprintf("clip_%03d", deletedID))
+	if deletedID > 0 {
+		a.app.Event.Emit("clip:deleted", fmt.Sprintf("clip_%03d", deletedID))
 	}
-	if a.ctx != nil && inserted {
+	if inserted {
 		a.emitClipAdded(clip, prunedIDs)
 	}
 
@@ -204,13 +199,11 @@ func (a *App) handleTextClip(text string) {
 
 	if isDup {
 		clip, prunedIDs, deletedID, _, _ := store.AddClip(text, "text")
-		if a.ctx != nil {
-			if deletedID > 0 {
-				runtime.EventsEmit(a.ctx, "clip:deleted", fmt.Sprintf("clip_%03d", deletedID))
-			}
-			if clip != nil {
-				a.emitClipAdded(clip, prunedIDs)
-			}
+		if deletedID > 0 {
+			a.app.Event.Emit("clip:deleted", fmt.Sprintf("clip_%03d", deletedID))
+		}
+		if clip != nil {
+			a.emitClipAdded(clip, prunedIDs)
 		}
 		return
 	}
@@ -220,10 +213,10 @@ func (a *App) handleTextClip(text string) {
 		fmt.Println("failed to save text:", err)
 		return
 	}
-	if a.ctx != nil && deletedID > 0 {
-		runtime.EventsEmit(a.ctx, "clip:deleted", fmt.Sprintf("clip_%03d", deletedID))
+	if deletedID > 0 {
+		a.app.Event.Emit("clip:deleted", fmt.Sprintf("clip_%03d", deletedID))
 	}
-	if a.ctx != nil && inserted {
+	if inserted {
 		a.emitClipAdded(clip, prunedIDs)
 	}
 
@@ -234,14 +227,14 @@ func (a *App) handleTextClip(text string) {
 
 func (a *App) emitClipAdded(clip *store.Clip, prunedIDs []int) {
 	if clip != nil {
-		runtime.EventsEmit(a.ctx, "clip:added", clip)
+		a.app.Event.Emit("clip:added", clip)
 	}
 	if len(prunedIDs) > 0 {
 		prunedStrs := make([]string, len(prunedIDs))
 		for i, pid := range prunedIDs {
 			prunedStrs[i] = fmt.Sprintf("clip_%03d", pid)
 		}
-		runtime.EventsEmit(a.ctx, "clip:pruned", prunedStrs)
+		a.app.Event.Emit("clip:pruned", prunedStrs)
 	}
 }
 
@@ -278,9 +271,7 @@ func (a *App) onReceiveClip(payload []byte) {
 			fmt.Println("[sync] failed to save network text:", err)
 			return
 		}
-		if a.ctx != nil {
-			runtime.EventsEmit(a.ctx, "clip:added", clip)
-		}
+		a.app.Event.Emit("clip:added", clip)
 
 	case 1: // image
 		img := payload[1:]
@@ -289,9 +280,7 @@ func (a *App) onReceiveClip(payload []byte) {
 			fmt.Println("[sync] failed to save network image:", err)
 			return
 		}
-		if a.ctx != nil {
-			runtime.EventsEmit(a.ctx, "clip:added", clip)
-		}
+		a.app.Event.Emit("clip:added", clip)
 	}
 }
 
@@ -378,14 +367,10 @@ func (a *App) GetSyncPeerCount() int {
 // onHotkeyFired is called when the user presses Ctrl+Shift+V. It shows the
 // Clipcat window, optionally repositioning it near the cursor first.
 func (a *App) onHotkeyFired() {
-	if a.ctx == nil {
-		return
-	}
-
 	quickPaste, _ := store.GetQuickPaste()
 	if cursorSnap, _ := store.GetCursorSnap(); cursorSnap && quickPaste {
 		cx, cy := clipboard.GetCursorPos()
-		ww, wh := runtime.WindowGetSize(a.ctx)
+		ww, wh := a.window.Width(), a.window.Height()
 		if ww <= 0 || wh <= 0 {
 			ww, wh = 450, 650
 		}
@@ -396,13 +381,13 @@ func (a *App) onHotkeyFired() {
 			winpos.Rect{X: mx, Y: my, W: mw, H: mh},
 		)
 		ox, oy := clipboard.GetWindowMonitorWorkOrigin()
-		runtime.WindowSetPosition(a.ctx, pos.X-ox, pos.Y-oy)
+		a.window.SetPosition(pos.X-ox, pos.Y-oy)
 	}
 
 	tray.Activate()
-	runtime.WindowShow(a.ctx)
+	a.window.Show()
 	if alwaysOnTop, err := store.GetAlwaysOnTop(); err == nil {
-		runtime.WindowSetAlwaysOnTop(a.ctx, alwaysOnTop)
+		a.window.SetAlwaysOnTop(alwaysOnTop)
 	}
 }
 
@@ -425,17 +410,14 @@ func (a *App) GetClips() ([]store.Clip, error) {
 }
 
 func (a *App) UpdateClipContent(clipID int, newContent string) error {
-	err := store.UpdateClipContent(clipID, newContent)
-	if err != nil {
+	if err := store.UpdateClipContent(clipID, newContent); err != nil {
 		return err
 	}
-	if a.ctx != nil {
-		runtime.EventsEmit(a.ctx, "clip:updated", map[string]interface{}{
-			"id":      fmt.Sprintf("clip_%03d", clipID),
-			"content": newContent,
-			"length":  len(newContent),
-		})
-	}
+	a.app.Event.Emit("clip:updated", map[string]interface{}{
+		"id":      fmt.Sprintf("clip_%03d", clipID),
+		"content": newContent,
+		"length":  len(newContent),
+	})
 	return nil
 }
 
@@ -444,23 +426,18 @@ func (a *App) TogglePin(clipID int) error {
 	if err != nil {
 		return err
 	}
-	if a.ctx != nil {
-		runtime.EventsEmit(a.ctx, "clip:pinToggled", map[string]interface{}{
-			"id":       fmt.Sprintf("clip_%03d", clipID),
-			"isPinned": isPinned,
-		})
-	}
+	a.app.Event.Emit("clip:pinToggled", map[string]interface{}{
+		"id":       fmt.Sprintf("clip_%03d", clipID),
+		"isPinned": isPinned,
+	})
 	return nil
 }
 
 func (a *App) Delete(clipID int) error {
-	err := store.DeleteClip(clipID)
-	if err != nil {
+	if err := store.DeleteClip(clipID); err != nil {
 		return err
 	}
-	if a.ctx != nil {
-		runtime.EventsEmit(a.ctx, "clip:deleted", fmt.Sprintf("clip_%03d", clipID))
-	}
+	a.app.Event.Emit("clip:deleted", fmt.Sprintf("clip_%03d", clipID))
 	return nil
 }
 
@@ -476,10 +453,8 @@ func (a *App) RenameClip(clipID int, label string) error {
 	if err := store.RenameClip(clipID, label); err != nil {
 		return err
 	}
-	if a.ctx != nil {
-		if labels, err := store.GetDistinctLabels(); err == nil {
-			runtime.EventsEmit(a.ctx, "labels:updated", labels)
-		}
+	if labels, err := store.GetDistinctLabels(); err == nil {
+		a.app.Event.Emit("labels:updated", labels)
 	}
 	return nil
 }
@@ -496,9 +471,7 @@ func (a *App) UnhideClip(clipID int) error {
 	if err := store.UnhideClip(clipID); err != nil {
 		return err
 	}
-	if a.ctx != nil {
-		runtime.EventsEmit(a.ctx, "clip:unhidden", fmt.Sprintf("clip_%03d", clipID))
-	}
+	a.app.Event.Emit("clip:unhidden", fmt.Sprintf("clip_%03d", clipID))
 	return nil
 }
 
@@ -506,22 +479,20 @@ func (a *App) HideClip(clipID int) error {
 	if err := store.HideClip(clipID); err != nil {
 		return err
 	}
-	if a.ctx != nil {
-		runtime.EventsEmit(a.ctx, "clip:hidden", fmt.Sprintf("clip_%03d", clipID))
-	}
+	a.app.Event.Emit("clip:hidden", fmt.Sprintf("clip_%03d", clipID))
 	return nil
 }
 
 func (a *App) DeleteAllClips() error {
-	return store.DeleteAllClips(a.ctx)
+	return store.DeleteAllClips()
 }
 
 func (a *App) DeletePinnedClips() error {
-	return store.DeletePinnedClips(a.ctx)
+	return store.DeletePinnedClips()
 }
 
 func (a *App) DeleteUnpinnedClips() error {
-	return store.DeleteUnpinnedClips(a.ctx)
+	return store.DeleteUnpinnedClips()
 }
 
 // --------------------------------------------------------------------------------
@@ -603,7 +574,7 @@ func (a *App) PasteToWindow(content string) error {
 	// app stays visible after the paste so the user can keep picking clips.
 	quickPaste, _ := store.GetQuickPaste()
 	if quickPaste {
-		runtime.WindowHide(a.ctx)
+		a.window.Hide()
 	}
 
 	// Give the window manager time to hide Clipcat before we refocus.
@@ -638,7 +609,7 @@ func (a *App) PasteImageToWindow(clipID int) error {
 
 	quickPaste, _ := store.GetQuickPaste()
 	if quickPaste {
-		runtime.WindowHide(a.ctx)
+		a.window.Hide()
 	}
 
 	time.Sleep(80 * time.Millisecond)
@@ -658,7 +629,7 @@ func (a *App) FocusAndPaste() error {
 
 	quickPaste, _ := store.GetQuickPaste()
 	if quickPaste {
-		runtime.WindowHide(a.ctx)
+		a.window.Hide()
 	}
 
 	time.Sleep(80 * time.Millisecond)
@@ -673,16 +644,16 @@ func (a *App) AddClip(content string, pinned bool) error {
 	if err != nil {
 		return err
 	}
-	if a.ctx != nil && inserted {
+	if inserted {
 		if clip != nil {
-			runtime.EventsEmit(a.ctx, "clip:added", clip)
+			a.app.Event.Emit("clip:added", clip)
 		}
 		if len(prunedIDs) > 0 {
 			prunedStrs := make([]string, len(prunedIDs))
 			for i, pid := range prunedIDs {
 				prunedStrs[i] = fmt.Sprintf("clip_%03d", pid)
 			}
-			runtime.EventsEmit(a.ctx, "clip:pruned", prunedStrs)
+			a.app.Event.Emit("clip:pruned", prunedStrs)
 		}
 	}
 	return nil
@@ -696,13 +667,13 @@ func (a *App) makeMiniClip(value bool) {
 		return
 	}
 
-	runtime.WindowUnmaximise(a.ctx)
+	a.window.UnMaximise()
 
 	if value {
-		runtime.WindowSetPosition(a.ctx, 20, 20)
-		runtime.WindowSetMaxSize(a.ctx, 450, 650)
+		a.window.SetPosition(20, 20)
+		a.window.SetMaxSize(450, 650)
 	} else {
-		runtime.WindowSetMaxSize(a.ctx, 0, 0)
+		a.window.SetMaxSize(0, 0)
 	}
 
 	a.isMiniClip = value
@@ -729,7 +700,7 @@ func (a *App) SetAlwaysOnTop(enabled bool) error {
 	if err := store.SetAlwaysOnTop(enabled); err != nil {
 		return err
 	}
-	runtime.WindowSetAlwaysOnTop(a.ctx, enabled)
+	a.window.SetAlwaysOnTop(enabled)
 	return nil
 }
 

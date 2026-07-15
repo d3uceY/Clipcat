@@ -2,14 +2,13 @@ package main
 
 import (
 	"embed"
-	"runtime"
+	goruntime "runtime"
 
 	"Clipcat/backend/platform"
 
-	"github.com/wailsapp/wails/v2"
-	"github.com/wailsapp/wails/v2/pkg/options"
-	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
-	// "github.com/wailsapp/wails/v2/pkg/options/windows"
+	"github.com/wailsapp/wails/v3/pkg/application"
+	"github.com/wailsapp/wails/v3/pkg/events"
+	"github.com/wailsapp/wails/v3/pkg/services/notifications"
 )
 
 //go:embed all:frontend/dist
@@ -26,47 +25,41 @@ func main() {
 		return
 	}
 
-	// Create an instance of the app structure
-	app := NewApp()
-
 	// Frameless only on Windows where we have custom window controls.
 	// macOS and Linux use native decorations.
-	frameless := runtime.GOOS == "windows"
+	frameless := goruntime.GOOS == "windows"
 
-	// Create application with options
-	err := wails.Run(
-		&options.App{
-			Title:     "Clipcat",
-			Width:     600,
-			Height:    450,
-			MinWidth:  300,
-			MinHeight: 300,
-			Frameless: frameless,
-			// On macOS/Linux: closing the window hides it instead of quitting.
-			// The user can quit via the tray menu → Quit.
-			HideWindowOnClose: true,
-			StartHidden:       true,
-			AssetServer: &assetserver.Options{
-				Assets: assets,
-			},
-			BackgroundColour: &options.RGBA{R: 245, G: 245, B: 240, A: 1},
-			OnStartup:        app.startup,
-			OnDomReady:       app.domReady,
-			Bind: []interface{}{
-				app,
-			},
-			// Disable the DevTools inspector in production builds.
-			// In dev mode (wails dev) the inspector is always available regardless.
-			Debug: options.Debug{
-				OpenInspectorOnStartup: false,
-			},
-			// just disabling this for memory leak issues in webview2, testing ese
-			// Windows: &windows.Options{
-			// 	WebviewGpuIsDisabled: true,
-			// },
-		})
+	notifService := notifications.New()
 
-	if err != nil {
+	app := application.New(application.Options{
+		Name: "Clipcat",
+		Assets: application.AssetOptions{
+			Handler: application.AssetFileServerFS(assets),
+		},
+	})
+
+	window := app.Window.NewWithOptions(application.WebviewWindowOptions{
+		Title:            "Clipcat",
+		Width:            600,
+		Height:           450,
+		MinWidth:         300,
+		MinHeight:        300,
+		Frameless:        frameless,
+		BackgroundColour: application.NewRGBA(245, 245, 240, 255),
+	})
+
+	// On close: hide the window instead of quitting.
+	// The user can quit via the tray menu → Quit.
+	window.RegisterHook(events.Common.WindowClosing, func(e *application.WindowEvent) {
+		e.Cancel()
+		window.Hide()
+	})
+
+	appService := NewApp(app, window, notifService)
+	app.RegisterService(application.NewService(appService))
+	app.RegisterService(application.NewService(notifService))
+
+	if err := app.Run(); err != nil {
 		println("Error:", err.Error())
 	}
 }

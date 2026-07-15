@@ -2,7 +2,6 @@ package store
 
 import (
 	"bytes"
-	"context"
 	"database/sql"
 	"encoding/base64"
 	"fmt"
@@ -12,7 +11,7 @@ import (
 
 	"Clipcat/backend/lib/secretscan"
 
-	"github.com/wailsapp/wails/v2/pkg/runtime"
+	"github.com/wailsapp/wails/v3/pkg/services/notifications"
 	"golang.org/x/image/draw"
 
 	_ "golang.org/x/image/webp"
@@ -282,17 +281,19 @@ func AddClip(content string, clipType string) (*Clip, []int, int, bool, error) {
 		if autolabel == "" || scanResult.Label != "" {
 			autolabel = scanResult.Label
 		}
-		if AppCtx != nil && runtime.IsNotificationAvailable(AppCtx) {
+		if AppNotif != nil {
 			body := "A sensitive item was copied to your clipboard."
 			if autolabel != "" {
 				body = autolabel + " was copied to your clipboard."
 			}
-			_ = runtime.SendNotification(AppCtx, runtime.NotificationOptions{
+			_ = AppNotif.SendNotification(notifications.NotificationOptions{
 				ID:    fmt.Sprintf("clipcat-sensitive-%d", len(content)),
 				Title: "Sensitive content detected",
 				Body:  body,
 			})
-			runtime.EventsEmit(AppCtx, "sensitive:detected")
+		}
+		if AppInstance != nil {
+			AppInstance.Event.Emit("sensitive:detected")
 		}
 	}
 
@@ -600,35 +601,8 @@ func DeleteClip(clipID int) error {
 	return nil
 }
 
-func confirmDestructiveDelete(ctx context.Context, title string, message string) (bool, error) {
-	res, err := runtime.MessageDialog(ctx, runtime.MessageDialogOptions{
-		Type:          runtime.QuestionDialog,
-		Title:         title,
-		Message:       message,
-		Buttons:       []string{"Yes", "No"},
-		DefaultButton: "Yes",
-		CancelButton:  "No",
-	})
-	if err != nil {
-		return false, fmt.Errorf("failed to show confirmation dialog: %v", err)
-	}
-
-	return res == "Yes", nil
-}
-
-func DeleteAllClips(ctx context.Context) error {
-	confirmed, err := confirmDestructiveDelete(ctx,
-		"Delete All Clips?",
-		"Are you sure you want to delete all clips? This action cannot be undone.",
-	)
-	if err != nil {
-		return err
-	}
-	if !confirmed {
-		return nil
-	}
-
-	_, err = DB.Exec(`DELETE FROM clips`)
+func DeleteAllClips() error {
+	_, err := DB.Exec(`DELETE FROM clips`)
 	if err != nil {
 		return fmt.Errorf("failed to delete all clips: %v", err)
 	}
@@ -636,19 +610,8 @@ func DeleteAllClips(ctx context.Context) error {
 	return nil
 }
 
-func DeletePinnedClips(ctx context.Context) error {
-	confirmed, err := confirmDestructiveDelete(ctx,
-		"Delete Pinned Clips?",
-		"Are you sure you want to delete all pinned clips? This action cannot be undone.",
-	)
-	if err != nil {
-		return err
-	}
-	if !confirmed {
-		return nil
-	}
-
-	_, err = DB.Exec(`DELETE FROM clips WHERE pinned = 1`)
+func DeletePinnedClips() error {
+	_, err := DB.Exec(`DELETE FROM clips WHERE pinned = 1`)
 	if err != nil {
 		return fmt.Errorf("failed to delete pinned clips: %v", err)
 	}
@@ -656,19 +619,8 @@ func DeletePinnedClips(ctx context.Context) error {
 	return nil
 }
 
-func DeleteUnpinnedClips(ctx context.Context) error {
-	confirmed, err := confirmDestructiveDelete(ctx,
-		"Delete Unpinned Clips?",
-		"Are you sure you want to delete all unpinned clips? This action cannot be undone.",
-	)
-	if err != nil {
-		return err
-	}
-	if !confirmed {
-		return nil
-	}
-
-	_, err = DB.Exec(`DELETE FROM clips WHERE pinned = 0`)
+func DeleteUnpinnedClips() error {
+	_, err := DB.Exec(`DELETE FROM clips WHERE pinned = 0`)
 	if err != nil {
 		return fmt.Errorf("failed to delete unpinned clips: %v", err)
 	}

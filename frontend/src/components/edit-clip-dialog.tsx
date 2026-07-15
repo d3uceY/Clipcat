@@ -1,7 +1,7 @@
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
 import { useState } from "react"
 import { Check, X } from "lucide-react"
-import { UpdateClipContent } from "../../wailsjs/go/main/App"
+import { UpdateClipContent } from "../../bindings/Clipcat/app"
 // import TeaseDialog from "./tease-dialog"
 import type { Clip } from '../../types/clip'
 

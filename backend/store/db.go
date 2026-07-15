@@ -1,22 +1,30 @@
 package store
 
 import (
-	"context"
 	"database/sql"
 	"fmt"
 
+	"github.com/wailsapp/wails/v3/pkg/application"
+	"github.com/wailsapp/wails/v3/pkg/services/notifications"
 	_ "modernc.org/sqlite"
 )
 
 var DB *sql.DB
 
-// AppCtx holds the Wails runtime context so store functions can call
-// runtime APIs (e.g. SendNotification) without threading it through every call.
-var AppCtx context.Context
+// AppInstance holds the Wails v3 application so store functions can emit events.
+var AppInstance *application.App
 
-// SetAppCtx stores the Wails context for use by store functions.
-func SetAppCtx(ctx context.Context) {
-	AppCtx = ctx
+// AppNotif holds the notification service so store functions can send notifications.
+var AppNotif *notifications.NotificationService
+
+// SetAppInstance stores the Wails v3 app reference for use by store functions.
+func SetAppInstance(app *application.App) {
+	AppInstance = app
+}
+
+// SetNotifService stores the notification service for use by store functions.
+func SetNotifService(ns *notifications.NotificationService) {
+	AppNotif = ns
 }
 
 func InitDB(path string) error {

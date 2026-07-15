@@ -7,8 +7,8 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog";
 import { useEffect, useState } from "react";
-import { BrowserOpenURL } from "../../wailsjs/runtime/runtime";
-import { GetPlatform } from "../../wailsjs/go/main/App";
+import { Browser } from "@wailsio/runtime";
+import { GetPlatform } from "../../bindings/Clipcat/app";
 import HowToUseDialog from "./how-to-use-dialog";
 
 interface AboutDialogProps {
@@ -95,7 +95,7 @@ export default function AboutDialog({ version, updateAvailable: updateAvailableP
                         <p>
                             <strong>Clipcat</strong> is a creative clipboard manager that helps you keep track of your copied content with style.{' '}
                             <button
-                                onClick={() => BrowserOpenURL('https://d3ucey.github.io/Clipcat/docs/intro')}
+                                onClick={() => Browser.OpenURL('https://d3ucey.github.io/Clipcat/docs/intro')}
                                 className="text-blue-600 hover:underline cursor-pointer"
                             >
                                 Read the docs
@@ -104,7 +104,7 @@ export default function AboutDialog({ version, updateAvailable: updateAvailableP
                         <p>
                             Created with 💜 by <strong>Onyekwelu Jesse</strong> (
                             <button
-                                onClick={() => BrowserOpenURL("https://github.com/d3uceY")}
+                                onClick={() => Browser.OpenURL("https://github.com/d3uceY")}
                                 className="text-blue-600 hover:underline cursor-pointer"
                             >
                                 @d3uceY
@@ -120,7 +120,7 @@ export default function AboutDialog({ version, updateAvailable: updateAvailableP
                                     Today is October 24th! 🥳
                                 </p>
                                 <button
-                                    onClick={() => BrowserOpenURL("https://www.linkedin.com/in/jesse-onyekwelu-4a8982275/")}
+                                    onClick={() => Browser.OpenURL("https://www.linkedin.com/in/jesse-onyekwelu-4a8982275/")}
                                     className="inline-block mt-1 px-3 py-1.5 bg-fuchsia-600 text-white text-sm rounded hover:bg-fuchsia-700 transition-colors cursor-pointer"
                                 >
                                     Visit my LinkedIn Profile
@@ -143,7 +143,7 @@ export default function AboutDialog({ version, updateAvailable: updateAvailableP
                                     Released {new Date(updateAvailable.releaseDate).toLocaleDateString()}
                                 </p>
                                 <button
-                                    onClick={() => BrowserOpenURL('https://d3ucey.github.io/Clipcat/download')}
+                                    onClick={() => Browser.OpenURL('https://d3ucey.github.io/Clipcat/download')}
                                     className="heartbeat hand-drawn-btn lined thin mt-3 px-3 py-1 text-base! font-bold hover:opacity-70 transition-opacity cursor-pointer"
                                 >
                                     ⬇︎ Download Update

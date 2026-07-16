@@ -11,12 +11,19 @@ import { Browser } from "@wailsio/runtime";
 import { GetPlatform } from "../../bindings/Clipcat/app";
 import HowToUseDialog from "./how-to-use-dialog";
 
+export interface UpdateInfo {
+    version: string;
+    releaseUrl?: string;
+    releaseDate?: string;
+}
+
 interface AboutDialogProps {
     version: string;
+    updateAvailable?: UpdateInfo | null;
 }
 
 
-export default function AboutDialog({ version }: AboutDialogProps) {
+export default function AboutDialog({ version, updateAvailable }: AboutDialogProps) {
     const [isBirthday, setIsBirthday] = useState<boolean>(false);
     const [platform, setPlatform] = useState<string>("");
     const [hasSeenHowToUse, setHasSeenHowToUse] = useState<boolean>(
@@ -37,7 +44,7 @@ export default function AboutDialog({ version }: AboutDialogProps) {
         <Dialog>
             <DialogTrigger asChild>
                 <button
-                    className={`info min-[400px]:block hidden sm:text-2xl hover:opacity-70 transition-opacity cursor-pointer font-bold about-btn ${isBirthday || !hasSeenHowToUse ? "indicator heartbeat" : ""}`}
+                    className={`info min-[400px]:block hidden sm:text-2xl hover:opacity-70 transition-opacity cursor-pointer font-bold about-btn ${isBirthday || !hasSeenHowToUse || updateAvailable ? "indicator heartbeat" : ""}`}
                     title="About"
                 >
                     ⓘ

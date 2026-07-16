@@ -36,7 +36,7 @@ function LabelFilterBar() {
                 className="hand-drawn-btn dashed thin flex items-center gap-2 px-3 py-1.5 text-xs bg-[#F9F5E6] text-amber-900 transition-all hover:bg-amber-50"
             >
                 <Tag className="h-3.5 w-3.5 shrink-0 text-amber-700" />
-                <span className="font-medium">{label}</span>
+                <span className="font-medium text-sm">{label}</span>
                 {activeLabels.length > 0 && (
                     <span className="flex items-center justify-center h-4 w-4 rounded-full bg-amber-300 text-amber-900 text-[10px] font-bold leading-none">
                         {activeLabels.length}

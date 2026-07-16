@@ -1,53 +1,102 @@
-import { memo } from "react"
-import { X } from "lucide-react"
+import { memo, useState, useRef, useEffect } from "react"
+import { ChevronDown, Check, Tag, X } from "lucide-react"
 import { useClips } from "@/context/ClipContext"
-import * as ScrollAreaPrimitive from "@radix-ui/react-scroll-area"
 
 function LabelFilterBar() {
     const { distinctLabels, activeLabels, toggleLabelFilter, clearLabelFilters } = useClips()
+    const [open, setOpen] = useState(false)
+    const containerRef = useRef<HTMLDivElement>(null)
+
+    // Close on outside click
+    useEffect(() => {
+        if (!open) return
+        const handler = (e: MouseEvent) => {
+            if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+                setOpen(false)
+            }
+        }
+        document.addEventListener("mousedown", handler)
+        return () => document.removeEventListener("mousedown", handler)
+    }, [open])
 
     if (distinctLabels.length === 0) return null
 
+    const label =
+        activeLabels.length === 0
+            ? "Filter by label"
+            : activeLabels.length === 1
+            ? activeLabels[0]
+            : `${activeLabels.length} labels`
+
     return (
-        <div className="mb-6">
-            <ScrollAreaPrimitive.Root className="w-full" type="hover">
-                <ScrollAreaPrimitive.Viewport className="w-full">
-                    <div className="flex items-center gap-2 pb-4">
-                        {distinctLabels.map(label => {
-                            const active = activeLabels.includes(label)
+        <div ref={containerRef} className="relative mb-6 w-fit">
+            {/* Trigger */}
+            <button
+                onClick={() => setOpen(v => !v)}
+                className="hand-drawn-btn dashed thin flex items-center gap-2 px-3 py-1.5 text-xs bg-[#F9F5E6] text-amber-900 transition-all hover:bg-amber-50"
+            >
+                <Tag className="h-3.5 w-3.5 shrink-0 text-amber-700" />
+                <span className="font-medium">{label}</span>
+                {activeLabels.length > 0 && (
+                    <span className="flex items-center justify-center h-4 w-4 rounded-full bg-amber-300 text-amber-900 text-[10px] font-bold leading-none">
+                        {activeLabels.length}
+                    </span>
+                )}
+                <ChevronDown
+                    className={`h-3.5 w-3.5 text-amber-700/60 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+                />
+            </button>
+
+            {/* Dropdown panel */}
+            {open && (
+                <div
+                    className="absolute top-full left-0 z-50 mt-1.5 min-w-40 bg-[#F9F5E6]"
+                    style={{
+                        border: "dashed 2px #41403e",
+                        borderRadius: "12px 4px 12px 4px / 4px 12px 4px 12px",
+                        boxShadow: "4px 8px 16px -4px hsla(0,0%,0%,0.18)",
+                    }}
+                >
+                    <ul className="py-1">
+                        {distinctLabels.map(lbl => {
+                            const active = activeLabels.includes(lbl)
                             return (
-                                <button
-                                    key={label}
-                                    onClick={() => toggleLabelFilter(label)}
-                                    className={`inline-flex shrink-0 items-center px-3 py-1 text-xs rounded-full border transition-colors shadow-md ${
-                                        active
-                                            ? "bg-amber-200 text-amber-900 border-amber-500/70 font-medium"
-                                            : "bg-amber-50 text-amber-800/75 border-amber-400/50 hover:bg-amber-100 hover:text-amber-900 hover:border-amber-500/60"
-                                    }`}
-                                >
-                                    {label}
-                                </button>
+                                <li key={lbl}>
+                                    <button
+                                        onClick={() => toggleLabelFilter(lbl)}
+                                        className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-amber-900 hover:bg-amber-100/70 transition-colors text-left"
+                                    >
+                                        <span
+                                            className={`h-3.5 w-3.5 shrink-0 flex items-center justify-center rounded-sm border ${
+                                                active
+                                                    ? "bg-amber-300 border-amber-600/70"
+                                                    : "border-amber-400/50 bg-transparent"
+                                            }`}
+                                            style={{ borderStyle: "dashed" }}
+                                        >
+                                            {active && <Check className="h-2.5 w-2.5 text-amber-900" />}
+                                        </span>
+                                        <span className={active ? "font-semibold" : ""}>{lbl}</span>
+                                    </button>
+                                </li>
                             )
                         })}
-                        {activeLabels.length > 0 && (
+                    </ul>
+
+                    {activeLabels.length > 0 && (
+                        <>
+                            <div style={{ borderTop: "dashed 1px #41403e40", margin: "2px 8px" }} />
                             <button
-                                onClick={clearLabelFilters}
-                                className="inline-flex shrink-0 items-center gap-1 px-2.5 py-1 text-xs rounded-full border border-transparent text-foreground/40 hover:text-foreground/65 transition-colors"
-                                title="Clear label filters"
+                                onClick={() => { clearLabelFilters(); setOpen(false) }}
+                                className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-amber-700/60 hover:text-amber-900 hover:bg-amber-100/50 transition-colors"
                             >
                                 <X className="h-3 w-3" />
-                                <span>clear</span>
+                                <span>Clear filters</span>
                             </button>
-                        )}
-                    </div>
-                </ScrollAreaPrimitive.Viewport>
-                <ScrollAreaPrimitive.Scrollbar
-                    orientation="horizontal"
-                    className="flex h-1.5 touch-none select-none flex-col rounded-full"
-                >
-                    <ScrollAreaPrimitive.Thumb className="relative flex-1 rounded-full bg-amber-400/60 hover:bg-amber-500/70 transition-colors cursor-grab active:cursor-grabbing" />
-                </ScrollAreaPrimitive.Scrollbar>
-            </ScrollAreaPrimitive.Root>
+                        </>
+                    )}
+                </div>
+            )}
         </div>
     )
 }

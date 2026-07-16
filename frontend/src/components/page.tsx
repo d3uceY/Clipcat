@@ -255,7 +255,7 @@ function PageContent() {
             )}
 
             {/* // pussy cat image */}
-            <div className="h-[20vh] min-h-25 max-h-50 pussy fixed bottom-0 -left-6 z-1">
+            <div className={`h-[20vh] min-h-25 max-h-50 pussy fixed bottom-0 -left-6 z-1${isMiniClip ? " hidden" : ""}`}>
                 {(searchFocused && searchQuery.length > 0) || (filteredClips.pinned.length === 0 && filteredClips.recent.length === 0) ?
                     (<img src="/pussy-nothing.png" alt="pussy" className="block h-full pussy-nothing" />)
                     :

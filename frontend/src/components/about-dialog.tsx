@@ -13,20 +13,11 @@ import HowToUseDialog from "./how-to-use-dialog";
 
 interface AboutDialogProps {
     version: string;
-    updateAvailable?: UpdateInfo | null;
 }
 
-export interface UpdateInfo {
-    version: string;
-    releaseUrl: string;
-    releaseDate: string;
-}
 
-export default function AboutDialog({ version, updateAvailable: updateAvailableProp }: AboutDialogProps) {
-    const [updateAvailableInternal, setUpdateAvailableInternal] = useState<UpdateInfo | null>(null);
-    const updateAvailable = updateAvailableProp !== undefined ? updateAvailableProp : updateAvailableInternal;
+export default function AboutDialog({ version }: AboutDialogProps) {
     const [isBirthday, setIsBirthday] = useState<boolean>(false);
-    const [_, setIsChecking] = useState<boolean>(false);
     const [platform, setPlatform] = useState<string>("");
     const [hasSeenHowToUse, setHasSeenHowToUse] = useState<boolean>(
         () => localStorage.getItem("clipcat-how-to-use-seen") === "true"
@@ -40,46 +31,13 @@ export default function AboutDialog({ version, updateAvailable: updateAvailableP
 
         GetPlatform().then(setPlatform).catch(() => setPlatform(""));
 
-        // Skip internal fetch if parent already provides update info
-        if (updateAvailableProp !== undefined) return;
-
-        const checkVersion = async () => {
-            setIsChecking(true);
-            try {
-
-                // Fetch latest release from GitHub
-                const response = await fetch("https://api.github.com/repos/d3uceY/Clipcat/releases/latest");
-                if (!response.ok) {
-                    throw new Error("Failed to fetch latest release");
-                }
-
-                const data = await response.json();
-                const latestVersion = data.tag_name;
-                //  LogPrint(`Current version: ${version}, Latest version: ${latestVersion}`); 
-                // Compare versions
-                const isStable = !version.endsWith("-dev") && !version.endsWith("-beta") && !version.endsWith("-alpha");
-                if (latestVersion !== version && isStable) {
-                    setUpdateAvailableInternal({
-                        version: latestVersion,
-                        releaseUrl: data.html_url,
-                        releaseDate: data.published_at,
-                    });
-                }
-            } catch (error) {
-                console.error("Error checking for updates:", error);
-            } finally {
-                setIsChecking(false);
-            }
-        };
-
-        checkVersion();
     }, []);
 
     return (
         <Dialog>
             <DialogTrigger asChild>
                 <button
-                    className={`info min-[400px]:block hidden sm:text-2xl hover:opacity-70 transition-opacity cursor-pointer font-bold about-btn ${updateAvailable || isBirthday || !hasSeenHowToUse ? "indicator heartbeat" : ""}`}
+                    className={`info min-[400px]:block hidden sm:text-2xl hover:opacity-70 transition-opacity cursor-pointer font-bold about-btn ${isBirthday || !hasSeenHowToUse ? "indicator heartbeat" : ""}`}
                     title="About"
                 >
                     ⓘ
@@ -114,10 +72,10 @@ export default function AboutDialog({ version, updateAvailable: updateAvailableP
                         {isBirthday && (
                             <div className="mt-4 p-3 bg-fuchsia-100 border border-fuchsia-200 rounded-md">
                                 <p className="text-sm font-semibold text-fuchsia-800 mb-2">
-                                    🎂 It's my Birthday!
+                                    It's my Birthday!
                                 </p>
                                 <p className="text-sm text-fuchsia-700 mb-2">
-                                    Today is October 24th! 🥳
+                                    Today is October 24th!
                                 </p>
                                 <button
                                     onClick={() => Browser.OpenURL("https://www.linkedin.com/in/jesse-onyekwelu-4a8982275/")}
@@ -131,24 +89,6 @@ export default function AboutDialog({ version, updateAvailable: updateAvailableP
                             <p className="text-xs text-muted-foreground pt-1">
                                 Version: {version}
                             </p>
-                        )}
-                        {updateAvailable && (
-                            <div className="mt-2 pt-1">
-                                <img src="/seperator.png" alt="" className="w-full my-2 opacity-70" />
-                                <p className="text-sm font-bold">🎉 Update Available</p>
-                                <p className="text-sm mt-1">
-                                    Version <strong>{updateAvailable.version}</strong> is ready to download
-                                </p>
-                                <p className="text-xs text-muted-foreground mt-0.5">
-                                    Released {new Date(updateAvailable.releaseDate).toLocaleDateString()}
-                                </p>
-                                <button
-                                    onClick={() => Browser.OpenURL('https://d3ucey.github.io/Clipcat/download')}
-                                    className="heartbeat hand-drawn-btn lined thin mt-3 px-3 py-1 text-base! font-bold hover:opacity-70 transition-opacity cursor-pointer"
-                                >
-                                    ⬇︎ Download Update
-                                </button>
-                            </div>
                         )}
 
                         {/* How to Use */}

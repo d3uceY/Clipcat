@@ -271,7 +271,6 @@ function PageContent() {
                 <div className="mb-10 sm:flex-row flex justify-center items-center gap-8 sm:justify-between">
                     {!isMiniClip && (
                     <div id="tour-about" className="items-center gap-2 sm:flex">
-                        <h1 className="font-serif text-xl font-bold italic text-foreground sm:block hidden">About</h1>
                         {
                             version &&
                             <Suspense fallback={null}>

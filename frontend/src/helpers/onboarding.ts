@@ -13,7 +13,7 @@ export function startTour() {
         animate: true,
         overlayColor: "rgba(0,0,0,0.45)",
         popoverClass: "clipcat-tour",
-        nextBtnText: "Next →",
+        nextBtnText: "Next ->",
         prevBtnText: "← Back",
         doneBtnText: "Got it!",
         onDestroyed: () => {

@@ -99,6 +99,14 @@ func RunMigrations() {
 	MigrateCursorSnapSetting()
 	MigrateSyncSourceColumn()
 	MigrateSyncSettings()
+	MigrateIgnoreDefaultsColumn()
+	SeedDefaultIgnoreList()
+}
+
+// MigrateIgnoreDefaultsColumn adds the flag that prevents the built-in
+// block list from being re-seeded after the user removes an entry.
+func MigrateIgnoreDefaultsColumn() {
+	_, _ = DB.Exec(`ALTER TABLE settings ADD COLUMN ignore_defaults_seeded INTEGER NOT NULL DEFAULT 0`)
 }
 
 // MigrateIndexes creates performance indexes on the clips table.

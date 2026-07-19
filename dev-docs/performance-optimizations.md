@@ -69,9 +69,9 @@ const sharedObserver = new ResizeObserver((entries) => {
 
 When the ResizeObserver fired for multiple cards in the same frame (e.g. all 500 on initial load), each card would:
 
-1. Read its height → `getBoundingClientRect()` (forces a layout)
-2. Write `--row-span` → `setProperty()` (invalidates layout)
-3. Next card reads height → forces layout again
+1. Read its height -> `getBoundingClientRect()` (forces a layout)
+2. Write `--row-span` -> `setProperty()` (invalidates layout)
+3. Next card reads height -> forces layout again
 
 This read-write-read-write interleaving is called **layout thrashing** and caused the browser to recalculate layout hundreds of times per frame.
 
@@ -744,12 +744,12 @@ const handleSettingsClick = () => {
 
 | #   | Optimization                                   | File(s)                                       | Problem Solved                              |
 | --- | ---------------------------------------------- | --------------------------------------------- | ------------------------------------------- |
-| 1   | Shared ResizeObserver                          | `use-card-row-span.ts`                        | N observer instances → 1                    |
+| 1   | Shared ResizeObserver                          | `use-card-row-span.ts`                        | N observer instances -> 1                    |
 | 2   | Batched read/write rAF                         | `use-card-row-span.ts`                        | Layout thrashing on startup                 |
 | 3   | Batched initial measurements                   | `use-card-row-span.ts`                        | Card overlap on first render                |
-| 4   | `transition: all` → `transition: box-shadow`   | `index.css`                                   | Grid animation storm on startup             |
-| 5   | CSS row-span fallback `auto` → `10`            | `index.css`                                   | Cards collapsing to 10px before measurement |
-| 6   | Global pub-sub interval                        | `use-relative-time.ts`                        | N setInterval timers → 1                    |
+| 4   | `transition: all` -> `transition: box-shadow`   | `index.css`                                   | Grid animation storm on startup             |
+| 5   | CSS row-span fallback `auto` -> `10`            | `index.css`                                   | Cards collapsing to 10px before measurement |
+| 6   | Global pub-sub interval                        | `use-relative-time.ts`                        | N setInterval timers -> 1                    |
 | 7   | IntersectionObserver virtualization            | `clip-card.tsx`, `page.tsx`                   | 100k+ DOM nodes with many clips             |
 | 8   | Lazy Dialog mount                              | `clip-card.tsx`                               | N Dialog trees in memory when closed        |
 | 9   | `useMemo` for `insertLinks`                    | `clip-card.tsx`                               | Regex re-runs on every render               |

@@ -80,11 +80,11 @@ sudo firewall-cmd --reload
 
 ### macOS
 
-Go to **System Settings → Network → Firewall → Options** and add Clipcat to the allowed apps, or add an exception for TCP port 47821.
+Go to **System Settings -> Network -> Firewall -> Options** and add Clipcat to the allowed apps, or add an exception for TCP port 47821.
 
 ### Windows Defender
 
-Windows may prompt on first run — click **Allow access**. Or add a rule manually in **Windows Security → Firewall & network protection → Advanced settings → Inbound Rules**.
+Windows may prompt on first run — click **Allow access**. Or add a rule manually in **Windows Security -> Firewall & network protection -> Advanced settings -> Inbound Rules**.
 
 ## Security Model
 
@@ -93,7 +93,7 @@ Windows may prompt on first run — click **Allow access**. Or add a rule manual
 | **Passphrase**     | Never transmitted over the network                                                                          |
 | **Key derivation** | PBKDF2 with SHA-256, 100,000 iterations, static salt `clipcat-lan-sync-v1`                                  |
 | **Encryption**     | AES-256-GCM (authenticated encryption)                                                                      |
-| **Wrong key**      | GCM auth failure → payload silently dropped (logged)                                                        |
+| **Wrong key**      | GCM auth failure -> payload silently dropped (logged)                                                        |
 | **Max payload**    | 10 MB (larger clips are silently skipped)                                                                   |
 | **Discovery**      | mDNS advertises the service type `_clipcat._tcp` with the machine hostname — leaks no sensitive information |
 | **Peer eviction**  | Peers are evicted after 3 consecutive TCP failures (via heartbeat probe or failed send)                     |
@@ -131,7 +131,7 @@ This usually means the remote machine's firewall is blocking TCP port 47821.
 
 Both machines must have port 47821 open. The machine that copies initiates an outgoing TCP connection to the peer. If only machine A's port is open:
 
-- **B copies → A receives it** ✅ (B connects out to A's open port)
-- **A copies → B does NOT receive it** ❌ (A tries to connect out to B's closed port)
+- **B copies -> A receives it** ✅ (B connects out to A's open port)
+- **A copies -> B does NOT receive it** ❌ (A tries to connect out to B's closed port)
 
 The fix is to open port 47821 on all machines.

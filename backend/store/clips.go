@@ -274,22 +274,15 @@ func AddClip(content string, clipType string) (*Clip, []int, int, bool, error) {
 	hidden := oldHidden
 	autolabel := oldLabel
 	if scanResult := secretscan.Scan(content); scanResult.IsSecret {
-		autolabel = scanResult.Label
+		autolabel = "sensitive"
 		if autoHide, _ := GetAutoHideSensitive(); autoHide {
 			hidden = 1 // auto-hide overrides any previous visible state
 		}
-		if autolabel == "" || scanResult.Label != "" {
-			autolabel = scanResult.Label
-		}
 		if AppNotif != nil {
-			body := "A sensitive item was copied to your clipboard."
-			if autolabel != "" {
-				body = autolabel + " was copied to your clipboard."
-			}
 			_ = AppNotif.SendNotification(notifications.NotificationOptions{
 				ID:    fmt.Sprintf("clipcat-sensitive-%d", len(content)),
 				Title: "Sensitive content detected",
-				Body:  body,
+				Body:  "A sensitive item was copied to your clipboard.",
 			})
 		}
 		if AppInstance != nil {

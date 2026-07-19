@@ -1,20 +1,11 @@
-import { Copy, Pin, Trash2, Pencil, ClipboardPaste, Tag, ShieldAlert, ShieldCheck } from "lucide-react"
-import { useState, useRef, useMemo, memo, useEffect, lazy, Suspense } from "react"
+import { useState, useRef, useMemo, memo, useEffect } from "react"
+import { Tag } from "lucide-react"
 import type { Clip } from '../../types/clip'
-import { TogglePin, Delete, PasteToWindow, GetClipImage } from "../../bindings/Clipcat/app"
 import { useClips } from "@/context/ClipContext"
-import { playSound } from "@/helpers/playSound"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { useRelativeTime } from "@/hooks/use-relative-time"
-import { ScrollArea } from "./ui/scroll-area-white"
-import { ScrollArea as ScrollAreaPencil } from "./ui/scroll-area-pencil"
-import { copyBase64ImageToClipboard } from "@/helpers/copyBase64Image"
 import { useCardRowSpan } from "@/hooks/use-card-row-span"
-const EditClipDialog = lazy(() => import("./edit-clip-dialog"))
-const ImageLightbox = lazy(() => import("./image-lightbox"))
+import ClipCardOverlay from "./clip-card-overlay"
 import { insertLinks } from "@/helpers/insertLinks"
-import { Browser } from "@wailsio/runtime"
-
 
 interface ClipCardProps {
     clip: Clip
@@ -24,80 +15,39 @@ interface ClipCardProps {
 }
 
 function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) {
-    const [copied, setCopied] = useState(false)
-    const [dialogOpen, setDialogOpen] = useState(false)
-    const [lightboxOpen, setLightboxOpen] = useState(false)
     const [isDeleted, setIsDeleted] = useState(false)
     const [isVisible, setIsVisible] = useState(initialVisible)
-    const [fullImage, setFullImage] = useState<string | null>(null)
-    const [isEditingLabel, setIsEditingLabel] = useState(false)
-    const [editingLabel, setEditingLabel] = useState(clip.label || "")
-    const isSavingLabelRef = useRef(false)
-    const cachedRowSpanRef = useRef(10) // matches CSS default span
-    const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-    const labelInputRef = useRef<HTMLInputElement>(null)
+    const [isHovered, setIsHovered] = useState(false)
+    const [overlayFocused, setOverlayFocused] = useState(false)
+    const [cardRect, setCardRect] = useState<DOMRect | null>(null)
+
+    const cachedRowSpanRef = useRef(10)
     const cardRef = useRef<HTMLDivElement>(null)
-    const { soundOn, hideContent, isMiniClip, renameClip, distinctLabels, unhideClip, hideClip } = useClips()
+    const hoverLeaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+    const { hideContent, isMiniClip } = useClips()
     const relativeTime = useRelativeTime(clip.createdAt)
     const linkedContent = useMemo(() => insertLinks(clip.content), [clip.content])
 
-    // Suggestions shown in the autocomplete dropdown while editing a label.
-    // Only the labels that contain the current query and aren't the current label.
-    const labelSuggestions = useMemo(() => {
-        if (!isEditingLabel || distinctLabels.length === 0) return []
-        const q = editingLabel.toLowerCase()
-        return distinctLabels
-            .filter(l => l !== (clip.label || "") && (q === "" || l.toLowerCase().includes(q)))
-            .slice(0, 8)
-    }, [isEditingLabel, editingLabel, distinctLabels, clip.label])
-
-    // Fetch full-resolution image when the detail dialog opens.
-    useEffect(() => {
-        if (!dialogOpen || clip.type !== "image") {
-            setFullImage(null)
-            return
-        }
-        const id = Number(clip.id.replace('clip_', ''))
-        GetClipImage(id).then(setFullImage).catch(() => { })
-    }, [dialogOpen, clip.id, clip.type])
-
     useCardRowSpan(cardRef, isMiniClip, isVisible)
-
-    useEffect(() => {
-        return () => {
-            if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current)
-        }
-    }, [])
 
     useEffect(() => {
         const el = cardRef.current
         if (!el) return
         let observer: IntersectionObserver | null = null
-        // Debounce timer for hiding: prevents brief layout shifts (e.g. the
-        // sensitive section opening / closing) from flipping visible cards to
-        // placeholder state.  Only commit the hide after the card has been
-        // continuously outside the rootMargin for 300 ms.
         let hideDebounceTimer: ReturnType<typeof setTimeout> | null = null
-        // Delay setup so initial batch measurements (~41 ms) complete first.
-        // Cards that started invisible have no measurement race - they render
-        // as placeholders immediately and get measured when scrolled into view.
         const timerId = setTimeout(() => {
             observer = new IntersectionObserver(
                 ([entry]) => {
                     if (entry.isIntersecting) {
-                        // Cancel any pending hide - card came back into range.
                         if (hideDebounceTimer !== null) {
                             clearTimeout(hideDebounceTimer)
                             hideDebounceTimer = null
                         }
                         setIsVisible(true)
                     } else {
-                        // Cache the current span before we potentially hide the card.
                         const span = parseInt(el.style.getPropertyValue('--row-span'))
                         if (span > 0) cachedRowSpanRef.current = span
-                        // Only hide after the card has been out of range for a
-                        // sustained period (i.e. the user actually scrolled away),
-                        // not just because the layout momentarily shifted.
                         if (hideDebounceTimer === null) {
                             hideDebounceTimer = setTimeout(() => {
                                 hideDebounceTimer = null
@@ -117,243 +67,65 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
         }
     }, [])
 
-
-    const handleCopy = async () => {
-        playSound("/sounds/paper-copy.wav", soundOn, 1)
-        try {
-            if (clip.type === "image") {
-                const clipId = Number(clip.id.replace('clip_', ''))
-                const imageData = await GetClipImage(clipId)
-                copyBase64ImageToClipboard(`data:image/png;base64,${imageData}`)
-                return
-            }
-            if (clip.content == null) return
-            await navigator.clipboard.writeText(clip.content)
-            setCopied(true)
-            if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current)
-            copiedTimerRef.current = setTimeout(() => setCopied(false), 2000)
-        } catch (err) {
-            console.error("Failed to copy:", err)
-        }
+    const handleHoverEnter = () => {
+        if (hoverLeaveTimerRef.current) clearTimeout(hoverLeaveTimerRef.current)
+        if (cardRef.current) setCardRect(cardRef.current.getBoundingClientRect())
+        setIsHovered(true)
     }
 
-    const handlePin = async () => {
-        const clipId = Number(clip.id.replace('clip_', ''))
-        playSound("/sounds/clipboard-slap.mp3", soundOn, 1)
-        await TogglePin(clipId).catch((err) => {
-            console.error("Failed to toggle pin:", err)
-        })
+    const handleHoverLeave = () => {
+        hoverLeaveTimerRef.current = setTimeout(() => setIsHovered(false), 80)
     }
 
-    const handlePaste = async () => {
-        if (!clip.content) return
-        playSound("/sounds/paper-copy.wav", soundOn, 1)
-        try {
-            await PasteToWindow(clip.content)
-        } catch (err) {
-            // Fall back to regular copy if paste-back fails
-            console.error("PasteToWindow failed, falling back to copy:", err)
-            await navigator.clipboard.writeText(clip.content)
-        }
-    }
-
-    const handleDelete = async () => {
-        const clipId = Number(clip.id.replace('clip_', ''))
-        playSound("/sounds/paper-rip.mp3", soundOn, 0.5)
-
-        // Optimistically hide the card immediately
-        setIsDeleted(true)
-
-        try {
-            await Delete(clipId)
-        } catch (err) {
-            console.error("Failed to delete clip:", err)
-            console.error(`Failed to delete clip: ${err}`)
-            setIsDeleted(false) // rollback on failure
-        }
-    }
-
-    const handleViewClip = () => {
-        setDialogOpen(true)
-    }
-
-    // Focus input when label editing starts
+    // Dismiss the overlay immediately on any scroll so it doesn't drift
+    // away from the card (capture:true catches ScrollArea internal scrolls)
     useEffect(() => {
-      if (isEditingLabel && labelInputRef.current) {
-        labelInputRef.current.focus()
-        labelInputRef.current.select()
-      }
-    }, [isEditingLabel])
-
-    const startEditingLabel = () => {
-      setEditingLabel(clip.label || "")
-      setIsEditingLabel(true)
-    }
-
-    const saveLabel = async () => {
-      if (isSavingLabelRef.current) return
-      isSavingLabelRef.current = true
-      setIsEditingLabel(false)
-      const trimmed = editingLabel.trim()
-      if (trimmed !== (clip.label || "")) {
-        await renameClip(clip.id, trimmed)
-      }
-      isSavingLabelRef.current = false
-    }
-
-    const cancelLabelEditing = () => {
-      setIsEditingLabel(false)
-      setEditingLabel(clip.label || "")
-    }
-
-    const handleLabelKeyDown = (e: React.KeyboardEvent) => {
-      if (e.key === "Enter") {
-        e.preventDefault()
-        saveLabel()
-      } else if (e.key === "Escape") {
-        cancelLabelEditing()
-      }
-    }
-
-    const handleLinkClick = (e: React.MouseEvent) => {
-        const target = e.target as HTMLElement
-        if (target.classList.contains('inserted-link')) {
-            e.preventDefault()
-            e.stopPropagation()
-            const url = target.getAttribute('data-url')
-            if (url) {
-                Browser.OpenURL(url)
-            }
+        if (!isHovered && !overlayFocused) return
+        const dismiss = () => {
+            if (hoverLeaveTimerRef.current) clearTimeout(hoverLeaveTimerRef.current)
+            setIsHovered(false)
         }
-    }
+        window.addEventListener('scroll', dismiss, true)
+        return () => window.removeEventListener('scroll', dismiss, true)
+    }, [isHovered, overlayFocused])
 
     if (isDeleted) return null
+    if (!isVisible) return <div id={tourId} ref={cardRef} />
 
-    // Placeholder for off-screen cards - keeps the grid cell the right size
-    // without rendering the full React subtree.
-    // --row-span is written directly via el.style.setProperty by useCardRowSpan
-    // and is NOT a React-managed prop, so it survives this render as-is.
-    if (!isVisible) {
-        return <div id={tourId} ref={cardRef} />
-    }
+    const showOverlay = (isHovered || overlayFocused) && cardRect !== null
 
     return (
         <div
             id={tourId}
             ref={cardRef}
-            className={`hand-drawn lined thin p-3 bg-[#F9F5E6] relative group${clip.isHidden ? " ring-1 ring-amber-500/30" : ""}${isEditingLabel ? " z-50" : ""}`}
-        >   {/* Header with icon and timestamp */}
-            {/* Shield button - absolute top-right. Shows as a sensitive badge when hidden,
-                or as a faint hover-only shield icon when not hidden. */}
-            {clip.isHidden ? (
-                <button
-                    onClick={() => unhideClip(clip.id)}
-                    className={`absolute -top-2 -right-2 z-10 flex items-center gap-1 text-[11px] font-medium text-amber-900 bg-amber-300 border border-amber-500 rounded-full shadow-sm hover:bg-green-200 hover:text-green-900 hover:border-green-500 transition-colors ${
-                        isMiniClip ? "p-1" : "px-2 py-0.5"
-                    }`}
-                    title="Mark as safe (unhide)"
-                >
-                    <ShieldCheck className="h-3 w-3" />
-                    {!isMiniClip && <span>sensitive</span>}
-                </button>
-            ) : (
-                <button
-                    onClick={() => hideClip(clip.id)}
-                    className="absolute -top-2 -right-2 z-10 p-1.5 rounded-full text-amber-800 bg-amber-200 border border-amber-400 shadow-sm opacity-0 group-hover:opacity-100 hover:bg-amber-300 hover:border-amber-500 transition-all"
-                    title="Mark as sensitive (hide)"
-                >
-                    <ShieldAlert className="h-3.5 w-3.5" />
-                </button>
-            )}
-            {type == "pinned" &&
-                <div className="h-10 -top-5 right-[40%] absolute">
-                    <img src={"pin.png"} alt="pin-img" className="h-full" />
+            className={`hand-drawn lined thin p-3 bg-[#F9F5E6] relative${clip.isHidden ? " ring-1 ring-amber-500/30" : ""}${showOverlay ? " invisible" : ""}`}
+            onMouseEnter={handleHoverEnter}
+            onMouseLeave={handleHoverLeave}
+        >
+            {/* Pin indicator */}
+            {type === "pinned" && (
+                <div className="h-10 -top-5 right-[40%] absolute z-20">
+                    <img src="pin.png" alt="pin-img" className="h-full" />
                     <div className="absolute h-3 w-4 rounded-[10px] shadow-lg/80 top-4 right-[10.5px]" />
                 </div>
-            }
+            )}
+
+            {/* Header */}
             <div className="mb-3 flex items-start justify-between">
                 <span className="text-xl"></span>
                 <span className="text-xs text-muted-foreground md:hidden">{relativeTime}</span>
             </div>
 
-            {/* Label editor – collapses to zero height when card is not hovered.
-                Uses the grid-template-rows trick (0fr -> 1fr) so height can
-                transition smoothly without knowing the natural height in advance.
-                Hover is handled entirely via the parent `group` CSS class so
-                there are zero React rerenders on hover. */}
-            <div className={`grid transition-[grid-template-rows] duration-200 ease-in-out${isEditingLabel || clip.label ? " grid-rows-[1fr]" : " grid-rows-[0fr] group-hover:grid-rows-[1fr]"}`}>
-                {/* overflow-hidden is removed while editing so the autocomplete
-                    dropdown (position:absolute) isn’t clipped by this wrapper. */}
-                <div className={`min-h-0 ${isEditingLabel ? "" : "overflow-hidden"}`}>
-                    <div className={`mb-1.5 ${isEditingLabel ? "relative" : ""}`}>
-                        {isEditingLabel ? (
-                            <>
-                                <div className="flex items-center gap-1">
-                                    <Tag className="h-3 w-3 shrink-0 text-amber-600/50" />
-                                    <input
-                                        ref={labelInputRef}
-                                        type="text"
-                                        className="w-full text-xs px-1 py-0.5 bg-transparent border-b border-dashed border-amber-600/50 outline-none text-foreground placeholder:text-muted-foreground/50"
-                                        placeholder="Enter label…"
-                                        value={editingLabel}
-                                        onChange={(e) => setEditingLabel(e.target.value)}
-                                        onBlur={saveLabel}
-                                        onKeyDown={handleLabelKeyDown}
-                                    />
-                                </div>
-                                {labelSuggestions.length > 0 && (
-                                    <div className="absolute top-full left-0 right-0 z-20 mt-0.5 bg-[#F9F5E6] border border-dashed border-amber-600/30 shadow-md overflow-y-auto max-h-50">
-                                        {labelSuggestions.map(suggestion => (
-                                            <button
-                                                key={suggestion}
-                                                className="w-full text-left px-2 py-1.5 text-[11px] text-amber-700/70 hover:bg-amber-50/80 hover:text-amber-800 flex items-center gap-1.5 transition-colors"
-                                                onMouseDown={(e) => {
-                                                    // Prevent blur from firing before we handle the click.
-                                                    e.preventDefault()
-                                                    if (isSavingLabelRef.current) return
-                                                    isSavingLabelRef.current = true
-                                                    setIsEditingLabel(false)
-                                                    setEditingLabel(suggestion)
-                                                    if (suggestion !== (clip.label || "")) {
-                                                        renameClip(clip.id, suggestion)
-                                                            .catch(console.error)
-                                                            .finally(() => { isSavingLabelRef.current = false })
-                                                    } else {
-                                                        isSavingLabelRef.current = false
-                                                    }
-                                                }}
-                                            >
-                                                <Tag className="h-2.5 w-2.5 shrink-0" />
-                                                {suggestion}
-                                            </button>
-                                        ))}
-                                    </div>
-                                )}
-                            </>
-                        ) : clip.label ? (
-                            <button
-                                onClick={startEditingLabel}
-                                className="group/label flex items-center gap-1 text-[11px] text-amber-700/70 hover:text-amber-700 transition-colors cursor-text"
-                            >
-                                <Tag className="h-3 w-3 shrink-0" />
-                                <span className="truncate max-w-50">{clip.label}</span>
-                                <Pencil className="h-3 w-3 opacity-0 group-hover/label:opacity-100 transition-opacity" />
-                            </button>
-                        ) : (
-                            <button
-                                onClick={startEditingLabel}
-                                className="flex items-center gap-1 text-[11px] text-muted-foreground/40 hover:text-muted-foreground/70 transition-colors cursor-text"
-                            >
-                                <Tag className="h-3 w-3 shrink-0" />
-                                Add label…
-                            </button>
-                        )}
-                    </div>
+            {/* Label badge — visible without hovering */}
+            {clip.label && (
+                <div className="flex items-center gap-1 text-[11px] text-amber-700/60 mb-1.5">
+                    <Tag className="h-3 w-3 shrink-0" />
+                    <span className="truncate">{clip.label}</span>
                 </div>
-            </div>
+            )}
 
             {/* Content */}
-            <div className={`mb-4 flex-1 overflow-hidden cursor-pointer hover:scale-95 transition-transform  ${hideContent ? "hard-to-read" : ""}`} onClick={(e) => { handleLinkClick(e); if (!(e.target as HTMLElement).classList.contains('inserted-link')) handleViewClip(); }}>
+            <div className={`${hideContent ? "hard-to-read" : ""} mb-4 flex-1 overflow-hidden`}>
                 {clip.type === "image" && clip.image ? (
                     <img
                         src={`data:image/png;base64,${clip.image}`}
@@ -361,113 +133,27 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
                         className="w-full h-auto object-contain max-h-48 rounded"
                     />
                 ) : (
-                    <p className={`line-clamp-4 text-sm text-foreground md:line-clamp-8`} dangerouslySetInnerHTML={{ __html: linkedContent }}></p>
+                    <p
+                        className="line-clamp-4 text-sm text-foreground md:line-clamp-8"
+                        dangerouslySetInnerHTML={{ __html: linkedContent }}
+                    />
                 )}
             </div>
 
-            {/* Footer with time and actions */}
-            <div className="flex flex-col-reverse gap-2 justify-between">
-                <span className="hidden text-xs text-muted-foreground md:block">{relativeTime}</span>
-                <div className="flex gap-2 opacity-0 transition-opacity group-hover:opacity-100">
-                    <button
-                        onClick={handleCopy}
-                        className={`rounded p-1.5 transition-colors ${copied ? "bg-green-100 text-green-700" : "bg-foreground/5 text-foreground hover:bg-foreground/10"
-                            }`}
-                        title="Copy to clipboard"
-                    >
-                        <Copy className="h-4 w-4" />
-                    </button>
-                    {clip.type !== "image" && (
-                        <button
-                            onClick={handlePaste}
-                            className="rounded p-1.5 bg-foreground/5 text-foreground transition-colors hover:bg-purple-100 hover:text-purple-700"
-                            title="Paste into previous window"
-                        >
-                            <ClipboardPaste className="h-4 w-4" />
-                        </button>
-                    )}
-                    {clip.type !== "image" && (
-                        <Suspense fallback={null}>
-                            <EditClipDialog clip={clip}>
-                                <button
-                                    className="rounded p-1.5 bg-foreground/5 text-foreground transition-colors hover:bg-blue-100 hover:text-blue-700"
-                                    title="Edit clip"
-                                >
-                                    <Pencil className="h-4 w-4" />
-                                </button>
-                            </EditClipDialog>
-                        </Suspense>
-                    )}
-                    <button
-                        onClick={handlePin}
-                        className={`rounded p-1.5 transition-colors ${clip.isPinned
-                            ? "bg-yellow-100 text-yellow-700 hover:bg-red-100 hover:text-red-700"
-                            : "bg-foreground/5 text-foreground hover:bg-yellow-100 hover:text-yellow-700"
-                            }`}
-                        title={clip.isPinned ? "Unpin clip" : "Pin clip"}
-                    >
-                        <Pin className={`h-4 w-4 ${clip.isPinned ? "fill-current" : ""}`} />
-                    </button>
-                    <button
-                        onClick={handleDelete}
-                        className="rounded p-1.5 bg-foreground/5 text-foreground transition-colors hover:bg-red-100 hover:text-red-700"
-                        title="Delete clip"
-                    >
-                        <Trash2 className="h-4 w-4" />
-                    </button>
-                </div>
-            </div>
+            {/* Desktop timestamp */}
+            <span className="hidden text-xs text-muted-foreground md:block">{relativeTime}</span>
 
-            {dialogOpen && (
-                <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) setLightboxOpen(false) }}>
-                    {
-                        clip.type === "image" && clip.image ? (
-                            <DialogContent className="px-3 border-0 rounded-sm max-w-2xl bg-[url(/board-texture.avif)] bg-cover h-screen!  sm:h-[90vh]! max-h-125">
-                                {/* clip image */}
-                                <ScrollArea className=" overflow-auto ">
-                                    <img
-                                        src={`data:image/png;base64,${fullImage ?? clip.image}`}
-                                        alt="Clip image"
-                                        onClick={() => setLightboxOpen(true)}
-                                        className={`w-full h-auto object-contain rounded cursor-zoom-in ${hideContent ? "hard-to-read" : ""}`}
-                                    />
-                                </ScrollArea>
-                                <Suspense fallback={null}>
-                                    <ImageLightbox
-                                        src={`data:image/png;base64,${fullImage ?? clip.image}`}
-                                        open={lightboxOpen}
-                                        hideContent={hideContent}
-                                        onClose={() => setLightboxOpen(false)}
-                                    />
-                                </Suspense>
-                            </DialogContent>
-
-                        )
-
-                            :
-
-                            (<DialogContent className="px-3 rounded-sm max-w-2xl bg-[url(/board-texture.avif)] bg-cover border-0 h-screen!  sm:h-[90vh]! max-h-125">
-                                {/* clip image */}
-                                <div className="w-fit hidden sm:block absolute h-[20%] top-[-7%] left-0 mx-auto right-0 z-10">
-                                    <div className="absolute border-black h-2 left-0 right-0 w-[90%] mx-auto bottom-0 shadow-md/65"></div>
-                                    <img src="/clip.png" className="h-full" alt="" />
-                                </div>
-
-                                <div className="page rounded-none! overflow-x-scroll overflow-y-hidden shadow-md/50">
-                                    <div className="margin"></div>
-                                    <DialogHeader className="sm:pt-7">
-                                        <DialogTitle>Clip Content</DialogTitle>
-                                        <DialogDescription>Created {relativeTime}</DialogDescription>
-                                        <img src="/seperator.png" alt="" className="w-full " />
-                                    </DialogHeader>
-                                    <ScrollAreaPencil className={` max-h-[60vh] pr-4 overflow-x-hidden ${hideContent ? "hard-to-read" : ""}`} onClick={handleLinkClick}>
-                                        <p className={`whitespace-pre-wrap wrap-break-word text-sm`} dangerouslySetInnerHTML={{ __html: linkedContent }} />
-                                    </ScrollAreaPencil>
-                                </div>
-                            </DialogContent>
-                            )
-                    }
-                </Dialog>
+            {showOverlay && (
+                <ClipCardOverlay
+                    clip={clip}
+                    type={type}
+                    cardRect={cardRect!}
+                    onDelete={() => setIsDeleted(true)}
+                    onDeleteRollback={() => setIsDeleted(false)}
+                    onFocusChange={setOverlayFocused}
+                    onHoverEnter={handleHoverEnter}
+                    onHoverLeave={handleHoverLeave}
+                />
             )}
         </div>
     )
@@ -478,6 +164,7 @@ export default memo(ClipCard, (prev, next) =>
     prev.clip.content === next.clip.content &&
     prev.clip.image === next.clip.image &&
     prev.clip.isPinned === next.clip.isPinned &&
+    prev.clip.isHidden === next.clip.isHidden &&
     prev.clip.label === next.clip.label &&
     prev.type === next.type &&
     prev.tourId === next.tourId &&

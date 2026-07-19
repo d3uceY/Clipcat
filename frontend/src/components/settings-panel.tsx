@@ -221,11 +221,6 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
                                 <Dot />
                                 {MenuSwitch(isPaused, togglePause)}
                             </SettingRow>
-                            <SettingRow title="Limits the number of clipboard items stored">
-                                <p className="sm:text-base text-sm">Clipboard Limit</p>
-                                <Dot />
-                                <ClipStorageLimitSwitch />
-                            </SettingRow>
                             <SettingRow title="alt + h to toggle">
                                 <p className="sm:text-base text-sm">Hide Content</p>
                                 <Dot />
@@ -235,6 +230,11 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
                                 <p className="sm:text-base text-sm">Auto-hide Sensitive</p>
                                 <Dot />
                                 {MenuSwitch(autoHideSensitive, toggleAutoHideSensitive)}
+                            </SettingRow>
+                            <SettingRow title="Limits the number of clipboard items stored">
+                                <p className="sm:text-base text-sm">Clipboard Limit</p>
+                                <Dot />
+                                <ClipStorageLimitSwitch />
                             </SettingRow>
                         </div>
                     )}

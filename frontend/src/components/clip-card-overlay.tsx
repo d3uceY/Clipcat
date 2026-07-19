@@ -168,7 +168,7 @@ export default function ClipCardOverlay({ clip, type, cardRect, onDelete, onDele
                     left: cardRect.left,
                     width: cardRect.width,
                     minHeight: cardRect.height,
-                    zIndex: 9999,
+                    zIndex: 9,
                     overflow: 'visible',
                     // Step aside when the detail dialog is open so it renders on top
                     opacity: dialogOpen ? 0 : undefined,

@@ -77,6 +77,18 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
         hoverLeaveTimerRef.current = setTimeout(() => setIsHovered(false), 80)
     }
 
+    // Dismiss the overlay immediately on any scroll so it doesn't drift
+    // away from the card (capture:true catches ScrollArea internal scrolls)
+    useEffect(() => {
+        if (!isHovered && !overlayFocused) return
+        const dismiss = () => {
+            if (hoverLeaveTimerRef.current) clearTimeout(hoverLeaveTimerRef.current)
+            setIsHovered(false)
+        }
+        window.addEventListener('scroll', dismiss, true)
+        return () => window.removeEventListener('scroll', dismiss, true)
+    }, [isHovered, overlayFocused])
+
     if (isDeleted) return null
     if (!isVisible) return <div id={tourId} ref={cardRef} />
 

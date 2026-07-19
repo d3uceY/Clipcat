@@ -169,6 +169,9 @@ export default function ClipCardOverlay({ clip, type, cardRect, onDelete, onDele
                     minHeight: cardRect.height,
                     zIndex: 9999,
                     overflow: 'visible',
+                    // Step aside when the detail dialog is open so it renders on top
+                    opacity: dialogOpen ? 0 : undefined,
+                    pointerEvents: dialogOpen ? 'none' : undefined,
                 }}
                 onMouseEnter={onHoverEnter}
                 onMouseLeave={onHoverLeave}
@@ -281,7 +284,10 @@ export default function ClipCardOverlay({ clip, type, cardRect, onDelete, onDele
                     className={`flex-1 min-h-0 overflow-hidden cursor-pointer hover:scale-95 transition-transform ${hideContent ? "hard-to-read" : ""}`}
                     onClick={(e) => {
                         handleLinkClick(e)
-                        if (!(e.target as HTMLElement).classList.contains('inserted-link')) setDialogOpen(true)
+                        if (!(e.target as HTMLElement).classList.contains('inserted-link')) {
+                            setDialogOpen(true)
+                            onFocusChange(true) // keep overlay alive while dialog is open
+                        }
                     }}
                 >
                     {clip.type === "image" && clip.image ? (
@@ -353,7 +359,13 @@ export default function ClipCardOverlay({ clip, type, cardRect, onDelete, onDele
 
             {/* Detail dialog — rendered outside the overlay div so it isn't clipped */}
             {dialogOpen && (
-                <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) setLightboxOpen(false) }}>
+                <Dialog open={dialogOpen} onOpenChange={(open) => {
+                    setDialogOpen(open)
+                    if (!open) {
+                        setLightboxOpen(false)
+                        onFocusChange(false) // allow overlay to dismiss now that dialog is closed
+                    }
+                }}>
                     {clip.type === "image" && clip.image ? (
                         <DialogContent className="px-3 border-0 rounded-sm max-w-2xl bg-[url(/board-texture.avif)] bg-cover h-screen! sm:h-[90vh]! max-h-125">
                             <ScrollArea className="overflow-auto">

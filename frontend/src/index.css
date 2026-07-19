@@ -472,7 +472,6 @@ body:before {
 
 .setting-dialog {
   position: relative;
-  /* overflow: hidden; */
   & .settings-bg {
     position: absolute;
     inset: 0;

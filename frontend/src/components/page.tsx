@@ -255,7 +255,7 @@ function PageContent() {
             )}
 
             {/* // pussy cat image */}
-            <div className="h-[20vh] min-h-25 max-h-50 pussy fixed bottom-0 -left-6 z-1">
+            <div className={`h-[20vh] min-h-25 max-h-50 pussy fixed bottom-0 -left-6 z-1${isMiniClip ? " hidden" : ""}`}>
                 {(searchFocused && searchQuery.length > 0) || (filteredClips.pinned.length === 0 && filteredClips.recent.length === 0) ?
                     (<img src="/pussy-nothing.png" alt="pussy" className="block h-full pussy-nothing" />)
                     :
@@ -271,7 +271,6 @@ function PageContent() {
                 <div className="mb-10 sm:flex-row flex justify-center items-center gap-8 sm:justify-between">
                     {!isMiniClip && (
                     <div id="tour-about" className="items-center gap-2 sm:flex">
-                        <h1 className="font-serif text-xl font-bold italic text-foreground sm:block hidden">About</h1>
                         {
                             version &&
                             <Suspense fallback={null}>

@@ -267,20 +267,24 @@ function PageContent() {
             </div>
             <div className="margin"></div>
             <div className="mx-auto max-w-6xl">
-                {/* Header */}
-                <div className="mb-10 sm:flex-row flex justify-center items-center gap-8 sm:justify-between">
-                    {!isMiniClip && (
-                    <div id="tour-about" className="items-center gap-2 sm:flex">
-                        {
-                            version &&
-                            <Suspense fallback={null}>
-                                <AboutDialog version={version} updateAvailable={updateInfo} />
-                            </Suspense>
-                        }
+                {/* Header: info (left) · search (center) · label filter (right) */}
+                <div className="mb-10 flex items-center gap-4 justify-between">
+                    {/* Left – about / version */}
+                    <div className="shrink-0">
+                        {!isMiniClip && (
+                        <div id="tour-about" className="items-center gap-2 sm:flex">
+                            {
+                                version &&
+                                <Suspense fallback={null}>
+                                    <AboutDialog version={version} updateAvailable={updateInfo} />
+                                </Suspense>
+                            }
+                        </div>
+                        )}
                     </div>
-                    )}
 
-                    <div className="relative w-full max-w-md torn-input">
+                    {/* Center – search */}
+                    <div className="relative flex-1 max-w-md torn-input mx-auto">
                         <div className="tape-1 absolute -top-3 left-0 h-12 w-4 bg-yellow-200/40 rotate-45 rounded-sm shadow-sm"></div>
                         <div className="tape-2 absolute -top-3 right-0 h-12 w-4 bg-yellow-200/40 -rotate-45 rounded-sm shadow-sm"></div>
                         <input
@@ -296,10 +300,12 @@ function PageContent() {
                         />
                         <Search className="absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-[#c0bdbd]" />
                     </div>
-                </div>
 
-                {/* Label filter bar - only renders when at least one label exists */}
-                <LabelFilterBar />
+                    {/* Right – label filter */}
+                    <div className="shrink-0">
+                        <LabelFilterBar />
+                    </div>
+                </div>
 
                 {/* Sensitive clips indicator - only shown when auto-hide is on and there are hidden clips */}
                 {autoHideSensitive && hiddenCount > 0 && (

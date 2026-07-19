@@ -1,6 +1,7 @@
 import { memo, useState, useRef, useEffect } from "react"
 import { ChevronDown, Check, Tag, X } from "lucide-react"
 import { useClips } from "@/context/ClipContext"
+import { ScrollArea } from "@/components/ui/scroll-area"
 
 function LabelFilterBar() {
     const { distinctLabels, activeLabels, toggleLabelFilter, clearLabelFilters } = useClips()
@@ -29,34 +30,36 @@ function LabelFilterBar() {
             : `${activeLabels.length} labels`
 
     return (
-        <div ref={containerRef} className="relative mb-6 w-fit">
+        <div ref={containerRef} className="relative">
             {/* Trigger */}
             <button
                 onClick={() => setOpen(v => !v)}
                 className="hand-drawn-btn dashed thin flex items-center gap-2 px-3 py-1.5 text-xs bg-[#F9F5E6] text-amber-900 transition-all hover:bg-amber-50"
             >
                 <Tag className="h-3.5 w-3.5 shrink-0 text-amber-700" />
-                <span className="font-medium text-sm">{label}</span>
+                {/* Full label text on lg+, icon-only below lg */}
+                <span className="hidden lg:inline font-medium text-sm">{label}</span>
                 {activeLabels.length > 0 && (
                     <span className="flex items-center justify-center h-4 w-4 rounded-full bg-amber-300 text-amber-900 text-[10px] font-bold leading-none">
                         {activeLabels.length}
                     </span>
                 )}
                 <ChevronDown
-                    className={`h-3.5 w-3.5 text-amber-700/60 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+                    className={`hidden lg:block h-3.5 w-3.5 text-amber-700/60 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
                 />
             </button>
 
-            {/* Dropdown panel */}
+            {/* Dropdown panel – aligned to right edge of trigger */}
             {open && (
                 <div
-                    className="absolute top-full left-0 z-50 mt-1.5 min-w-40 max-h-52 overflow-y-auto bg-[#F9F5E6]"
+                    className="absolute top-full right-0 z-50 mt-1.5 min-w-44 bg-[#F9F5E6]"
                     style={{
                         border: "dashed 2px #41403e",
                         borderRadius: "12px 4px 12px 4px / 4px 12px 4px 12px",
                         boxShadow: "4px 8px 16px -4px hsla(0,0%,0%,0.18)",
                     }}
                 >
+                    <ScrollArea className="max-h-52">
                     <ul className="py-1">
                         {distinctLabels.map(lbl => {
                             const active = activeLabels.includes(lbl)
@@ -82,6 +85,7 @@ function LabelFilterBar() {
                             )
                         })}
                     </ul>
+                    </ScrollArea>
 
                     {activeLabels.length > 0 && (
                         <>

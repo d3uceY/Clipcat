@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { useRelativeTime } from "@/hooks/use-relative-time"
 import { ScrollArea } from "./ui/scroll-area-white"
 import { ScrollArea as ScrollAreaPencil } from "./ui/scroll-area-pencil"
+import { ScrollArea as ScrollAreaDark } from "./ui/scroll-area"
 import { copyBase64ImageToClipboard } from "@/helpers/copyBase64Image"
 const EditClipDialog = lazy(() => import("./edit-clip-dialog"))
 const ImageLightbox = lazy(() => import("./image-lightbox"))
@@ -232,7 +233,8 @@ export default function ClipCardOverlay({ clip, type, cardRect, onDelete, onDele
                                 />
                             </div>
                             {labelSuggestions.length > 0 && (
-                                <div className="absolute top-full left-0 right-0 z-30 mt-0.5 bg-[#F9F5E6] border border-dashed border-amber-600/30 shadow-md overflow-y-auto max-h-50">
+                                <div className="absolute top-full left-0 right-0 z-30 mt-0.5 bg-[#F9F5E6] border border-dashed border-amber-600/30 shadow-md">
+                                    <ScrollAreaDark className="max-h-40">
                                     {labelSuggestions.map(suggestion => (
                                         <button
                                             key={suggestion}
@@ -256,6 +258,7 @@ export default function ClipCardOverlay({ clip, type, cardRect, onDelete, onDele
                                             {suggestion}
                                         </button>
                                     ))}
+                                    </ScrollAreaDark>
                                 </div>
                             )}
                         </>

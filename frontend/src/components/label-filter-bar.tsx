@@ -50,7 +50,7 @@ function LabelFilterBar() {
             {/* Dropdown panel */}
             {open && (
                 <div
-                    className="absolute top-full left-0 z-50 mt-1.5 min-w-40 bg-[#F9F5E6]"
+                    className="absolute top-full left-0 z-50 mt-1.5 min-w-40 max-h-52 overflow-y-auto bg-[#F9F5E6]"
                     style={{
                         border: "dashed 2px #41403e",
                         borderRadius: "12px 4px 12px 4px / 4px 12px 4px 12px",

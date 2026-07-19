@@ -399,7 +399,7 @@ export default function ClipCardOverlay({ clip, type, cardRect, onDelete, onDele
                                     <img src="/seperator.png" alt="" className="w-full" />
                                 </DialogHeader>
                                 <ScrollAreaPencil
-                                    className={`max-h-[60vh] pr-4 overflow-x-hidden ${hideContent ? "hard-to-read" : ""}`}
+                                    className={`max-h-[60vh] pr-4 overflow-x-hidden pb-90 ${hideContent ? "hard-to-read" : ""}`}
                                     onClick={handleLinkClick}
                                 >
                                     <p className="whitespace-pre-wrap wrap-break-word text-sm" dangerouslySetInnerHTML={{ __html: linkedContent }} />

@@ -2,12 +2,12 @@ import { useState, useEffect, forwardRef } from "react";
 import { Browser } from "@wailsio/runtime";
 import { useClips } from "@/context/ClipContext";
 import { playSound } from "@/helpers/playSound";
-import { UpdateStorageLimit, GetStorageLimit, GetClips, DeleteAllClips, DeletePinnedClips, DeleteUnpinnedClips } from "../../bindings/Clipcat/app";
+import { UpdateStorageLimit, GetStorageLimit, GetClips, DeleteAllClips, DeletePinnedClips, DeleteUnpinnedClips, GetSyncSettings, SaveSyncSettings } from "../../bindings/Clipcat/app";
 import { ScrollArea } from "./ui/scroll-area";
-import { RefreshCw, Download, Monitor, Clipboard, Wrench, ShieldCheck, Trash2 } from "lucide-react";
+import { RefreshCw, Download, Monitor, Clipboard, Wrench, ShieldCheck, Trash2, Network, Save, Eye, EyeOff } from "lucide-react";
 import type { UpdateInfo } from "./about-dialog";
 
-type SettingsTab = "window" | "clipboard" | "system" | "privacy";
+type SettingsTab = "window" | "clipboard" | "system" | "privacy" | "network";
 
 interface SettingsPanelProps {
     /** Animated close triggered by the parent's GSAP timeline */
@@ -45,8 +45,23 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
         const [limit, setLimit] = useState(100);
         const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
 
+        // Network / LAN sync state
+        const [syncEnabled, setSyncEnabled] = useState(false);
+        const [syncPassphrase, setSyncPassphrase] = useState("");
+        const [syncPeerCount, setSyncPeerCount] = useState(0);
+        const [isSyncSaving, setIsSyncSaving] = useState(false);
+        const [showPassphrase, setShowPassphrase] = useState(false);
+
         useEffect(() => {
             GetStorageLimit().then(setLimit).catch(() => { });
+        }, []);
+
+        useEffect(() => {
+            GetSyncSettings().then((s) => {
+                setSyncEnabled(s.enabled);
+                setSyncPassphrase(s.passphrase);
+                setSyncPeerCount(s.peerCount);
+            }).catch(() => { });
         }, []);
 
         const incrementLimit = async () => {
@@ -82,6 +97,18 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
             if (!name) return;
             await addIgnoreEntry(name);
             setNewIgnoreEntry("");
+        };
+
+        const handleSaveSyncSettings = async () => {
+            setIsSyncSaving(true);
+            try {
+                await SaveSyncSettings(syncEnabled, syncPassphrase);
+                playSound('/sounds/switch-on.mp3', soundOn, 1);
+            } catch (e) {
+                console.error("Failed to save sync settings:", e);
+            } finally {
+                setIsSyncSaving(false);
+            }
         };
 
         const hasClips = () => clips.recent.length > 0 || clips.pinned.length > 0;
@@ -134,6 +161,7 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
             { id: "clipboard", label: "Clipboard", icon: <Clipboard size={11} /> },
             { id: "system", label: "System", icon: <Wrench size={11} /> },
             { id: "privacy", label: "Privacy", icon: <ShieldCheck size={11} /> },
+            { id: "network", label: "Network", icon: <Network size={11} /> },
         ];
 
 
@@ -172,6 +200,11 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
                                 {id === "privacy" && ignoreList.length > 0 && (
                                     <span className="ml-0.5 w-3.5 h-3.5 rounded-full bg-current/25 text-[9px] flex items-center justify-center leading-none font-bold">
                                         {ignoreList.length}
+                                    </span>
+                                )}
+                                {id === "network" && syncEnabled && syncPeerCount > 0 && (
+                                    <span className="ml-0.5 w-3.5 h-3.5 rounded-full bg-green-500/70 text-[9px] flex items-center justify-center leading-none font-bold">
+                                        {syncPeerCount}
                                     </span>
                                 )}
                                 {id === "system" && updateAvailable && (
@@ -381,6 +414,62 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
                                     ))}
                                 </ul>
                             )}
+                        </div>
+                    )}
+
+                    {/* ══════ NETWORK ══════ */}
+                    {activeTab === "network" && (
+                        <div className="pt-3">
+                            <SettingRow title="Sync clipboard entries with other devices on the same LAN">
+                                <p className="sm:text-base text-sm">LAN Sync</p>
+                                <Dot />
+                                {MenuSwitch(syncEnabled, () => setSyncEnabled(v => !v))}
+                            </SettingRow>
+
+                            <div className="mt-3 mb-1">
+                                <p className="text-[10px] uppercase tracking-widest opacity-40 mb-2">Passphrase</p>
+                                <p className="text-xs text-foreground/55 mb-3">All devices must share the same passphrase. Your clipboard data is encrypted in transit.</p>
+                                <div className="flex items-center gap-1">
+                                    <div className="relative flex-1">
+                                        <input
+                                            type={showPassphrase ? "text" : "password"}
+                                            value={syncPassphrase}
+                                            onChange={(e) => setSyncPassphrase(e.target.value)}
+                                            placeholder="Enter a shared passphrase…"
+                                            disabled={!syncEnabled}
+                                            className="w-full text-xs px-2 py-1 pr-7 border-b border-current bg-transparent focus:outline-none placeholder-gray-400 disabled:opacity-40 [&::-ms-reveal]:hidden [&::-webkit-credentials-auto-fill-button]:hidden"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassphrase(v => !v)}
+                                            disabled={!syncEnabled}
+                                            className="absolute right-1 top-1/2 -translate-y-1/2 opacity-40 hover:opacity-70 disabled:opacity-20 transition-opacity"
+                                            title={showPassphrase ? "Hide passphrase" : "Show passphrase"}
+                                        >
+                                            {showPassphrase ? <EyeOff size={12} /> : <Eye size={12} />}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="mt-4 flex items-center justify-between">
+                                <button
+                                    onClick={handleSaveSyncSettings}
+                                    disabled={isSyncSaving || (syncEnabled && syncPassphrase.trim() === "")}
+                                    className="flex items-center gap-1 text-xs! px-2 py-1 hand-drawn-btn lined thin font-bold hover:opacity-70 transition-opacity disabled:opacity-40"
+                                    title="Save sync settings"
+                                >
+                                    <Save size={11} />
+                                    {isSyncSaving ? "Saving…" : "Save"}
+                                </button>
+                                {syncEnabled && (
+                                    <p className="text-xs opacity-50">
+                                        {syncPeerCount === 0
+                                            ? "No peers found"
+                                            : `${syncPeerCount} peer${syncPeerCount === 1 ? "" : "s"} connected`}
+                                    </p>
+                                )}
+                            </div>
                         </div>
                     )}
                 </ScrollArea>

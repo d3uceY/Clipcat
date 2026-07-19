@@ -145,7 +145,7 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
                            md:w-[74vw] max-w-200 md:h-[74vh]" 
             >
                 {/* ── Header ── */} 
-                <div className="relative z-1 flex items-center justify-between px-10 pt-10 pb-2 shrink-0">
+                <div className="relative z-1 flex items-center justify-between px-10 max-sm:px-6 pt-10 pb-2 shrink-0">
                     <h2 className="text-lg">Settings</h2>
                     <button
                         onClick={onClose}
@@ -156,7 +156,7 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
                 </div>
 
                 {/* ── Tab bar ── */}
-                <div className="relative z-1 px-10 shrink-0">
+                <div className="relative z-1 px-10 max-sm:px-5 shrink-0">
                     <div className="flex gap-1 flex-wrap pb-1">
                         {tabs.map(({ id, label, icon }) => (
                             <button
@@ -184,7 +184,7 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
                 </div>
 
                 {/* ── Tab content ── */}
-                <ScrollArea className="relative z-1 flex-1 min-h-0 px-12 pb-6">
+                <ScrollArea className="relative z-1 flex-1 min-h-0 px-12 max-sm:px-8 pb-6">
 
                     {/* ══════ WINDOW ══════ */}
                     {activeTab === "window" && (

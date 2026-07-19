@@ -1,12 +1,10 @@
-import { useState, useEffect, lazy, Suspense, forwardRef } from "react";
+import { useState, useEffect, forwardRef } from "react";
 import { Browser } from "@wailsio/runtime";
 import { useClips } from "@/context/ClipContext";
 import { playSound } from "@/helpers/playSound";
-import { UpdateStorageLimit, GetStorageLimit, GetClips } from "../../bindings/Clipcat/app";
+import { UpdateStorageLimit, GetStorageLimit, GetClips, DeleteAllClips, DeletePinnedClips, DeleteUnpinnedClips } from "../../bindings/Clipcat/app";
 import { ScrollArea } from "./ui/scroll-area";
-import DeleteButton from "./delete-button";
-import { RefreshCw, Download, Monitor, Clipboard, Wrench, ShieldCheck } from "lucide-react";
-const DeleteClipsDialog = lazy(() => import("./delete-clips-dialog"));
+import { RefreshCw, Download, Monitor, Clipboard, Wrench, ShieldCheck, Trash2 } from "lucide-react";
 import type { UpdateInfo } from "./about-dialog";
 
 type SettingsTab = "window" | "clipboard" | "system" | "privacy";
@@ -39,15 +37,16 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
             autoHideSensitive, toggleAutoHideSensitive,
             isAlwaysOnTop, toggleAlwaysOnTop,
             isCursorSnap, toggleCursorSnap,
+            getClips,
         } = useClips();
 
-        const [activeTab, setActiveTab]           = useState<SettingsTab>("window");
+        const [activeTab, setActiveTab] = useState<SettingsTab>("window");
         const [newIgnoreEntry, setNewIgnoreEntry] = useState("");
-        const [limit, setLimit]                   = useState(100);
+        const [limit, setLimit] = useState(100);
         const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
 
         useEffect(() => {
-            GetStorageLimit().then(setLimit).catch(() => {});
+            GetStorageLimit().then(setLimit).catch(() => { });
         }, []);
 
         const incrementLimit = async () => {
@@ -66,6 +65,18 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
             catch (e) { console.error("Failed to update storage limit:", e); }
         };
 
+        const handleDeleteAllClips = async () => {
+            await DeleteAllClips().then(() => getClips());
+        };
+
+        const handleDeletePinnedClips = async () => {
+            await DeletePinnedClips().then(() => getClips());
+        };
+
+        const handleDeleteUnpinnedClips = async () => {
+            await DeleteUnpinnedClips().then(() => getClips());
+        };
+
         const handleAddIgnoreEntry = async () => {
             const name = newIgnoreEntry.trim();
             if (!name) return;
@@ -74,8 +85,6 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
         };
 
         const hasClips = () => clips.recent.length > 0 || clips.pinned.length > 0;
-
-        // ─── Primitive UI helpers ───────────────────────────────────────────
 
         const MenuSwitch = (isOn: boolean, fn: () => void, disabled = false): React.JSX.Element => (
             <button
@@ -87,7 +96,7 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
                 disabled={disabled}
             >
                 {isOn
-                    ? <img src="/on.png"  alt="" className="block h-full" />
+                    ? <img src="/on.png" alt="" className="block h-full" />
                     : <img src="/off.png" alt="" className="block h-full" />}
             </button>
         );
@@ -120,23 +129,20 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
             <span className="flex-1 border-b border-dashed border-current opacity-20 mb-1 mx-1" />
         );
 
-        // ─── Tabs definition ─────────────────────────────────────────────────
-
         const tabs: { id: SettingsTab; label: string; icon: React.ReactNode }[] = [
-            { id: "window",    label: "Window",    icon: <Monitor     size={11} /> },
-            { id: "clipboard", label: "Clipboard", icon: <Clipboard   size={11} /> },
-            { id: "system",    label: "System",    icon: <Wrench      size={11} /> },
-            { id: "privacy",   label: "Privacy",   icon: <ShieldCheck size={11} /> },
+            { id: "window", label: "Window", icon: <Monitor size={11} /> },
+            { id: "clipboard", label: "Clipboard", icon: <Clipboard size={11} /> },
+            { id: "system", label: "System", icon: <Wrench size={11} /> },
+            { id: "privacy", label: "Privacy", icon: <ShieldCheck size={11} /> },
         ];
 
-        // ─── Render ───────────────────────────────────────────────────────────
 
         return (
             <div
                 ref={ref}
-                className="setting-dialog relative z-10 flex flex-col overflow-hidden
+                className="setting-dialog relative z-10 flex flex-col
                            w-full h-full
-                           md:w-[74vw] md:h-[74vh] md:rounded-sm"
+                           md:w-[74vw] max-w-200 md:h-[74vh]" 
             >
                 {/* ── Header ── */}
                 <div className="relative z-1 flex items-center justify-between px-6 pt-5 pb-2 shrink-0">
@@ -156,11 +162,10 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
                             <button
                                 key={id}
                                 onClick={() => setActiveTab(id)}
-                                className={`flex items-center gap-1.5 text-[11px] px-3 py-1.5 transition-all hand-drawn-btn ${
-                                    activeTab === id
-                                        ? "font-bold opacity-100 lined thin"
-                                        : "opacity-45 hover:opacity-70"
-                                }`}
+                                className={`flex items-center gap-1.5 !text-[11px] px-3 py-1.5 transition-all hand-drawn-btn ${activeTab === id
+                                    ? "font-bold opacity-100 lined thin"
+                                    : "opacity-45 hover:opacity-70"
+                                    }`}
                             >
                                 {icon}
                                 {label}
@@ -175,7 +180,7 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
                             </button>
                         ))}
                     </div>
-                    <img src="/seperator.png" alt="" className="w-full opacity-40" />
+                    <img src="/seperator.png" alt="" className="w-full opacity-60" />
                 </div>
 
                 {/* ── Tab content ── */}
@@ -302,13 +307,41 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
                     {/* ══════ PRIVACY ══════ */}
                     {activeTab === "privacy" && (
                         <div className="pt-3">
-                            {/* Clear History — first item, zero scroll friction */}
-                            <p className="text-[10px] uppercase tracking-widest opacity-40 mb-3">Clear History</p>
-                            <Suspense fallback={null}>
-                                <DeleteClipsDialog>
-                                    <DeleteButton />
-                                </DeleteClipsDialog>
-                            </Suspense>
+                            {/* Clear History */}
+                            <p className="text-[10px] uppercase tracking-widest opacity-40 mb-2">Clear History</p>
+                            <SettingRow>
+                                <p className="sm:text-base text-sm">Delete Recents</p>
+                                <Dot />
+                                <button
+                                    onClick={handleDeleteUnpinnedClips}
+                                    className="flex items-center gap-1 text-xs! px-2 py-1 hand-drawn-btn lined thin font-bold hover:opacity-70 transition-opacity"
+                                >
+                                    <Trash2 size={11} />
+                                    Delete
+                                </button>
+                            </SettingRow>
+                            <SettingRow>
+                                <p className="sm:text-base text-sm">Delete Pinned</p>
+                                <Dot />
+                                <button
+                                    onClick={handleDeletePinnedClips}
+                                    className="flex items-center gap-1 text-xs! px-2 py-1 hand-drawn-btn lined thin font-bold hover:opacity-70 transition-opacity"
+                                >
+                                    <Trash2 size={11} />
+                                    Delete
+                                </button>
+                            </SettingRow>
+                            <SettingRow>
+                                <p className="sm:text-base text-sm">Delete All</p>
+                                <Dot />
+                                <button
+                                    onClick={handleDeleteAllClips}
+                                    className="flex items-center gap-1 text-xs! px-2 py-1 hand-drawn-btn lined thin font-bold hover:opacity-70 transition-opacity"
+                                >
+                                    <Trash2 size={11} />
+                                    Delete
+                                </button>
+                            </SettingRow>
 
                             <Separator />
 
@@ -353,7 +386,7 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
                 </ScrollArea>
 
                 {/* Paper texture */}
-                <img src="/menu-clean.png" alt="" className="settings-bg" style={{ height: '100%', objectFit: 'cover' }} />
+                <img src="/menu-clean.png" alt="" className="settings-bg"/>
             </div>
         );
     }

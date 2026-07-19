@@ -13,7 +13,7 @@ main.go
   └─ EnsureSingleInstance()          // backend/platform/single_instance_linux.go
        └─ PID lock file in ~/.cache/clipcat/clipcat.lock
             ├─ If stale: overwrite and continue
-            └─ If live:  wmctrl -a Clipcat  →  exit
+            └─ If live:  wmctrl -a Clipcat  ->  exit
 
   └─ wails.Run(...)                  // launch_other.go (no-op relaunch on Linux)
        └─ app.startup()              // app.go
@@ -22,7 +22,7 @@ main.go
             ├─ clipboard.SetIgnoredProcesses
             ├─ clipboard.SetOurProcessID   // no-op on Linux
             ├─ clipboard.StartFocusTracker
-            ├─ a.startTray()               // tray_other.go → backend/tray/tray_linux.go
+            ├─ a.startTray()               // tray_other.go -> backend/tray/tray_linux.go
             └─ clipboard.StartClipboardListener(onChange, onHotkey)
 ```
 
@@ -47,7 +47,7 @@ runX11EventLoop()        // blocks forever
        └─ KeyPress + Ctrl+Shift+V match
             └─ linuxHotkeyFired()   ← exported Go callback
                  ├─ capturePreviousAppLinux()
-                 └─ onHotkeyCallback()  →  app shows window
+                 └─ onHotkeyCallback()  ->  app shows window
 ```
 
 If `XOpenDisplay` fails (Wayland session without XWayland), the goroutine returns silently and the app continues working via the tray icon.
@@ -61,8 +61,8 @@ CGo includes the preamble comment into **every** generated `.c` translation unit
 ```
 gclip.Watch(ctx, FmtText)   \
 gclip.Watch(ctx, FmtImage)   ├─ select loop
-                              |    └─ shouldSkip()  →  isPaused || isForegroundProcessIgnored()
-                              └─    fireChange()    →  150 ms debounce → onChangeCallback()
+                              |    └─ shouldSkip()  ->  isPaused || isForegroundProcessIgnored()
+                              └─    fireChange()    ->  150 ms debounce -> onChangeCallback()
 ```
 
 `shouldSkip` and `fireChange` are defined locally in `listener_linux.go` (they mirror the macOS helpers - each platform file must define its own copy because Go build tags mean they live in separate compilation units).
@@ -92,9 +92,9 @@ app.PasteToWindow(content)
   ├─ gclip.Write(FmtText, content)
   ├─ [ghost mode] runtime.WindowHide
   ├─ time.Sleep(80ms)
-  ├─ clipboard.FocusPreviousWindow()   →  xdotool windowactivate
+  ├─ clipboard.FocusPreviousWindow()   ->  xdotool windowactivate
   ├─ time.Sleep(100ms)
-  └─ clipboard.SimulatePaste()         →  xdotool key ctrl+v
+  └─ clipboard.SimulatePaste()         ->  xdotool key ctrl+v
 ```
 
 ---
@@ -115,8 +115,8 @@ Root-level `tray_other.go` embeds the icon bytes and wires the systray callbacks
 
 1. Creates `~/.cache/clipcat/clipcat.lock` containing the current PID.
 2. On startup, if the file exists: reads the PID, sends signal 0 (`kill -0`) to check liveness.
-   - Dead PID → overwrite lock file, continue.
-   - Live PID → runs `wmctrl -a Clipcat` to bring the existing window front, then `os.Exit(0)`.
+   - Dead PID -> overwrite lock file, continue.
+   - Live PID -> runs `wmctrl -a Clipcat` to bring the existing window front, then `os.Exit(0)`.
 
 ---
 

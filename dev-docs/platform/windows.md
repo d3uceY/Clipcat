@@ -12,7 +12,7 @@ The Windows build uses Win32 message-window APIs for both clipboard monitoring a
 main.go
   └─ EnsureSingleInstance()          // backend/platform/single_instance_windows.go
        └─ CreateMutex("ClipcatSingleInstance")
-            ├─ Mutex already owned: FindWindow("ClipcatClipboardWindow") → show + exit
+            ├─ Mutex already owned: FindWindow("ClipcatClipboardWindow") -> show + exit
             └─ Mutex acquired: continue
 
   └─ wails.Run(...)                  // launch_other.go (no-op relaunch on Windows)
@@ -22,7 +22,7 @@ main.go
             ├─ clipboard.SetIgnoredProcesses
             ├─ clipboard.SetOurProcessID(os.Getpid())
             ├─ clipboard.StartFocusTracker
-            ├─ a.startTray()               // tray_windows.go → backend/tray/tray_windows.go
+            ├─ a.startTray()               // tray_windows.go -> backend/tray/tray_windows.go
             └─ clipboard.StartClipboardListener(onChange, onHotkey)
 ```
 
@@ -41,10 +41,10 @@ AddClipboardFormatListener(hwnd)
   └─ OS sends WM_CLIPBOARDUPDATE whenever clipboard content changes
 
 wndProc(WM_CLIPBOARDUPDATE)
-  ├─ isPaused?                   → drop
-  ├─ isForegroundProcessIgnored? → drop
+  ├─ isPaused?                   -> drop
+  ├─ isForegroundProcessIgnored? -> drop
   └─ 150 ms debounce
-       └─ onChangeCallback()     →  app.go reads clipboard, persists clip, emits event
+       └─ onChangeCallback()     ->  app.go reads clipboard, persists clip, emits event
 ```
 
 The 150 ms debounce is enforced in the message handler itself using `lastClipboardChange` from `shared.go`.
@@ -56,7 +56,7 @@ RegisterHotKey(hwnd, id=1, MOD_CONTROL|MOD_SHIFT, VK_V)
 
 wndProc(WM_HOTKEY, wParam=1)
   ├─ capturePreviousWindow()   ← snapshot before Clipcat steals focus
-  └─ onHotkeyCallback()        →  app shows window, brings to front
+  └─ onHotkeyCallback()        ->  app shows window, brings to front
 ```
 
 The message window class name `"ClipcatClipboardWindow"` is also used by the single-instance guard to find an already-running instance.
@@ -77,10 +77,10 @@ All system calls use lazily-loaded DLL procs from `user32.dll`, `kernel32.dll`, 
 | `HasPreviousWindow()` | `prevHWND != 0` |
 | `FocusPreviousWindow()` | `SetForegroundWindow(prevHWND)` |
 | `SimulatePaste()` | `keybd_event(VK_CONTROL down, VK_V down/up, VK_CONTROL up)` |
-| `isForegroundProcessIgnored()` | `GetForegroundWindow` → `GetWindowThreadProcessId` → `OpenProcess` → `GetModuleBaseNameW` |
+| `isForegroundProcessIgnored()` | `GetForegroundWindow` -> `GetWindowThreadProcessId` -> `OpenProcess` -> `GetModuleBaseNameW` |
 | `GetCursorPos()` | `GetCursorPos` - returns the current cursor screen position |
-| `GetMonitorBoundsAt(px,py)` | `MonitorFromPoint(NEAREST)` → `GetMonitorInfoW` - returns `rcWork` (taskbar excluded) of the containing monitor |
-| `GetWindowMonitorWorkOrigin()` | `FindWindowW("Clipcat")` → `MonitorFromWindow` → `GetMonitorInfoW` - returns the `rcWork.Left/Top` of the monitor the Wails window is currently on |
+| `GetMonitorBoundsAt(px,py)` | `MonitorFromPoint(NEAREST)` -> `GetMonitorInfoW` - returns `rcWork` (taskbar excluded) of the containing monitor |
+| `GetWindowMonitorWorkOrigin()` | `FindWindowW("Clipcat")` -> `MonitorFromWindow` -> `GetMonitorInfoW` - returns the `rcWork.Left/Top` of the monitor the Wails window is currently on |
 
 ### Paste flow
 
@@ -89,9 +89,9 @@ app.PasteToWindow(content)
   ├─ gclip.Write(FmtText, content)
   ├─ [ghost mode] runtime.WindowHide
   ├─ time.Sleep(80ms)
-  ├─ clipboard.FocusPreviousWindow()   →  SetForegroundWindow(prevHWND)
+  ├─ clipboard.FocusPreviousWindow()   ->  SetForegroundWindow(prevHWND)
   ├─ time.Sleep(100ms)
-  └─ clipboard.SimulatePaste()         →  keybd_event Ctrl+V sequence
+  └─ clipboard.SimulatePaste()         ->  keybd_event Ctrl+V sequence
 ```
 
 ---
@@ -125,7 +125,7 @@ So passing absolute screen coordinates directly causes the origin to be added tw
 ```
 ox, oy := clipboard.GetWindowMonitorWorkOrigin()  // current window monitor origin
 runtime.WindowSetPosition(ctx, pos.X - ox, pos.Y - oy)
-// Wails adds ox,oy back  →  final position == pos.X, pos.Y  ✓
+// Wails adds ox,oy back  ->  final position == pos.X, pos.Y  ✓
 ```
 
 On macOS and Linux, `GetWindowMonitorWorkOrigin()` is a stub returning `(0, 0)` because Wails uses absolute coordinates on those platforms.
@@ -134,9 +134,9 @@ On macOS and Linux, `GetWindowMonitorWorkOrigin()` is a stub returning `(0, 0)` 
 
 ```
 GetForegroundWindow()
-  └─ GetWindowThreadProcessId → pid
+  └─ GetWindowThreadProcessId -> pid
        └─ OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ)
-            └─ GetModuleBaseNameW → "1password.exe"
+            └─ GetModuleBaseNameW -> "1password.exe"
                  └─ lowercased, compared against ignore list
 ```
 
@@ -172,7 +172,7 @@ GetForegroundWindow()
 Uses PowerShell's `WScript.Shell` COM object to create / remove a `.lnk` shortcut in the user's `Startup` folder (`shell:startup`).
 
 ```
-EnableStartup:  New-Object -ComObject WScript.Shell → CreateShortcut → .Save()
+EnableStartup:  New-Object -ComObject WScript.Shell -> CreateShortcut -> .Save()
 DisableStartup: Remove-Item "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Startup\Clipcat.lnk"
 IsStartupEnabled: Test-Path of the same .lnk
 ```

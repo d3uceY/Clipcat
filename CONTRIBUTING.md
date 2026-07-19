@@ -92,7 +92,7 @@ Clipcat/
     │   ├── helpers/      Utility functions (formatTime, playSound, insertLinks…)
     │   ├── hooks/        Custom hooks (use-card-row-span, use-relative-time)
     │   └── types/        TypeScript interfaces (Clip)
-    ├── wailsjs/          Auto-generated Wails Go→TS bindings (do not edit)
+    ├── wailsjs/          Auto-generated Wails Go->TS bindings (do not edit)
     └── public/           Static assets (sounds, cursors, textures)
 ```
 

@@ -39,13 +39,13 @@ Clipcat is not code-signed, so each platform may warn you on first launch. The a
 1. Click **More info**
 2. Click **Run anyway**
 
-Or right-click the `.exe` → **Properties** → check **Unblock** → **Apply**.
+Or right-click the `.exe` -> **Properties** -> check **Unblock** -> **Apply**.
 
 **macOS - Gatekeeper**
 
-Right-click the `.dmg` → **Open** → click **Open** again in the dialog. Alternatively, go to System Settings → Privacy & Security and click **Open Anyway** after the first blocked attempt.
+Right-click the `.dmg` -> **Open** -> click **Open** again in the dialog. Alternatively, go to System Settings -> Privacy & Security and click **Open Anyway** after the first blocked attempt.
 
-Clipcat also requires **Accessibility** permission to simulate paste (Cmd+V). Grant it under System Settings → Privacy & Security → Accessibility.
+Clipcat also requires **Accessibility** permission to simulate paste (Cmd+V). Grant it under System Settings -> Privacy & Security -> Accessibility.
 
 **Linux**
 
@@ -86,12 +86,12 @@ sudo apt install wl-clipboard
 - **Privacy Mode** - Instantly blur all clip content for screen sharing or shoulder-surfing situations; toggle with `Alt+H`
 - <img width="1918" height="1017" alt="image" src="https://github.com/user-attachments/assets/7989e737-d9b9-4b1d-a008-9fd2ad3fd079" />
 
-- **Blocked Apps** - Add any app's process name to a blocklist so its clipboard activity is never captured (useful for password managers)
+- **Blocked Apps** - Add any app's process name to a blocklist so its clipboard activity is never captured. Clipcat ships with common password managers pre-blocked out of the box (1Password, Bitwarden, LastPass, KeePass/KeePassXC, Dashlane, NordPass, Enpass, RoboForm). Any default can be removed from Settings - Privacy -> Blocked Apps if you'd prefer Clipcat to capture from that app
 - **Pause Capture** - Temporarily stop recording clipboard changes without closing the app
 - **Bulk Delete** - Clear all clips, only pinned, or only unpinned in one click - always with a confirmation prompt
 - **Mini Clip Mode** - Compact always-on-top window that stays out of your way; toggle with `Alt+M`. State persists between sessions
 - **Always on Top** - Keep the Clipcat window above all other windows at all times. State persists between sessions
-- **Smart Position** - When Quick Paste summons the window, it pops up right next to your cursor so you never have to hunt for it. Always stays fully on-screen, even on multi-monitor setups. Toggle in Settings → Window (on by default)
+- **Smart Position** - When Quick Paste summons the window, it pops up right next to your cursor so you never have to hunt for it. Always stays fully on-screen, even on multi-monitor setups. Toggle in Settings -> Window (on by default)
 - **System Tray** - Lives quietly in your tray; summon or quit it any time
 - **Startup Support** - Optionally launch Clipcat on system startup
 - **Clickable Links** - URLs in clips are automatically detected and open in your browser with a click

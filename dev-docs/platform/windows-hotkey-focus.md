@@ -125,7 +125,7 @@ window actually takes focus.
 - **`runtime.WindowShow(a.ctx)`** - Wails runtime call; restores the window if
   minimised and brings it to the front.
 - **`runtime.WindowSetAlwaysOnTop`** - re-applies the user's stored
-  AlwaysOnTop preference. Previously this was a `set-true → sleep(150ms) →
+  AlwaysOnTop preference. Previously this was a `set-true -> sleep(150ms) ->
   set-false` hack intended to force focus; it was unreliable and broke the
   setting for users who had AlwaysOnTop enabled.
 

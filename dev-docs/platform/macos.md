@@ -12,13 +12,13 @@ The macOS build uses the **Carbon** framework for the global hotkey, **CoreGraph
 main.go
   └─ prepareDarwinBundleLaunch()     // launch_darwin.go
        └─ If argv[0] is a bare binary (not inside .app/Contents/MacOS/):
-            └─ exec.Command("open", "-n", bundlePath)  →  exit current process
+            └─ exec.Command("open", "-n", bundlePath)  ->  exit current process
             (Ensures Cocoa / Carbon event loop is properly initialized)
 
   └─ EnsureSingleInstance()          // backend/platform/single_instance_darwin.go
        └─ PID lock file in ~/Library/Caches/clipcat/clipcat.lock
             ├─ Stale PID: overwrite, continue
-            └─ Live PID:  osascript → activate Clipcat → os.Exit(0)
+            └─ Live PID:  osascript -> activate Clipcat -> os.Exit(0)
 
   └─ wails.Run(...)
        └─ app.startup()              // app.go
@@ -27,7 +27,7 @@ main.go
             ├─ clipboard.SetIgnoredProcesses
             ├─ clipboard.SetOurProcessID(os.Getpid())   // detects own bundle ID
             ├─ clipboard.StartFocusTracker
-            ├─ a.startTray()               // tray_other.go → backend/tray/tray_darwin.go
+            ├─ a.startTray()               // tray_other.go -> backend/tray/tray_darwin.go
             └─ clipboard.StartClipboardListener(onChange, onHotkey)
 ```
 
@@ -56,7 +56,7 @@ C.registerDarwinHotkey()          // clipboard_darwin.c (called after 500ms dela
 hotkeyHandler (C callback)
   └─ darwinHotkeyFired()          ← exported Go callback
        ├─ capturePreviousAppDarwin()
-       └─ onHotkeyCallback()       →  app shows window
+       └─ onHotkeyCallback()       ->  app shows window
 
 unregisterDarwinHotkey()          // called on shutdown
 ```
@@ -68,8 +68,8 @@ The 500 ms startup delay lets `NSApplication` finish its run-loop setup before C
 ```
 gclip.Watch(ctx, FmtText)   \
 gclip.Watch(ctx, FmtImage)   ├─ select loop
-                              |    └─ shouldSkip()  →  isPaused || isForegroundProcessIgnored()
-                              └─    fireChange()    →  150 ms debounce → onChangeCallback()
+                              |    └─ shouldSkip()  ->  isPaused || isForegroundProcessIgnored()
+                              └─    fireChange()    ->  150 ms debounce -> onChangeCallback()
 ```
 
 `shouldSkip` and `fireChange` are defined in `listener_darwin.go` (each platform file owns its own copy; they cannot live in `shared.go` because of build tag isolation).
@@ -92,8 +92,8 @@ macOS tracks the **bundle ID** of the frontmost app rather than a window handle.
 | `FocusPreviousWindow()` | `open -b <bundleID>` |
 | `SimulatePaste()` | `C.sendPasteDarwin()` - CGEvent Cmd+V |
 | `isForegroundProcessIgnored()` | `getForegroundAppNameDarwin()` (osascript bundle ID) vs ignore list |
-| `GetCursorPos()` | CGo `clipcat_cursor_pos` in `winpos_darwin.c` - `CGEventCreate(NULL)` → `CGEventGetLocation` |
-| `GetMonitorBoundsAt(px,py)` | CGo `clipcat_monitor_bounds_at` in `winpos_darwin.c` - `CGGetDisplaysWithPoint` → `CGDisplayBounds` |
+| `GetCursorPos()` | CGo `clipcat_cursor_pos` in `winpos_darwin.c` - `CGEventCreate(NULL)` -> `CGEventGetLocation` |
+| `GetMonitorBoundsAt(px,py)` | CGo `clipcat_monitor_bounds_at` in `winpos_darwin.c` - `CGGetDisplaysWithPoint` -> `CGDisplayBounds` |
 | `GetWindowMonitorWorkOrigin()` | Returns `(0, 0)` - Wails uses absolute screen coords on macOS |
 
 ### Own-app detection
@@ -114,10 +114,10 @@ isOurOwnApp(name)
 sendPasteDarwin()             // clipboard_darwin.c
   └─ usleep(80ms)
   └─ CGEventSourceCreate(kCGEventSourceStateHIDSystemState)
-  └─ CGEventPost: Cmd↓ → V↓ → V↑ → Cmd↑
+  └─ CGEventPost: Cmd↓ -> V↓ -> V↑ -> Cmd↑
 ```
 
-Requires **Accessibility** permission in System Settings → Privacy & Security → Accessibility. Without it, `CGEventPost` silently does nothing.
+Requires **Accessibility** permission in System Settings -> Privacy & Security -> Accessibility. Without it, `CGEventPost` silently does nothing.
 
 ### Paste flow
 
@@ -126,9 +126,9 @@ app.PasteToWindow(content)
   ├─ gclip.Write(FmtText, content)
   ├─ [ghost mode] runtime.WindowHide
   ├─ time.Sleep(80ms)
-  ├─ clipboard.FocusPreviousWindow()   →  open -b <bundleID>
+  ├─ clipboard.FocusPreviousWindow()   ->  open -b <bundleID>
   ├─ time.Sleep(100ms)
-  └─ clipboard.SimulatePaste()         →  CGEvent Cmd+V
+  └─ clipboard.SimulatePaste()         ->  CGEvent Cmd+V
 ```
 
 ---
@@ -149,8 +149,8 @@ startTrayDarwin (Objective-C)
        ├─ Tries iconBytes first
        └─ Falls back to SF Symbol "doc.on.clipboard" or text "📋"
   └─ NSMenu with "Show Clipcat" and "Quit" items
-       ├─ showAction  →  Go showFn  →  runtime.WindowShow
-       └─ quitAction  →  Go quitFn  →  runtime.Quit
+       ├─ showAction  ->  Go showFn  ->  runtime.WindowShow
+       └─ quitAction  ->  Go quitFn  ->  runtime.Quit
 
 tray.Activate()                          // backend/tray/tray_darwin.go
   └─ C.activateTrayDarwin()             // brings app to front via NSApp activate
@@ -166,8 +166,8 @@ tray.Activate()                          // backend/tray/tray_darwin.go
 
 1. Creates `~/Library/Caches/clipcat/clipcat.lock` containing the current PID.
 2. If the file exists: reads PID, sends signal 0 to check liveness.
-   - Dead → overwrite lock, continue.
-   - Live → `osascript: tell application "Clipcat" to activate` → `os.Exit(0)`.
+   - Dead -> overwrite lock, continue.
+   - Live -> `osascript: tell application "Clipcat" to activate` -> `os.Exit(0)`.
 
 ---
 
@@ -195,5 +195,5 @@ IsStartupEnabled: os.Stat(plistPath) != nil
 
 - `wails build -platform darwin/arm64` and `-platform darwin/amd64` are run separately; each produces a `.app` bundle.
 - DMG packaging uses `hdiutil create -format UDZO`.
-- The app is **not code-signed or notarized** in the open-source CI build. Users may need to right-click → Open on first launch.
+- The app is **not code-signed or notarized** in the open-source CI build. Users may need to right-click -> Open on first launch.
 - `Info.plist` (`build/darwin/Info.plist`) declares `NSAppleEventsUsageDescription` and `NSAccessibilityUsageDescription` for the permissions Clipcat requires.

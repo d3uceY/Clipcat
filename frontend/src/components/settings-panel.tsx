@@ -113,8 +113,8 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
             </div>
         );
 
-        const Separator = () => (
-            <div className="my-3">
+        const Separator = ({className}: {className?: string}) => (
+            <div className={`my-3 ${className ?? ""}`}>
                 <img src="/seperator.png" alt="" className="w-full opacity-40" />
             </div>
         );
@@ -144,8 +144,8 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
                            w-full h-full
                            md:w-[74vw] max-w-200 md:h-[74vh]" 
             >
-                {/* ── Header ── */}
-                <div className="relative z-1 flex items-center justify-between px-6 pt-5 pb-2 shrink-0">
+                {/* ── Header ── */} 
+                <div className="relative z-1 flex items-center justify-between px-10 pt-10 pb-2 shrink-0">
                     <h2 className="text-lg">Settings</h2>
                     <button
                         onClick={onClose}
@@ -156,7 +156,7 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
                 </div>
 
                 {/* ── Tab bar ── */}
-                <div className="relative z-1 px-6 shrink-0">
+                <div className="relative z-1 px-10 shrink-0">
                     <div className="flex gap-1 flex-wrap pb-1">
                         {tabs.map(({ id, label, icon }) => (
                             <button
@@ -180,11 +180,11 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
                             </button>
                         ))}
                     </div>
-                    <img src="/seperator.png" alt="" className="w-full opacity-60" />
+                    <Separator className = "w-[80%] mx-auto"/>
                 </div>
 
                 {/* ── Tab content ── */}
-                <ScrollArea className="relative z-1 flex-1 min-h-0 px-6 pb-6">
+                <ScrollArea className="relative z-1 flex-1 min-h-0 px-12 pb-6">
 
                     {/* ══════ WINDOW ══════ */}
                     {activeTab === "window" && (
@@ -258,7 +258,7 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
                                 {MenuSwitch(isQuickPaste, onQuickPasteToggle)}
                             </SettingRow>
 
-                            <Separator />
+                            <Separator className = "w-1/2 mx-auto"/>
 
                             <p className="text-[10px] uppercase tracking-widest opacity-40 mb-2">Updates</p>
                             {updateAvailable ? (
@@ -343,7 +343,7 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
                                 </button>
                             </SettingRow>
 
-                            <Separator />
+                            <Separator className = "w-1/2 mx-auto" />
 
                             {/* Blocked Apps */}
                             <p className="text-[10px] uppercase tracking-widest opacity-40 mb-1">Blocked Apps</p>

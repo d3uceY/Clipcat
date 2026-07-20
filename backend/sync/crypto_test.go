@@ -11,13 +11,13 @@ func TestDeriveKey(t *testing.T) {
 		t.Fatalf("expected 32-byte key, got %d", len(key))
 	}
 
-	// Same passphrase → same key (deterministic).
+	// Same passphrase -> same key (deterministic).
 	key2 := DeriveKey("hunter2")
 	if !bytes.Equal(key, key2) {
 		t.Fatal("same passphrase should produce the same key")
 	}
 
-	// Different passphrase → different key.
+	// Different passphrase -> different key.
 	key3 := DeriveKey("correct-horse-battery-staple")
 	if bytes.Equal(key, key3) {
 		t.Fatal("different passphrase should produce a different key")

@@ -49,7 +49,7 @@ func main() {
 	})
 
 	// On close: hide the window instead of quitting.
-	// The user can quit via the tray menu → Quit.
+	// The user can quit via the tray menu -> Quit.
 	window.RegisterHook(events.Common.WindowClosing, func(e *application.WindowEvent) {
 		e.Cancel()
 		window.Hide()

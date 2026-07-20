@@ -186,8 +186,8 @@ func startWaylandPoller() {
 
 // StartClipboardListener picks the best clipboard monitoring strategy:
 //
-//	X11      → XFixesSelectSelectionInput (event-driven, zero polling)
-//	Wayland  → wl-paste polling (1s interval, 5s per-read timeout)
+//	X11      -> XFixesSelectSelectionInput (event-driven, zero polling)
+//	Wayland  -> wl-paste polling (1s interval, 5s per-read timeout)
 func StartClipboardListener(onChange func(), onHotkey func()) {
 	onChangeCallback = onChange
 	onHotkeyCallback = onHotkey

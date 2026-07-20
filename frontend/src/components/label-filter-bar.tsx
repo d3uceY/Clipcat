@@ -1,4 +1,5 @@
 import { memo, useState, useRef, useEffect } from "react"
+import { createPortal } from "react-dom"
 import { ChevronDown, Check, Tag, X } from "lucide-react"
 import { useClips } from "@/context/ClipContext"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -6,7 +7,9 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 function LabelFilterBar() {
     const { distinctLabels, activeLabels, toggleLabelFilter, clearLabelFilters } = useClips()
     const [open, setOpen] = useState(false)
+    const [dropdownStyle, setDropdownStyle] = useState<{ top: number; right: number }>()
     const containerRef = useRef<HTMLDivElement>(null)
+    const btnRef = useRef<HTMLButtonElement>(null)
 
     // Close on outside click
     useEffect(() => {
@@ -29,11 +32,23 @@ function LabelFilterBar() {
             ? activeLabels[0]
             : `${activeLabels.length} labels`
 
+    const handleToggle = () => {
+        if (!open && btnRef.current) {
+            const rect = btnRef.current.getBoundingClientRect()
+            setDropdownStyle({
+                top: rect.bottom + 6,
+                right: window.innerWidth - rect.right,
+            })
+        }
+        setOpen(v => !v)
+    }
+
     return (
         <div ref={containerRef} className="relative">
             {/* Trigger */}
             <button
-                onClick={() => setOpen(v => !v)}
+                ref={btnRef}
+                onClick={handleToggle}
                 className="hand-drawn-btn dashed thin flex items-center gap-2 px-3 py-1.5 text-xs bg-[#F9F5E6] text-amber-900 transition-all hover:bg-amber-50"
             >
                 <Tag className="h-3.5 w-3.5 shrink-0 text-amber-700" />
@@ -49,11 +64,13 @@ function LabelFilterBar() {
                 />
             </button>
 
-            {/* Dropdown panel – aligned to right edge of trigger */}
-            {open && (
+            {/* Dropdown panel — rendered in a portal so it's never clipped by overflow:hidden ancestors */}
+            {open && dropdownStyle && createPortal(
                 <div
-                    className="absolute top-full right-0 z-50 mt-1.5 min-w-44 bg-[#F9F5E6]"
+                    className="fixed z-9999 min-w-44 bg-[#F9F5E6]"
                     style={{
+                        top: dropdownStyle.top,
+                        right: dropdownStyle.right,
                         border: "dashed 2px #41403e",
                         borderRadius: "12px 4px 12px 4px / 4px 12px 4px 12px",
                         boxShadow: "4px 8px 16px -4px hsla(0,0%,0%,0.18)",
@@ -99,7 +116,8 @@ function LabelFilterBar() {
                             </button>
                         </>
                     )}
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     )

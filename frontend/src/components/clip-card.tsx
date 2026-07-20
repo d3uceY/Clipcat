@@ -250,53 +250,56 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
                 )}
 
                 {/* Label input — grid 0fr→1fr for height transition */}
-                <div
-                    className={`grid overflow-hidden [transition:grid-template-rows_0.2s_ease] shrink-0${isEditingLabel ? " grid-rows-[1fr]" : " grid-rows-[0fr]"}`}
-                >
-                    <div className="min-h-0 overflow-hidden">
-                        <div className="flex items-center gap-1 pb-1.5 pt-0.5">
-                            <Tag className="h-3 w-3 shrink-0 text-amber-600/50" />
-                            <input
-                                ref={labelInputRef}
-                                type="text"
-                                className="w-full text-xs px-1 py-0.5 bg-transparent border-b border-dashed border-amber-600/50 outline-none text-foreground placeholder:text-muted-foreground/50"
-                                placeholder="Enter label…"
-                                value={editingLabel}
-                                onChange={(e) => setEditingLabel(e.target.value)}
-                                onBlur={saveLabel}
-                                onKeyDown={handleLabelKeyDown}
-                            />
-                        </div>
-                        {labelSuggestions.length > 0 && (
-                            <div className="mt-0.5 mb-1 bg-[#F9F5E6] border border-dashed border-amber-600/30 shadow-md">
-                                <ScrollAreaDark className="max-h-40">
-                                    {labelSuggestions.map(suggestion => (
-                                        <button
-                                            key={suggestion}
-                                            className="w-full text-left px-2 py-1.5 text-[11px] text-amber-700/70 hover:bg-amber-50/80 hover:text-amber-800 flex items-center gap-1.5 transition-colors"
-                                            onMouseDown={(e) => {
-                                                e.preventDefault()
-                                                if (isSavingLabelRef.current) return
-                                                isSavingLabelRef.current = true
-                                                setIsEditingLabel(false)
-                                                setEditingLabel(suggestion)
-                                                if (suggestion !== (clip.label || "")) {
-                                                    renameClip(clip.id, suggestion)
-                                                        .catch(console.error)
-                                                        .finally(() => { isSavingLabelRef.current = false })
-                                                } else {
-                                                    isSavingLabelRef.current = false
-                                                }
-                                            }}
-                                        >
-                                            <Tag className="h-2.5 w-2.5 shrink-0" />
-                                            {suggestion}
-                                        </button>
-                                    ))}
-                                </ScrollAreaDark>
+                <div className="relative shrink-0">
+                    <div
+                        className={`grid overflow-hidden [transition:grid-template-rows_0.2s_ease]${isEditingLabel ? " grid-rows-[1fr]" : " grid-rows-[0fr]"}`}
+                    >
+                        <div className="min-h-0">
+                            <div className="flex items-center gap-1 pb-1.5 pt-0.5">
+                                <Tag className="h-3 w-3 shrink-0 text-amber-600/50" />
+                                <input
+                                    ref={labelInputRef}
+                                    type="text"
+                                    className="w-full text-xs px-1 py-0.5 bg-transparent border-b border-dashed border-amber-600/50 outline-none text-foreground placeholder:text-muted-foreground/50"
+                                    placeholder="Enter label…"
+                                    value={editingLabel}
+                                    onChange={(e) => setEditingLabel(e.target.value)}
+                                    onBlur={saveLabel}
+                                    onKeyDown={handleLabelKeyDown}
+                                />
                             </div>
-                        )}
+                        </div>
                     </div>
+                    {/* Suggestions — absolutely positioned so they never affect card layout */}
+                    {isEditingLabel && labelSuggestions.length > 0 && (
+                        <div className="absolute top-full left-0 right-0 z-30 mt-0.5 bg-[#F9F5E6] border border-dashed border-amber-600/30 shadow-md">
+                            <ScrollAreaDark className="max-h-40">
+                                {labelSuggestions.map(suggestion => (
+                                    <button
+                                        key={suggestion}
+                                        className="w-full text-left px-2 py-1.5 text-[11px] text-amber-700/70 hover:bg-amber-50/80 hover:text-amber-800 flex items-center gap-1.5 transition-colors"
+                                        onMouseDown={(e) => {
+                                            e.preventDefault()
+                                            if (isSavingLabelRef.current) return
+                                            isSavingLabelRef.current = true
+                                            setIsEditingLabel(false)
+                                            setEditingLabel(suggestion)
+                                            if (suggestion !== (clip.label || "")) {
+                                                renameClip(clip.id, suggestion)
+                                                    .catch(console.error)
+                                                    .finally(() => { isSavingLabelRef.current = false })
+                                            } else {
+                                                isSavingLabelRef.current = false
+                                            }
+                                        }}
+                                    >
+                                        <Tag className="h-2.5 w-2.5 shrink-0" />
+                                        {suggestion}
+                                    </button>
+                                ))}
+                            </ScrollAreaDark>
+                        </div>
+                    )}
                 </div>
 
                 {/* Content */}

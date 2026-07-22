@@ -34,11 +34,7 @@ tasks:
 
   create:deb:
     summary: Creates a .deb package using nfpm
-    vars:
-      VERSION: '{{.VERSION | default "v0.0.0"}}'
-      VERSION_BARE: '{{trimPrefix "v" .VERSION}}'
     cmds:
-      - sed -i "s/^version:.*/version: \"{{.VERSION_BARE}}\"/" build/linux/nfpm/nfpm.yaml
       - nfpm package --config build/linux/nfpm/nfpm.yaml --packager deb --target bin/
 
   run:

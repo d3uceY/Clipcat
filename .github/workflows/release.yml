@@ -80,7 +80,7 @@ jobs:
 
       - name: Collect Linux artifacts
         run: |
-          cp bin/*.deb build/bin/Clipcat-linux-amd64.deb
+          cp bin/clipcat.deb build/bin/Clipcat-linux-amd64.deb
 
       - uses: actions/upload-artifact@v4
         with:

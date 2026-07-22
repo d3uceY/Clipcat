@@ -35,7 +35,7 @@ tasks:
   create:deb:
     summary: Creates a .deb package using nfpm
     cmds:
-      - nfpm package --config build/linux/nfpm/nfpm.yaml --packager deb --target bin/
+      - nfpm package --config build/linux/nfpm/nfpm.yaml --packager deb --target bin/clipcat.deb
 
   run:
     cmds:

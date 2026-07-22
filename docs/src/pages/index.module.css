@@ -380,21 +380,16 @@
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3);
 }
 
-.featureIcon {
-  font-size: 1.6rem;
-  display: block;
-  margin-bottom: 0.6rem;
-}
-
 .featureTitle {
-  font-size: 1rem !important;
+  font-size: 0.95rem !important;
   font-weight: 700 !important;
   margin-bottom: 0.35rem !important;
+  letter-spacing: -0.01em;
 }
 
 .featureDesc {
-  font-size: 0.85rem;
-  opacity: 0.7;
+  font-size: 0.82rem;
+  opacity: 0.65;
   line-height: 1.55;
   margin: 0;
 }

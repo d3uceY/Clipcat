@@ -158,6 +158,7 @@ URLs detected inside clip text are automatically rendered as clickable links. Cl
 ## Relative Timestamps
 
 Every clip shows a live-updating relative time: `"2 minutes ago"`, `"yesterday"`, `"3 days ago"`.
+
 ---
 
 ## Sound Effects
@@ -169,6 +170,28 @@ Satisfying audio feedback on every action. Toggle with <kbd>Alt</kbd>+<kbd>S</kb
 ## Configurable Storage Limit
 
 Choose how many clips to keep (100–500). Older unpinned clips are automatically removed when the limit is reached. Pinned clips are always preserved. Adjust in **Settings -> Clipboard**.
+
+---
+
+## Command Palette
+
+Press <kbd>Ctrl</kbd>+<kbd>K</kbd> (or <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>) to open the command palette — a fuzzy-searchable list of every quick action in Clipcat. Toggle Quick Paste, Mini Clip mode, privacy mode, sound, and more without navigating menus. 
+
+The palette appears as an overlay centered on screen, with results grouped by category and filtered as you type. Press <kbd>Escape</kbd> to dismiss.
+
+---
+
+## LAN Sync
+
+Sync your clipboard across devices on the same local network, end-to-end encrypted. Every clip you copy is broadcast to connected peers in real time.
+
+- **End-to-end encrypted** using AES-GCM with a key derived from a shared passphrase
+- **Peer discovery** via mDNS — no configuration, no server, no account
+- **Real-time sync** — clips arrive on connected devices as you copy them
+- **Works for text and images**
+- Configure in **Settings -> Network**
+
+Enable LAN sync, set a passphrase (peers on other machines use the same one), and devices on your network find each other automatically. The peer count shows how many devices are currently connected.
 
 ---
 

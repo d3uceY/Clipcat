@@ -49,6 +49,18 @@ Use your OS task manager to find the exact process name for an app you want to b
 
 ---
 
+## Network
+
+| Setting | Description |
+|---|---|
+| **LAN Sync** | Toggle LAN clipboard sync on or off. When enabled, clips are broadcast to other Clipcat instances on the same local network in real time. |
+| **Passphrase** | A shared passphrase used to encrypt all sync traffic. Every device must use the same passphrase. Cannot be blank when sync is enabled. |
+| **Peers** | Shows the number of currently connected devices on the network. Updates in real time as peers join or leave. |
+
+Sync uses **mDNS** for automatic peer discovery — no IP addresses, no server, no account. Traffic is encrypted with **AES-GCM** using a key derived from the passphrase.
+
+---
+
 ## System
 
 | Setting | Description |

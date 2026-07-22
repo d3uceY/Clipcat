@@ -81,6 +81,14 @@ Use **Settings -> Clipboard -> Pause Capture** to temporarily stop recording cli
 
 ---
 
+## LAN Sync Encryption
+
+Clipcat's LAN sync feature uses **AES-256-GCM** to encrypt clipboard data before it leaves your machine. The encryption key is derived from a user-supplied passphrase using PBKDF2 with 600,000 iterations.
+
+Clipcat does not operate a sync server — discovery and data transfer happen entirely over your local network via mDNS and direct TCP connections. No clipboard data ever reaches the internet.
+
+---
+
 ## Open Source
 
 Clipcat is fully open source. Every line of code is available at [github.com/d3uceY/Clipcat](https://github.com/d3uceY/Clipcat). You can audit the clipboard capture logic, the database layer, and the secret scanning rules yourself.

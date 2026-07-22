@@ -25,6 +25,7 @@ const config: Config = {
   projectName: 'Clipcat',
 
   onBrokenLinks: 'throw',
+  onBrokenAnchors: 'ignore',
 
   // Even if you don't use internationalization, you can use this field to set
   // useful metadata like html lang. For example, if your site is Chinese, you
@@ -67,7 +68,7 @@ const config: Config = {
   ],
 
   themeConfig: {
-    image: 'img/clipcat-social-card.jpg',
+    image: 'img/app-screenshot.png',
     colorMode: {
       defaultMode: 'light',
       respectPrefersColorScheme: true,
@@ -75,7 +76,7 @@ const config: Config = {
     navbar: {
       title: 'Clipcat',
       logo: {
-        alt: 'Clipcat Logo',
+        alt: 'Clipcat',
         src: 'img/logo.png',
       },
       items: [
@@ -107,6 +108,7 @@ const config: Config = {
             { label: 'Features', to: '/docs/features' },
             { label: 'Keyboard Shortcuts', to: '/docs/keyboard-shortcuts' },
             { label: 'Settings', to: '/docs/settings' },
+            { label: 'Privacy and Security', to: '/docs/privacy-security' },
           ],
         },
         {
@@ -138,7 +140,7 @@ const config: Config = {
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} Onyekwelu Jesse. Built with Docusaurus.`,
+      copyright: `Copyright © ${new Date().getFullYear()} Onyekwelu Jesse.`,
     },
     prism: {
       theme: prismThemes.github,

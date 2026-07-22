@@ -31,6 +31,7 @@ Clipcat is fully open source and safe, but has no code-signing certificate yet. 
 
 ## First-Run Notes
 
+<a id="windows--smartscreen"></a>
 ### Windows - SmartScreen
 
 1. Click **More info**
@@ -38,6 +39,7 @@ Clipcat is fully open source and safe, but has no code-signing certificate yet. 
 
 Or right-click the `.exe` -> **Properties** -> check **Unblock** -> **Apply**.
 
+<a id="macos--gatekeeper"></a>
 ### macOS - Gatekeeper
 
 Right-click the `.dmg` -> **Open** -> click **Open** in the dialog.
@@ -61,6 +63,14 @@ Install `xdotool` for window focus and paste simulation:
 
 ```bash
 sudo apt install xdotool
+```
+
+Clipcat bundles its own clipboard monitoring — XFixes extension on X11 (event-driven) and wl-clipboard on Wayland (polling).
+
+If you're on **Wayland** (e.g. COSMIC, GNOME on Wayland), also install:
+
+```bash
+sudo apt install wl-clipboard
 ```
 
 ---

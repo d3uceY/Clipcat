@@ -106,7 +106,7 @@ function DownloadDialog({ info, onClose }: { info: DialogInfo; onClose: () => vo
           </svg>
         </button>
 
-        <p className={styles.dialogIcon}>{info.platform === 'windows' ? '🛡️' : '🍎'}</p>
+        <p className={styles.dialogIcon}>{info.platform === 'windows' ? '!' : '?'}</p>
         <h2 id="dl-dialog-title" className={styles.dialogTitle}>{content.title}</h2>
         <p className={styles.dialogBody}>{content.body}</p>
 
@@ -191,49 +191,48 @@ function MacDropdownBtn({ onDownload }: { onDownload: (info: DialogInfo) => void
 
 const FEATURES = [
   {
-    icon: '📋',
     title: 'Auto-Capture',
-    desc: 'Everything you copy - text and images - is saved instantly with no setup needed.',
+    desc: 'Everything you copy — text and images — is saved instantly with no setup needed.',
   },
   {
-    icon: '⚡',
     title: 'Quick Paste',
     desc: 'Summon Clipcat from any app, pick a clip, and it pastes directly then vanishes.',
   },
   {
-    icon: '📌',
-    title: 'Pin & Label',
+    title: 'Pin and Label',
     desc: 'Pin important clips to the top and tag them with labels to keep your history organised.',
   },
   {
-    icon: '🔍',
     title: 'Instant Search',
     desc: 'Filter your entire clipboard history in real time with a single keyboard shortcut.',
   },
   {
-    icon: '🛡️',
     title: 'Privacy Mode',
     desc: 'Blur all clip content instantly for screen sharing or shoulder-surfing situations.',
   },
   {
-    icon: '🔒',
     title: 'Auto-hide Secrets',
-    desc: 'Automatically detects and collapses passwords, API keys, tokens, and JWTs.',
+    desc: 'Detects and collapses passwords, API keys, tokens, and JWTs automatically.',
   },
   {
-    icon: '🚫',
     title: 'Blocked Apps',
     desc: 'Exclude any app by process name so its clipboard activity is never captured.',
   },
   {
-    icon: '✏️',
     title: 'Edit Clips',
-    desc: 'Fix typos or update any saved clip without re-copying.',
+    desc: 'Fix typos or update any saved clip without re-copying from the source.',
   },
   {
-    icon: '🖼️',
     title: 'Image Support',
     desc: 'Copied images are saved as previews and can be pasted back just like text clips.',
+  },
+  {
+    title: 'LAN Sync',
+    desc: 'Sync your clipboard across devices on the same local network, end-to-end encrypted.',
+  },
+  {
+    title: 'Command Palette',
+    desc: 'Press Ctrl+K to open a command palette and control Clipcat without the mouse.',
   },
 ];
 
@@ -327,12 +326,11 @@ function FeaturesSection() {
           Everything you need from a clipboard manager
         </Heading>
         <p className={styles.sectionSubtitle}>
-          Clipcat quietly captures everything, then gets out of your way.
+          Quietly captures everything, then gets out of your way.
         </p>
         <div className={styles.featuresGrid}>
-          {FEATURES.map(({icon, title, desc}) => (
+          {FEATURES.map(({title, desc}) => (
             <div key={title} className={styles.featureCard}>
-              <span className={styles.featureIcon} aria-hidden="true">{icon}</span>
               <Heading as="h3" className={styles.featureTitle}>{title}</Heading>
               <p className={styles.featureDesc}>{desc}</p>
             </div>
@@ -360,7 +358,7 @@ function ShortcutsSection() {
             Keyboard shortcuts
           </Heading>
           <p className={styles.sectionSubtitle}>
-            Fast by design. Everything important is one key combo away.
+            Fast by design — every essential action is one key combo away.
           </p>
           <Link className={styles.shortcutsLink} to="/docs/keyboard-shortcuts">
             View all shortcuts {'->'}
@@ -399,10 +397,8 @@ function ScreenshotBand() {
           See it in action
         </Heading>
         <p className={clsx(styles.sectionSubtitle, styles.centered)}>
-          A stylish clipboard manager that stays out of your way until you need it.
+          Stays out of your way until you need it.
         </p>
-
-            {/* ─── comment kept for reference ─── */}
         <div className={styles.screenshotGrid}>
           {screenshots.map(({src, label}) => (
             <div key={label} className={styles.screenshotCard}>
@@ -420,10 +416,10 @@ function CTASection() {
     <section className={styles.ctaSection}>
       <div className={clsx('container', styles.ctaContainer)}>
         <Heading as="h2" className={clsx(styles.sectionTitle, styles.ctaTitle)}>
-          Ready to never lose a copy again?
+          Never lose a copy again
         </Heading>
         <p className={clsx(styles.sectionSubtitle, styles.ctaSubtitle)}>
-          Free, open source, and takes 30 seconds to install.
+          Free, open source, and takes thirty seconds to install.
         </p>
         <div className={styles.heroCtas}>
           <a

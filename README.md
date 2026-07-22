@@ -75,6 +75,7 @@ sudo apt install wl-clipboard
 
 - **Pin Important Clips** - Keep your most-used clips at the top, protected from being pushed out when the storage limit is reached
 - **Fast Search** - Filter everything instantly with `Ctrl+F`
+- **Command Palette** - Press `Ctrl+K` or `Ctrl+Shift+P` to open a fuzzy-searchable command palette for toggling features without the mouse
 - <img width="1911" height="1016" alt="image" src="https://github.com/user-attachments/assets/41338104-c3a3-4c1d-9db6-42dd7901f35f" />
 
 - **Paste Into Any Window** - Click the paste button on any clip and it fires directly into whatever window you were using before opening Clipcat. No manual Ctrl+V needed
@@ -93,6 +94,7 @@ sudo apt install wl-clipboard
 - **Always on Top** - Keep the Clipcat window above all other windows at all times. State persists between sessions
 - **Smart Position** - When Quick Paste summons the window, it pops up right next to your cursor so you never have to hunt for it. Always stays fully on-screen, even on multi-monitor setups. Toggle in Settings -> Window (on by default)
 - **System Tray** - Lives quietly in your tray; summon or quit it any time
+- **LAN Sync** - Sync your clipboard to other devices on the same local network with end-to-end encryption; configure in Settings -> Network
 - **Startup Support** - Optionally launch Clipcat on system startup
 - **Clickable Links** - URLs in clips are automatically detected and open in your browser with a click
 - <img width="1912" height="1011" alt="image" src="https://github.com/user-attachments/assets/531f4334-b857-437c-99e5-5907c495fb48" />
@@ -110,13 +112,14 @@ sudo apt install wl-clipboard
 
 ## Keyboard Shortcuts
 
-| Shortcut           | Action                                            |
-| ------------------ | ------------------------------------------------- |
-| `Ctrl + Shift + V` | Summon Clipcat from any application (system-wide) |
-| `Ctrl + F`         | Focus the search bar                              |
-| `Alt + M`          | Toggle Mini Clip mode                             |
-| `Alt + H`          | Toggle Privacy Mode                               |
-| `Alt + S`          | Toggle sound effects                              |
+| Shortcut              | Action                                            |
+| --------------------- | ------------------------------------------------- |
+| `Ctrl + Shift + V`    | Summon Clipcat from any application (system-wide) |
+| `Ctrl + F`            | Focus the search bar                              |
+| `Ctrl + K`            | Open the command palette                          |
+| `Alt + M`             | Toggle Mini Clip mode                             |
+| `Alt + H`             | Toggle Privacy Mode                               |
+| `Alt + S`             | Toggle sound effects                              |
 
 ## Your Clips Are Stored Here
 

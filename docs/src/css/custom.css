@@ -110,6 +110,40 @@
   font-weight: 600;
 }
 
+/* Doc content typography */
+.markdown h1 {
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin-bottom: 1rem;
+}
+
+.markdown h2 {
+  font-size: 1.35rem;
+  font-weight: 700;
+  margin-top: 2.5rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1.5px solid var(--cc-border);
+}
+
+.markdown h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-top: 1.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.markdown p {
+  line-height: 1.7;
+  margin-bottom: 1rem;
+}
+
+.markdown ul,
+.markdown ol {
+  line-height: 1.7;
+}
+
 /* Kbd element */
 kbd {
   display: inline-flex;
@@ -152,15 +186,39 @@ kbd {
 .alert {
   border-radius: 0.75rem;
   border-left-width: 4px;
+  margin: 1.5rem 0;
 }
 
 /* Table styling */
 table {
   border-radius: 0.5rem;
   overflow: hidden;
+  font-size: 0.9rem;
+}
+
+table thead th {
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.8;
 }
 
 /* Smooth scrolling */
 html {
   scroll-behavior: smooth;
+}
+
+/* Inline code */
+code {
+  font-size: 0.85em;
+  padding: 0.15em 0.35em;
+}
+
+/* Blockquotes */
+blockquote {
+  border-left: 3px solid var(--cc-border);
+  padding-left: 1rem;
+  color: var(--cc-ink-muted);
+  font-style: italic;
 }

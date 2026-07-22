@@ -1,0 +1,14 @@
+name: clipcat
+version: "0.11.0"
+arch: amd64
+platform: linux
+maintainer: d3uceY <onyekwelujesse1234@gmail.com>
+description: A clipboard manager
+homepage: https://github.com/d3uceY/Clipcat
+license: MIT
+
+contents:
+  - src: ../../../bin/Clipcat-linux-amd64
+    dst: /usr/bin/clipcat
+    file_info:
+      mode: 0755

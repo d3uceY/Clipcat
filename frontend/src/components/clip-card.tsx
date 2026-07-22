@@ -226,6 +226,19 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
                     </button>
                 )}
 
+                {/* Pin floating button — left side */}
+                <button
+                    onClick={handlePin}
+                    className={`absolute -top-2 -left-2 z-20 p-1.5 rounded-full border shadow-sm transition-all opacity-0 group-hover/card:opacity-100 ${
+                        clip.isPinned
+                            ? "text-amber-800 bg-amber-200 border-amber-400 hover:bg-red-200 hover:text-red-700 hover:border-red-400"
+                            : "text-yellow-700 bg-yellow-100 border-yellow-300 hover:bg-yellow-200 hover:border-yellow-400"
+                    }`}
+                    title={clip.isPinned ? "Unpin clip" : "Pin clip"}
+                >
+                    <Pin className={`h-3 w-3 ${clip.isPinned ? "fill-current" : ""}`} />
+                </button>
+
                 {/* Tag floating button — below shield, opens/closes label input */}
                 <button
                     onClick={isEditingLabel ? cancelLabelEditing : startEditingLabel}
@@ -364,16 +377,6 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
                                 </EditClipDialog>
                             </Suspense>
                         )}
-                        <button
-                            onClick={handlePin}
-                            className={`rounded p-1.5 transition-colors ${clip.isPinned
-                                ? "bg-yellow-100 text-yellow-700 hover:bg-red-100 hover:text-red-700"
-                                : "bg-foreground/5 text-foreground hover:bg-yellow-100 hover:text-yellow-700"
-                            }`}
-                            title={clip.isPinned ? "Unpin clip" : "Pin clip"}
-                        >
-                            <Pin className={`h-4 w-4 ${clip.isPinned ? "fill-current" : ""}`} />
-                        </button>
                         <button
                             onClick={handleDelete}
                             className="rounded p-1.5 bg-foreground/5 text-foreground transition-colors hover:bg-red-100 hover:text-red-700"

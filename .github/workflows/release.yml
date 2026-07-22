@@ -42,14 +42,7 @@ jobs:
       - name: Install system deps
         run: |
           sudo apt update
-          sudo apt install -y build-essential pkg-config libgtk-3-dev libwebkit2gtk-4.1-dev libayatana-appindicator3-dev
-
-      - name: webkit2gtk-4.0 compat shim
-        run: |
-          sudo mkdir -p /usr/local/lib/pkgconfig
-          printf 'Name: webkit2gtk-4.0\nDescription: WebKit2 GTK+ (compat shim for 4.1)\nVersion: 2.44.0\nRequires: webkit2gtk-4.1\nCflags:\nLibs:\n' \
-            | sudo tee /usr/local/lib/pkgconfig/webkit2gtk-4.0.pc
-          echo "PKG_CONFIG_PATH=/usr/local/lib/pkgconfig" >> "$GITHUB_ENV"
+          sudo apt install -y build-essential pkg-config libgtk-4-dev libwebkitgtk-6.0-dev libayatana-appindicator3-dev
 
       - name: Install Wails CLI and nfpm
         run: |
@@ -83,7 +76,7 @@ jobs:
           CGO_ENABLED: "1"
           GOOS: linux
           GOARCH: amd64
-        run: go build -tags "production webkit2gtk_4_1" -trimpath -buildvcs=false -ldflags="-w -s" -o build/bin/Clipcat-linux-amd64
+        run: go build -tags production -trimpath -buildvcs=false -ldflags="-w -s" -o build/bin/Clipcat-linux-amd64
 
       - name: Collect Linux artifacts
         run: |
@@ -131,8 +124,7 @@ jobs:
       - name: Inject version into Info.plist
         run: |
           VERSION="${{ needs.validate-tag.outputs.version }}"
-          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString ${VERSION}" build/darwin/Info.plist
-          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${VERSION}" build/darwin/Info.plist
+          sed -i '' "s/{{.Info.ProductVersion}}/${VERSION}/g" build/darwin/Info.plist
 
       - name: Build macOS ARM64 binary + DMG
         env:
@@ -258,7 +250,7 @@ jobs:
 
       - name: Build NSIS installer
         shell: cmd
-        run: makensis -DARG_WAILS_AMD64_BINARY=..\..\bin\Clipcat-windows-amd64.exe -DARCH=amd64 build\windows\installer\project.nsi
+        run: makensis -DARG_WAILS_AMD64_BINARY=..\..\bin\Clipcat-windows-amd64.exe build\windows\installer\project.nsi
 
       - name: Collect artifacts
         shell: pwsh

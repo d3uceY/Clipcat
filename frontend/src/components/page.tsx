@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, lazy, Suspense } from "react"
 import type { FilteredClips } from '../workers/search.worker'
 import { startTour, hasSeenTour } from "@/helpers/onboarding"
-import { Search, ShieldAlert, X } from "lucide-react"
+import { Search, ShieldAlert, X, Plus } from "lucide-react"
 import ClipCard from "./clip-card"
 import ClipListItem from "./clip-list-item"
 import LabelFilterBar from "./label-filter-bar"
@@ -409,9 +409,7 @@ function PageContent() {
                                 className="fixed bottom-6 right-6 z-30 flex h-14 w-14 items-center justify-center rounded-full border-2 border-dashed border-amber-600 bg-amber-200 shadow-lg transition-all hover:scale-110 hover:bg-amber-300"
                                 title="Add new clip"
                             >
-                                <span className="flex items-center justify-center text-3xl font-bold text-amber-800">
-                                    +
-                                </span>
+                                <Plus className="h-6 w-6 text-amber-800" strokeWidth="3" />
                             </button>
                         </AddClipDialog>
                     </Suspense>)}

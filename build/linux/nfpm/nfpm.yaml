@@ -8,7 +8,7 @@ homepage: https://github.com/d3uceY/Clipcat
 license: MIT
 
 contents:
-  - src: ../../../bin/Clipcat-linux-amd64
+  - src: ../../../bin/Clipcat
     dst: /usr/bin/clipcat
     file_info:
       mode: 0755

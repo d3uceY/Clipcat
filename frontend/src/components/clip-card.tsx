@@ -219,7 +219,7 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
                 ) : (
                     <button
                         onClick={() => hideClip(clip.id)}
-                        className="absolute -top-2 -right-2 z-20 p-1.5 rounded-full text-amber-800 bg-amber-200 border border-amber-400 shadow-sm hover:bg-amber-300 hover:border-amber-500 transition-all opacity-0 group-hover/card:opacity-100"
+                        className="absolute -top-2 -right-2 z-20 p-1.5 rounded-full text-orange-800 bg-orange-200 border border-orange-400 shadow-sm hover:bg-orange-300 hover:border-orange-500 transition-all opacity-0 group-hover/card:opacity-100"
                         title="Mark as sensitive (hide)"
                     >
                         <ShieldAlert className="h-3.5 w-3.5" />
@@ -233,7 +233,7 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
                     className={`absolute top-6 -right-2 z-20 p-1.5 rounded-full border shadow-sm transition-all opacity-0 group-hover/card:opacity-100 ${
                         isEditingLabel
                             ? "text-red-700 bg-red-200 border-red-400 hover:bg-red-300 hover:border-red-500"
-                            : "text-amber-700 bg-amber-100 border-amber-300 hover:bg-amber-200 hover:border-red-400"
+                            : "text-indigo-700 bg-indigo-100 border-indigo-300 hover:bg-indigo-200 hover:border-indigo-400"
                     }`}
                     title={isEditingLabel ? "Cancel label editing" : "Add label"}
                 >

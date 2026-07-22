@@ -299,7 +299,7 @@ function PageContent() {
                             onChange={(e) => setSearchQuery(e.target.value)}
                             onFocus={() => setSearchFocused(true)}
                             onBlur={() => setSearchFocused(false)}
-                            className="w-full text-base sm:text-xl pl-4 pr-10 pt-2 text-foreground placeholder-gray-500 focus:outline-none shadow-xl"
+                            className="w-full text-base sm:text-xl pl-4 pr-10 pt-2 text-foreground placeholder-gray-500 placeholder:text-lg focus:outline-none shadow-xl"
                         />
                         {searchQuery ? (
                             <button

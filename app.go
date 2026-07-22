@@ -483,6 +483,28 @@ func (a *App) HideClip(clipID int) error {
 	return nil
 }
 
+// ConfirmDelete shows a native Yes/No dialog and returns true if the user
+// confirmed the deletion. The message is shown as the dialog body.
+func (a *App) ConfirmDelete(message string) bool {
+	ch := make(chan bool, 1)
+
+	dialog := a.app.Dialog.Question().
+		SetTitle("Confirm Delete").
+		SetMessage(message)
+
+	deleteBtn := dialog.AddButton("Delete")
+	deleteBtn.OnClick(func() { ch <- true })
+
+	cancelBtn := dialog.AddButton("Cancel")
+	cancelBtn.OnClick(func() { ch <- false })
+
+	dialog.SetDefaultButton(deleteBtn)
+	dialog.SetCancelButton(cancelBtn)
+	dialog.Show()
+
+	return <-ch
+}
+
 func (a *App) DeleteAllClips() error {
 	return store.DeleteAllClips()
 }

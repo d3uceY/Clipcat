@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { createPortal } from "react-dom";
 import DeleteButton from "./delete-button";
-import { DeleteAllClips, DeletePinnedClips, DeleteUnpinnedClips } from "../../bindings/Clipcat/app";
+import { DeleteAllClips, DeletePinnedClips, DeleteUnpinnedClips, ConfirmDelete } from "../../bindings/Clipcat/app";
 import { useGSAP } from "@gsap/react";
 import { gsap } from "gsap";
 import { useClips } from "@/context/ClipContext";
@@ -45,21 +45,27 @@ export default function DeleteClipsDialog({ children }: { children: React.ReactN
     }, { dependencies: [isOpen], scope: containerRef });
 
     const handleDeleteAllClips = async () => {
-        await DeleteAllClips().then(() => {
-            getClips();
-        })
+        const confirmed = await ConfirmDelete("Are you sure you want to delete ALL clips? This cannot be undone.")
+        if (!confirmed) return
+        setIsOpen(false)
+        await DeleteAllClips()
+        getClips()
     };
 
     const handleDeletePinnedClips = async () => {
-        await DeletePinnedClips().then(() => {
-            getClips();
-        })
+        const confirmed = await ConfirmDelete("Are you sure you want to delete all pinned clips? This cannot be undone.")
+        if (!confirmed) return
+        setIsOpen(false)
+        await DeletePinnedClips()
+        getClips()
     };
 
     const handleDeleteUnpinnedClips = async () => {
-        await DeleteUnpinnedClips().then(() => {
-            getClips();
-        })
+        const confirmed = await ConfirmDelete("Are you sure you want to delete all recent clips? This cannot be undone.")
+        if (!confirmed) return
+        setIsOpen(false)
+        await DeleteUnpinnedClips()
+        getClips()
     };
 
 

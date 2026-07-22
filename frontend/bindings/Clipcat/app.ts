@@ -26,6 +26,14 @@ export function AddIgnoreEntry(name: string): $CancellablePromise<void> {
     return $Call.ByID(1243036326, name);
 }
 
+/**
+ * ConfirmDelete shows a native Yes/No dialog and returns true if the user
+ * confirmed the deletion. The message is shown as the dialog body.
+ */
+export function ConfirmDelete(message: string): $CancellablePromise<boolean> {
+    return $Call.ByID(1149614580, message);
+}
+
 export function Delete(clipID: number): $CancellablePromise<void> {
     return $Call.ByID(1990065762, clipID);
 }

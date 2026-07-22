@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, lazy, Suspense } from "react"
 import type { FilteredClips } from '../workers/search.worker'
 import { startTour, hasSeenTour } from "@/helpers/onboarding"
-import { Search, ShieldAlert } from "lucide-react"
+import { Search, ShieldAlert, X } from "lucide-react"
 import ClipCard from "./clip-card"
 import ClipListItem from "./clip-list-item"
 import LabelFilterBar from "./label-filter-bar"
@@ -10,6 +10,7 @@ import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { playSound } from "@/helpers/playSound";
 import WindowControls from "./window-controls";
+import CommandPalette from "./command-palette";
 import { GetVersion } from "../../bindings/Clipcat/app";
 import { Browser } from "@wailsio/runtime";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -117,7 +118,7 @@ function PageContent() {
     // Initialize browser notifications on mount
     useEffect(() => {
         if ('Notification' in window && Notification.permission === 'default') {
-            Notification.requestPermission().catch(() => {});
+            Notification.requestPermission().catch(() => { });
         }
     }, [])
 
@@ -247,6 +248,7 @@ function PageContent() {
             {/* Draggable title bar */}
             <div className="fixed z-10 top-1 left-0 right-0 h-10 cursor-grab" style={{ '--wails-draggable': 'drag' } as React.CSSProperties}></div>
             <WindowControls updateAvailable={updateInfo} onCheckUpdate={checkForUpdates} />
+            <CommandPalette />
             {!curtainsDone && (
                 <>
                     <img src="/paper-curtain.png" className="paper-curtain-1 h-screen fixed w-[53vw] left-0 top-0 bottom-0 z-10 " />
@@ -272,14 +274,14 @@ function PageContent() {
                     {/* Left – about / version */}
                     <div className="shrink-0">
                         {!isMiniClip && (
-                        <div id="tour-about" className="items-center gap-2 sm:flex">
-                            {
-                                version &&
-                                <Suspense fallback={null}>
-                                    <AboutDialog version={version} updateAvailable={updateInfo} />
-                                </Suspense>
-                            }
-                        </div>
+                            <div id="tour-about" className="items-center gap-2 sm:flex">
+                                {
+                                    version &&
+                                    <Suspense fallback={null}>
+                                        <AboutDialog version={version} updateAvailable={updateInfo} />
+                                    </Suspense>
+                                }
+                            </div>
                         )}
                     </div>
 
@@ -296,9 +298,19 @@ function PageContent() {
                             onChange={(e) => setSearchQuery(e.target.value)}
                             onFocus={() => setSearchFocused(true)}
                             onBlur={() => setSearchFocused(false)}
-                            className="w-full text-base sm:text-xl px-4 pt-2 text-foreground placeholder-gray-500 focus:outline-none shadow-xl"
+                            className="w-full text-base sm:text-xl pl-4 pr-10 pt-2 text-foreground placeholder-gray-500 focus:outline-none shadow-xl"
                         />
-                        <Search className="absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-[#c0bdbd]" />
+                        {searchQuery ? (
+                            <button
+                                onClick={() => { setSearchQuery(""); searchInputRef.current?.focus() }}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#c0bdbd] hover:text-foreground transition-colors"
+                                title="Clear search"
+                            >
+                                <X className="h-5 w-5" />
+                            </button>
+                        ) : (
+                            <Search className="absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-[#c0bdbd]" />
+                        )}
                     </div>
 
                     {/* Right – label filter */}
@@ -310,93 +322,38 @@ function PageContent() {
                 {/* Sensitive clips indicator - only shown when auto-hide is on and there are hidden clips */}
                 {autoHideSensitive && hiddenCount > 0 && (
                     <div className={`${!isMiniClip ? "mb-6" : "-mb-6 -mt-4"} flex items-center gap-3 flex-wrap`}>
-                        {isMiniClip ? (
-                            <button
-                                onClick={() => setShowSensitive(v => !v)}
-                                className={`relative inline-flex items-center justify-center w-8 h-8 rounded-full border-2 transition-colors ${
-                                    showSensitive
-                                        ? "bg-amber-200 text-amber-900 border-amber-500"
-                                        : "bg-amber-400 text-white border-amber-500 hover:bg-amber-500 animate-pulse"
+                        <button
+                            onClick={() => setShowSensitive(v => !v)}
+                            className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs rounded-full border transition-colors shadow-md ${showSensitive
+                                    ? "bg-amber-200 text-amber-900 border-amber-400/60"
+                                    : "bg-amber-50/80 text-amber-700/80 border-amber-300/50 hover:bg-amber-100 hover:text-amber-800"
                                 }`}
-                                title={`${hiddenCount} sensitive clip${hiddenCount !== 1 ? "s" : ""} hidden - click to ${showSensitive ? "hide" : "reveal"}`}
-                            >
-                                <ShieldAlert className="h-4 w-4" />
-                                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white leading-none">
-                                    {hiddenCount}
-                                </span>
-                            </button>
-                        ) : (
-                            <button
-                                onClick={() => setShowSensitive(v => !v)}
-                                className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs rounded-full border transition-colors shadow-md ${
-                                    showSensitive
-                                        ? "bg-amber-100 text-amber-800 border-amber-400/60"
-                                        : "bg-amber-50/80 text-amber-700/80 border-amber-300/50 hover:bg-amber-100 hover:text-amber-800"
-                                }`}
-                            >
-                                <ShieldAlert className="h-3 w-3" />
-                                {hiddenCount} sensitive clip{hiddenCount !== 1 ? "s" : ""} hidden
-                            </button>
-                        )}
+                        >
+                            <ShieldAlert className="h-3 w-3" />
+                            {showSensitive
+                                ? `Hide ${hiddenCount} sensitive clip${hiddenCount !== 1 ? "s" : ""}`
+                                : `${hiddenCount} sensitive clip${hiddenCount !== 1 ? "s" : ""} hidden — click to reveal`
+                            }
+                        </button>
                     </div>
                 )}
 
-                {/* Sensitive clips - miniclip/quickpaste list view */}
-                {isMiniClip && showSensitive && hiddenCount > 0 && (
-                    <section className="mb-4 rounded border border-dashed border-amber-400/40 bg-amber-50/20 p-2">
-                        <div className="flex flex-col gap-2">
-                            {[...filteredClips.hiddenPinned, ...filteredClips.hiddenRecent].map((clip) => (
-                                <ClipListItem key={clip.id} clip={clip} revealed />
-                            ))}
-                        </div>
-                    </section>
-                )}
-
-                {/* Sensitive clips section - only shown when user expands it */}
-                {!isMiniClip && showSensitive && hiddenCount > 0 && (
-                    <section className="mb-10 p-4 rounded border border-dashed border-amber-400/40 bg-amber-50/20">
-                        <div className="flex items-center gap-2 mb-4">
-                            <ShieldAlert className="h-4 w-4 text-amber-700/60" />
-                            <h2 className="text-sm font-medium italic text-amber-800/70">
-                                Sensitive Clips ({hiddenCount})
-                            </h2>
-                            <span className="text-xs text-muted-foreground/50 ml-1">- use the shield button on each card to mark as safe</span>
-                        </div>
-                        <div className="free-form-grid-container">
-                            {[...filteredClips.hiddenPinned, ...filteredClips.hiddenRecent].map((clip, i) => (
-                                <ClipCard key={clip.id} clip={clip} type={clip.isPinned ? "pinned" : "recent"} initialVisible={i < 25} />
-                            ))}
-                        </div>
-                    </section>
-                )}
-
-                {/* Pinned Section */}
-                {filteredClips.pinned.length > 0 && (
+                {/* Pinned Section — interleaves hidden pinned clips when showSensitive is active */}
+                {(filteredClips.pinned.length > 0 || (showSensitive && filteredClips.hiddenPinned.length > 0)) && (
                     <section className="mb-12">
                         <div className="flex items-center gap-8 mb-4">
                             <h2 className="sm:flex hidden items-center gap-2 text-2xl font-bold text-foreground">
                                 <span className="text-2xl">📌</span>
-                                <span className="italic">Pinned <span className="text-xl"> ({filteredClips.pinned.length}) </span></span>
+                                <span className="italic">Pinned <span className="text-xl"> ({filteredClips.pinned.length + (showSensitive ? filteredClips.hiddenPinned.length : 0)}) </span></span>
                             </h2>
-                            {!isMiniClip && (
-                            <div id="tour-add-clip" className="sm:m-0 mx-auto mb-2">
-                                <Suspense fallback={null}>
-                                    <AddClipDialog>
-                                        <button className="hover:scale-95 sm:p-2 p-4 rounded-lg! h-auto bg-amber-100 transition-transform hand-drawn-btn dashed thin" title="Add new clip">
-                                            <div className="flex items-center sm:gap-2 gap-1 font-bold">
-                                                <span className="text-xs leading-0.5">Add Clip</span>
-                                                <span className="text-base leading-0.5">+</span>
-                                            </div>
-                                        </button>
-                                    </AddClipDialog>
-                                </Suspense>
-                            </div>
-                            )}
                         </div>
                         {isMiniClip ? (
                             <div className="flex flex-col gap-3">
                                 {filteredClips.pinned.map((clip) => (
                                     <ClipListItem key={clip.id} clip={clip} />
+                                ))}
+                                {showSensitive && filteredClips.hiddenPinned.map((clip) => (
+                                    <ClipListItem key={clip.id} clip={clip} revealed />
                                 ))}
                             </div>
                         ) : (
@@ -404,38 +361,30 @@ function PageContent() {
                                 {filteredClips.pinned.map((clip, i) => (
                                     <ClipCard key={clip.id} clip={clip} type="pinned" initialVisible={i < 25} tourId={i === 0 ? "tour-clip-card" : undefined} />
                                 ))}
+                                {showSensitive && filteredClips.hiddenPinned.map((clip, i) => (
+                                    <ClipCard key={clip.id} clip={clip} type="pinned" initialVisible={i < 25} />
+                                ))}
                             </div>
                         )}
                     </section>
                 )}
 
-                {/* Recent Section */}
-                {filteredClips.recent.length > 0 && (
+                {/* Recent Section — interleaves hidden recent clips when showSensitive is active */}
+                {(filteredClips.recent.length > 0 || (showSensitive && filteredClips.hiddenRecent.length > 0)) && (
                     <section>
                         <div className="flex items-center gap-8 mb-4">
                             <h2 className=" sm:flex hidden items-center gap-2 text-2xl font-bold text-foreground">
                                 <span className="text-2xl">📝</span>
-                                <span className="italic">Recent <span className="text-xl"> ({filteredClips.recent.length}) </span></span>
+                                <span className="italic">Recent <span className="text-xl"> ({filteredClips.recent.length + (showSensitive ? filteredClips.hiddenRecent.length : 0)}) </span></span>
                             </h2>
-                            {!isMiniClip && (
-                            <div>
-                                <Suspense fallback={null}>
-                                    <AddClipDialog triggerClassName="sm:block hidden">
-                                        <button className="hover:scale-95 p-2 rounded-lg! h-auto bg-amber-100 transition-transform hand-drawn-btn dashed thin" title="Add new clip">
-                                            <div className="flex items-center sm:gap-2 gap-1 font-bold">
-                                                <span className="text-xs leading-0.5">Add Clip</span>
-                                                <span className="text-base leading-0.5">+</span>
-                                            </div>
-                                        </button>
-                                    </AddClipDialog>
-                                </Suspense>
-                            </div>
-                            )}
                         </div>
                         {isMiniClip ? (
                             <div className="flex flex-col gap-3">
                                 {filteredClips.recent.map((clip) => (
                                     <ClipListItem key={clip.id} clip={clip} />
+                                ))}
+                                {showSensitive && filteredClips.hiddenRecent.map((clip) => (
+                                    <ClipListItem key={clip.id} clip={clip} revealed />
                                 ))}
                             </div>
                         ) : (
@@ -443,33 +392,53 @@ function PageContent() {
                                 {filteredClips.recent.map((clip, i) => (
                                     <ClipCard key={clip.id} clip={clip} type="recent" initialVisible={i < 25} tourId={i === 0 && filteredClips.pinned.length === 0 ? "tour-clip-card" : undefined} />
                                 ))}
+                                {showSensitive && filteredClips.hiddenRecent.map((clip, i) => (
+                                    <ClipCard key={clip.id} clip={clip} type="recent" initialVisible={i < 25} />
+                                ))}
                             </div>
                         )}
                     </section>
                 )}
 
-                {/* Empty State */}
-                {filteredClips.pinned.length === 0 && filteredClips.recent.length === 0 && (
-                    <div className="flex-col h-64 text-black flex items-center justify-center gap-2">
-                        <p className="text-lg text-black text-center">
-                            {searchQuery ? "No clips found matching your search" : "No clips yet. Start copying!"}
-                        </p>
+                {/* Floating Add Clip button — single FAB, not duplicated per section */}
+                {!isMiniClip && (
+                    <Suspense fallback={null}>
+                        <AddClipDialog>
+                            <button
+                                id="tour-add-clip"
+                                className="fixed bottom-6 right-6 z-30 flex h-14 w-14 items-center justify-center rounded-full border-2 border-dashed border-amber-600 bg-amber-200 shadow-lg transition-all hover:scale-110 hover:bg-amber-300"
+                                title="Add new clip"
+                            >
+                                <span className="flex items-center justify-center text-3xl font-bold text-amber-800">
+                                    +
+                                </span>
+                            </button>
+                        </AddClipDialog>
+                    </Suspense>)}
 
-                        <div className="text-lg text-black text-center">OR</div>
-                        <div className="w-full flex justify-center">
-                            <Suspense fallback={null}>
-                                <AddClipDialog>
-                                    <button className="hover:scale-95 p-1 bg-amber-100 transition-transform cursor-pointer hand-drawn-btn dashed thin" title="Add new clip">
-                                        <div className="flex items-center sm:gap-2 gap-1">
-                                            <span className="sm:text-xl text-lg">Add Clip</span>
-                                            <span className="sm:text-4xl text-2xl">+</span>
-                                        </div>
-                                    </button>
-                                </AddClipDialog>
-                            </Suspense>
+                {/* Empty State — also check hidden clips when sensitive view is on */}
+                {filteredClips.pinned.length === 0 && filteredClips.recent.length === 0
+                    && (!showSensitive || (filteredClips.hiddenPinned.length === 0 && filteredClips.hiddenRecent.length === 0)) && (
+                        <div className="flex-col h-64 text-black flex items-center justify-center gap-2">
+                            <p className="text-lg text-black text-center">
+                                {searchQuery ? "No clips found matching your search" : "No clips yet. Start copying!"}
+                            </p>
+
+                            <div className="text-lg text-black text-center">OR</div>
+                            <div className="w-full flex justify-center">
+                                <Suspense fallback={null}>
+                                    <AddClipDialog>
+                                        <button className="hover:scale-95 p-1 bg-amber-100 transition-transform cursor-pointer hand-drawn-btn dashed thin" title="Add new clip">
+                                            <div className="flex items-center sm:gap-2 gap-1">
+                                                <span className="sm:text-xl text-lg">Add Clip</span>
+                                                <span className="sm:text-4xl text-2xl">+</span>
+                                            </div>
+                                        </button>
+                                    </AddClipDialog>
+                                </Suspense>
+                            </div>
                         </div>
-                    </div>
-                )}
+                    )}
             </div>
         </main>
     )

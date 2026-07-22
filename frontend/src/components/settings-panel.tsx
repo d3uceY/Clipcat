@@ -2,7 +2,7 @@ import { useState, useEffect, forwardRef } from "react";
 import { Browser } from "@wailsio/runtime";
 import { useClips } from "@/context/ClipContext";
 import { playSound } from "@/helpers/playSound";
-import { UpdateStorageLimit, GetStorageLimit, GetClips, DeleteAllClips, DeletePinnedClips, DeleteUnpinnedClips, GetSyncSettings, SaveSyncSettings } from "../../bindings/Clipcat/app";
+import { UpdateStorageLimit, GetStorageLimit, GetClips, DeleteAllClips, DeletePinnedClips, DeleteUnpinnedClips, GetSyncSettings, SaveSyncSettings, ConfirmDelete } from "../../bindings/Clipcat/app";
 import { ScrollArea } from "./ui/scroll-area";
 import { RefreshCw, Download, Monitor, Clipboard, Wrench, ShieldCheck, Trash2, Network, Save, Eye, EyeOff } from "lucide-react";
 import type { UpdateInfo } from "./about-dialog";
@@ -81,15 +81,24 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
         };
 
         const handleDeleteAllClips = async () => {
-            await DeleteAllClips().then(() => getClips());
+            const confirmed = await ConfirmDelete("Are you sure you want to delete ALL clips? This cannot be undone.")
+            if (!confirmed) return
+            await DeleteAllClips()
+            getClips()
         };
 
         const handleDeletePinnedClips = async () => {
-            await DeletePinnedClips().then(() => getClips());
+            const confirmed = await ConfirmDelete("Are you sure you want to delete all pinned clips? This cannot be undone.")
+            if (!confirmed) return
+            await DeletePinnedClips()
+            getClips()
         };
 
         const handleDeleteUnpinnedClips = async () => {
-            await DeleteUnpinnedClips().then(() => getClips());
+            const confirmed = await ConfirmDelete("Are you sure you want to delete all recent clips? This cannot be undone.")
+            if (!confirmed) return
+            await DeleteUnpinnedClips()
+            getClips()
         };
 
         const handleAddIgnoreEntry = async () => {

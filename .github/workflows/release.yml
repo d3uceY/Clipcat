@@ -119,7 +119,14 @@ jobs:
       - name: Inject version into Info.plist
         run: |
           VERSION="${{ needs.validate-tag.outputs.version }}"
-          sed -i '' "s/{{.Info.ProductVersion}}/${VERSION}/g" build/darwin/Info.plist
+          sed -i '' \
+            -e "s/{{.Info.ProductVersion}}/${VERSION}/g" \
+            -e "s/{{.Info.ProductName}}/Clipcat/g" \
+            -e "s/{{.OutputFilename}}/Clipcat/g" \
+            -e "s/{{.Name}}/Clipcat/g" \
+            -e "s/{{.Info.Comments}}/Built using Wails (https:\/\/wails.io)/g" \
+            -e "s/{{.Info.Copyright}}/Copyright © 2026 d3uceY/g" \
+            build/darwin/Info.plist
 
       - name: Build macOS ARM64 binary + DMG
         env:

@@ -32,3 +32,7 @@ func (a *App) startTray() {
 	systray.SetMenu(menu)
 	systray.AttachWindow(a.window)
 }
+
+// syncTrayMenu is a no-op on non-Windows platforms — the basic Show/Quit menu
+// has no dynamic items to sync.
+func (a *App) syncTrayMenu() {}

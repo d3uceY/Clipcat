@@ -27,14 +27,15 @@ func (a *App) startTray() {
 	})
 	menu.AddSeparator()
 
-	quickPaste, _ := store.GetQuickPaste()
-	menu.AddCheckbox("Quick Paste", quickPaste).OnClick(func(ctx *application.Context) {
+	// Default unchecked — synced from DB later via syncTrayMenu().
+	quickPasteItem := menu.AddCheckbox("Quick Paste", false)
+	quickPasteItem.OnClick(func(ctx *application.Context) {
 		enabled := ctx.ClickedMenuItem().Checked()
 		_ = store.SetQuickPaste(enabled)
 	})
 
-	paused := clipboard.IsPaused()
-	menu.AddCheckbox("Pause Capture", paused).OnClick(func(ctx *application.Context) {
+	pauseItem := menu.AddCheckbox("Pause Capture", false)
+	pauseItem.OnClick(func(ctx *application.Context) {
 		if ctx.ClickedMenuItem().Checked() {
 			clipboard.PauseCapture()
 		} else {
@@ -49,4 +50,24 @@ func (a *App) startTray() {
 
 	systray.SetMenu(menu)
 	systray.AttachWindow(a.window)
+
+	// Store references so syncTrayMenu can update checkbox states after DB init.
+	a.trayMenu = menu
+	a.trayQuickPasteItem = quickPasteItem
+	a.trayPauseItem = pauseItem
+}
+
+// syncTrayMenu syncs tray checkbox states with the current DB/pause state.
+// Called from ServiceStartup after the DB is initialized.
+func (a *App) syncTrayMenu() {
+	if a.trayQuickPasteItem != nil {
+		quickPaste, _ := store.GetQuickPaste()
+		a.trayQuickPasteItem.SetChecked(quickPaste)
+	}
+	if a.trayPauseItem != nil {
+		a.trayPauseItem.SetChecked(clipboard.IsPaused())
+	}
+	if a.trayMenu != nil {
+		a.trayMenu.Update()
+	}
 }

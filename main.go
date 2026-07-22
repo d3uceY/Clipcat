@@ -59,6 +59,11 @@ func main() {
 	app.RegisterService(application.NewService(appService))
 	app.RegisterService(application.NewService(notifService))
 
+	// The systray must be created before app.Run() — Wails v3 defers its
+	// actual initialization until the event loop starts, but the New() call
+	// must happen before Run() to be properly registered.
+	appService.startTray()
+
 	if err := app.Run(); err != nil {
 		println("Error:", err.Error())
 	}

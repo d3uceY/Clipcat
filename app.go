@@ -37,6 +37,11 @@ type App struct {
 
 	// LAN sync
 	syncManager *lansync.Manager
+
+	// Tray menu items for post-DB-init state sync.
+	trayMenu           *application.Menu
+	trayQuickPasteItem *application.MenuItem
+	trayPauseItem      *application.MenuItem
 }
 
 // NewApp creates a new App application struct
@@ -94,7 +99,9 @@ func (a *App) ServiceStartup(ctx context.Context, options application.ServiceOpt
 	clipboard.StartFocusTracker()
 
 	// Start the system-tray icon so the app is reachable while hidden.
-	a.startTray()
+	// The tray itself is created in main() before app.Run().
+	// Sync the tray menu checkbox states now that the DB is ready.
+	a.syncTrayMenu()
 
 	clipboard.StartClipboardListener(a.onClipboardChange, a.onHotkeyFired)
 

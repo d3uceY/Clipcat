@@ -325,9 +325,9 @@ function PageContent() {
                     <div className={`${!isMiniClip ? "mb-6" : "-mb-6 -mt-4"} flex items-center gap-3 flex-wrap`}>
                         <button
                             onClick={() => setShowSensitive(v => !v)}
-                            className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs rounded-full border transition-colors shadow-md ${showSensitive
-                                    ? "bg-amber-200 text-amber-900 border-amber-400/60"
-                                    : "bg-amber-50/80 text-amber-700/80 border-amber-300/50 hover:bg-amber-100 hover:text-amber-800"
+                            className={`hand-drawn-btn lined thin inline-flex items-center gap-1.5 px-3 py-1 ${isMiniClip ? "text-[10px]!" : "text-xs!"} mb-4 mt-2 transition-opacity hover:opacity-70 ${showSensitive
+                                    ? "bg-amber-200 text-amber-900"
+                                    : "bg-amber-50/80 text-amber-700/80 hover:bg-amber-100 hover:text-amber-800"
                                 }`}
                         >
                             <ShieldAlert className="h-3 w-3" />
@@ -341,7 +341,7 @@ function PageContent() {
 
                 {/* Pinned Section — interleaves hidden pinned clips when showSensitive is active */}
                 {(filteredClips.pinned.length > 0 || (showSensitive && filteredClips.hiddenPinned.length > 0)) && (
-                    <section className="mb-12">
+                    <section className={isMiniClip ? "mb-4" : "mb-12"}>
                         <div className="flex items-center gap-8 mb-4">
                             <h2 className="sm:flex hidden items-center gap-2 text-2xl font-bold text-foreground">
                                 <span className="text-2xl">📌</span>

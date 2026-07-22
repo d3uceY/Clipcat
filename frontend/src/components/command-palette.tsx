@@ -1,6 +1,11 @@
 import { useState, useEffect, useRef, useMemo } from "react"
 import { createPortal } from "react-dom"
 import { Search, Eye, EyeOff, Volume2, VolumeX, Minimize2, Maximize2, BookOpen } from "lucide-react"
+import {
+    Dialog,
+    DialogContent,
+} from "@/components/ui/dialog"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { useClips } from "@/context/ClipContext"
 import { GetPlatform } from "../../bindings/Clipcat/app"
 import HowToUseDialog from "./how-to-use-dialog"
@@ -34,7 +39,7 @@ export default function CommandPalette() {
 
     useEffect(() => { GetPlatform().then(setPlatform).catch(() => {}) }, [])
 
-    // Ctrl+K or Ctrl+Shift+P opens, Escape closes
+    // Ctrl+K or Ctrl+Shift+P toggles the palette — Escape is handled by Dialog
     useEffect(() => {
         const handler = (e: KeyboardEvent) => {
             const isOpenCmd =
@@ -45,24 +50,11 @@ export default function CommandPalette() {
                 e.stopPropagation()
                 setOpen(v => !v)
                 setQuery("")
-                return
-            }
-            if (e.key === "Escape" && open) {
-                e.preventDefault()
-                setOpen(false)
             }
         }
-        // Also open when search input is focused and user hasn't typed yet
         window.addEventListener("keydown", handler, true)
         return () => window.removeEventListener("keydown", handler, true)
-    }, [open])
-
-    // Focus input when opened
-    useEffect(() => {
-        if (open) {
-            setTimeout(() => inputRef.current?.focus(), 50)
-        }
-    }, [open])
+    }, [])
 
     const commands: Command[] = useMemo(() => [
         {
@@ -124,71 +116,70 @@ export default function CommandPalette() {
         settings: "Settings",
     }
 
-    if (!open) return <HowToUsePortal platform={platform} show={showHowToUse} onClose={setShowHowToUse} />
-
     return (
         <>
-        <div className="fixed inset-0 z-100 flex items-start justify-center pt-[15vh]" onClick={() => setOpen(false)}>
-            <div className="absolute inset-0 bg-black/30" />
-            <div
-                className="relative z-10 w-full max-w-lg bg-[#F9F5E6] hand-drawn lined thin overflow-hidden"
-                onClick={e => e.stopPropagation()}
-            >
-                {/* Search input */}
-                <div className="flex items-center gap-2 px-4 pt-3 pb-2 border-b border-dashed border-amber-600/40">
-                    <Search className="h-4 w-4 text-amber-700/50 shrink-0" />
-                    <input
-                        ref={inputRef}
-                        type="text"
-                        placeholder="Type a command..."
-                        value={query}
-                        onChange={e => setQuery(e.target.value)}
-                        className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground/50 outline-none"
-                    />
-                    <kbd className="text-[10px] text-muted-foreground ml-auto">esc to close</kbd>
-                </div>
+        <Dialog open={open} onOpenChange={setOpen}>
+            <DialogContent className="bg-transparent! shadow-none border-0 p-0 w-[90vw] max-w-sm">
+                <div className="setting-dialog relative w-full h-screen! sm:h-[90vh]! max-h-100 rounded-sm overflow-hidden">
+                    <ScrollArea className="relative z-1 h-full pt-6 px-6 pb-4">
+                        {/* Search input */}
+                        <div className="flex items-center gap-2 pb-3 border-b border-amber-600/20">
+                            <Search className="h-4 w-4 text-amber-700/50 shrink-0" />
+                            <input
+                                ref={inputRef}
+                                type="text"
+                                placeholder="Type a command..."
+                                value={query}
+                                onChange={e => setQuery(e.target.value)}
+                                className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground/50 outline-none"
+                            />
+                            <kbd className="text-[10px] text-muted-foreground ml-auto opacity-50 shrink-0">esc</kbd>
+                        </div>
 
-                {/* Command list grouped by category */}
-                <div className="max-h-72 overflow-y-auto p-2">
-                    {["clipboard", "display", "settings"].map(cat => {
-                        const items = filtered.filter(c => c.category === cat)
-                        if (items.length === 0) return null
-                        return (
-                            <div key={cat} className="mb-2 last:mb-0">
-                                <div className="px-2 py-1 text-[10px] font-semibold text-amber-800/60 uppercase tracking-wider">
-                                    {categoryLabels[cat]}
-                                </div>
-                                {items.map(cmd => (
-                                    <button
-                                        key={cmd.id}
-                                        onClick={cmd.action}
-                                        className="w-full flex items-center gap-3 px-3 py-2 text-sm text-amber-950 hover:bg-amber-100/70 rounded transition-colors text-left"
-                                    >
-                                        <span className="text-amber-700/60 shrink-0">{cmd.icon}</span>
-                                        <span className="flex-1">{cmd.label}</span>
-                                        {cmd.shortcut && (
-                                            <kbd className="text-[10px] px-1.5 py-0.5 rounded bg-amber-200/60 text-amber-700/60 font-mono">
-                                                {cmd.shortcut}
-                                            </kbd>
-                                        )}
-                                    </button>
-                                ))}
-                            </div>
-                        )
-                    })}
-                    {filtered.length === 0 && (
-                        <p className="text-center text-xs text-muted-foreground py-4">No commands found</p>
-                    )}
-                </div>
+                        {/* Command list */}
+                        <div className="py-2">
+                            {["clipboard", "display", "settings"].map(cat => {
+                                const items = filtered.filter(c => c.category === cat)
+                                if (items.length === 0) return null
+                                return (
+                                    <div key={cat} className="mb-2 last:mb-0">
+                                        <div className="px-2 py-1 text-[10px] font-semibold text-amber-800/50 uppercase tracking-wider">
+                                            {categoryLabels[cat]}
+                                        </div>
+                                        {items.map(cmd => (
+                                            <button
+                                                key={cmd.id}
+                                                onClick={cmd.action}
+                                                className="w-full flex items-center gap-3 px-3 py-2 text-sm text-amber-950 hover:bg-amber-100/70 rounded transition-colors text-left"
+                                            >
+                                                <span className="text-amber-700/50 shrink-0">{cmd.icon}</span>
+                                                <span className="flex-1">{cmd.label}</span>
+                                                {cmd.shortcut && (
+                                                    <kbd className="text-[10px] px-1.5 py-0.5 rounded bg-amber-200/50 text-amber-700/50 font-mono leading-none shrink-0">
+                                                        {cmd.shortcut}
+                                                    </kbd>
+                                                )}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )
+                            })}
+                            {filtered.length === 0 && (
+                                <p className="text-center text-xs text-muted-foreground py-4">No commands found</p>
+                            )}
+                        </div>
 
-                {/* Footer */}
-                <div className="flex items-center gap-4 px-4 py-2 border-t border-dashed border-amber-600/40 text-[10px] text-muted-foreground">
-                    <span>↑↓ navigate</span>
-                    <span>↵ select</span>
-                    <span>esc close</span>
+                        {/* Footer */}
+                        <div className="flex items-center gap-4 pt-2 border-t border-amber-600/20 text-[10px] text-muted-foreground">
+                            <span>↑↓ navigate</span>
+                            <span>↵ select</span>
+                            <span>esc close</span>
+                        </div>
+                    </ScrollArea>
+                    <img src="/menu-clean.png" alt="" className="settings-bg" />
                 </div>
-            </div>
-        </div>
+            </DialogContent>
+        </Dialog>
         <HowToUsePortal platform={platform} show={showHowToUse} onClose={setShowHowToUse} />
         </>)
 }

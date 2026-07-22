@@ -253,17 +253,12 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
                     {isEditingLabel ? <X className="h-3 w-3" /> : <Tag className="h-3 w-3" />}
                 </button>
 
-                {/* Header — network indicator + sensitive indicator on left, time on right */}
+                {/* Header — network indicator on left, time on right */}
                 <div className="mb-3 flex items-start justify-between shrink-0">
                     <div className="flex items-center gap-1.5">
                         {clip.source === "network" && (
                             <span title="Synced from LAN">
                                 <Network className="h-3 w-3 text-blue-600/60" />
-                            </span>
-                        )}
-                        {clip.isHidden && (
-                            <span title="Sensitive clip" className="group-hover/card:opacity-0 transition-opacity">
-                                <ShieldAlert className="h-3 w-3 text-orange-600/60" />
                             </span>
                         )}
                     </div>
@@ -301,7 +296,7 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
                     </div>
                     {/* Suggestions — absolutely positioned so they never affect card layout */}
                     {isEditingLabel && labelSuggestions.length > 0 && (
-                        <div className="absolute top-full left-0 right-0 z-50 mt-0.5 bg-[#F9F5E6] border border-dashed border-amber-600/50 shadow-lg overflow-hidden">
+                        <div className="absolute top-full left-0 right-0 z-60 mt-0.5 bg-[#F9F5E6] border border-dashed border-amber-600/50 shadow-lg overflow-hidden">
                             <ScrollAreaDark className="max-h-40">
                                 {labelSuggestions.map(suggestion => (
                                     <button
@@ -355,9 +350,16 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
                     )}
                 </div>
 
-                {/* Footer: timestamp + action buttons */}
+                {/* Footer: timestamp + sensitive indicator + action buttons */}
                 <div className="flex flex-col-reverse gap-2 justify-between mt-2 shrink-0">
-                    <span className="hidden text-xs text-muted-foreground md:block">{relativeTime}</span>
+                    <div className="flex items-center gap-2">
+                        {clip.isHidden && (
+                            <span title="Sensitive clip">
+                                <ShieldAlert className="h-3 w-3 text-orange-600/60" />
+                            </span>
+                        )}
+                        <span className="hidden text-xs text-muted-foreground md:block">{relativeTime}</span>
+                    </div>
                     {/* Buttons invisible until hover — still take up space */}
                     <div className="flex gap-2 opacity-0 group-hover/card:opacity-100 transition-opacity">
                         <button

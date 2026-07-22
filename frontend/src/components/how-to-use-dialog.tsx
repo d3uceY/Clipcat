@@ -28,9 +28,11 @@ interface HowToUseDialogProps {
     platform: string;
     onOpen?: () => void;
     hasSeenHowToUse?: boolean;
+    open?: boolean;
+    onOpenChange?: (open: boolean) => void;
 }
 
-export default function HowToUseDialog({ platform, onOpen, hasSeenHowToUse = true }: HowToUseDialogProps) {
+export default function HowToUseDialog({ platform, onOpen, hasSeenHowToUse = true, open: controlledOpen, onOpenChange: controlledOnOpenChange }: HowToUseDialogProps) {
     const isMac = platform === "darwin";
     const mod = isMac ? "⌘" : "Ctrl";
 
@@ -156,7 +158,7 @@ export default function HowToUseDialog({ platform, onOpen, hasSeenHowToUse = tru
     ];
 
     return (
-        <Dialog onOpenChange={(open) => { if (open && onOpen) onOpen(); }}>
+        <Dialog open={controlledOpen} onOpenChange={(open) => { if (controlledOnOpenChange) controlledOnOpenChange(open); if (open && onOpen) onOpen(); }}>
             <DialogTrigger asChild>
                 <button className="relative flex items-center gap-1.5 hover:opacity-70 transition-opacity cursor-pointer">
                     <span className="text-sm font-bold">How to Use</span>

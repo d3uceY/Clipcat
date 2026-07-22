@@ -10,12 +10,16 @@ function LabelFilterBar() {
     const [dropdownStyle, setDropdownStyle] = useState<{ top: number; right: number }>()
     const containerRef = useRef<HTMLDivElement>(null)
     const btnRef = useRef<HTMLButtonElement>(null)
+    const dropdownRef = useRef<HTMLDivElement>(null)
 
-    // Close on outside click
+    // Close on outside click — checks both the trigger container AND the portal dropdown
     useEffect(() => {
         if (!open) return
         const handler = (e: MouseEvent) => {
-            if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+            const target = e.target as Node
+            const insideTrigger = containerRef.current?.contains(target)
+            const insideDropdown = dropdownRef.current?.contains(target)
+            if (!insideTrigger && !insideDropdown) {
                 setOpen(false)
             }
         }
@@ -67,6 +71,7 @@ function LabelFilterBar() {
             {/* Dropdown panel — rendered in a portal so it's never clipped by overflow:hidden ancestors */}
             {open && dropdownStyle && createPortal(
                 <div
+                    ref={dropdownRef}
                     className="fixed z-9999 min-w-44 bg-[#F9F5E6]"
                     style={{
                         top: dropdownStyle.top,

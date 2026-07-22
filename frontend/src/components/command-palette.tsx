@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef, useMemo } from "react"
-import { Search, Eye, EyeOff, Volume2, VolumeX, Minimize2, Maximize2, Keyboard } from "lucide-react"
+import { createPortal } from "react-dom"
+import { Search, Eye, EyeOff, Volume2, VolumeX, Minimize2, Maximize2, BookOpen } from "lucide-react"
 import { useClips } from "@/context/ClipContext"
+import { GetPlatform } from "../../bindings/Clipcat/app"
+import HowToUseDialog from "./how-to-use-dialog"
 
 interface Command {
     id: string
@@ -14,6 +17,8 @@ interface Command {
 export default function CommandPalette() {
     const [open, setOpen] = useState(false)
     const [query, setQuery] = useState("")
+    const [showHowToUse, setShowHowToUse] = useState(false)
+    const [platform, setPlatform] = useState("")
     const inputRef = useRef<HTMLInputElement>(null)
     const {
         soundOn, toggleSound,
@@ -21,6 +26,13 @@ export default function CommandPalette() {
         isMiniClip, toggleMiniClip,
         isQuickPaste, toggleQuickPaste,
     } = useClips()
+
+    // Close palette when HowToUseDialog opens so it doesn't cover it
+    useEffect(() => {
+        if (showHowToUse) setOpen(false)
+    }, [showHowToUse])
+
+    useEffect(() => { GetPlatform().then(setPlatform).catch(() => {}) }, [])
 
     // Ctrl+K or Ctrl+Shift+P opens, Escape closes
     useEffect(() => {
@@ -91,12 +103,12 @@ export default function CommandPalette() {
             action: () => { setOpen(false); toggleSound() },
         },
         {
-            id: "shortcuts",
-            label: "Keyboard Shortcuts Reference",
+            id: "howtouse",
+            label: "How to Use Clipcat",
             shortcut: "?",
             category: "settings",
-            icon: <Keyboard className="h-4 w-4" />,
-            action: () => { setOpen(false); document.dispatchEvent(new CustomEvent("show:shortcuts")) },
+            icon: <BookOpen className="h-4 w-4" />,
+            action: () => { setShowHowToUse(true) },
         },
     ], [isQuickPaste, isMiniClip, hideContent, soundOn, toggleQuickPaste, toggleMiniClip, toggleHideContent, toggleSound])
 
@@ -112,9 +124,10 @@ export default function CommandPalette() {
         settings: "Settings",
     }
 
-    if (!open) return null
+    if (!open) return <HowToUsePortal platform={platform} show={showHowToUse} onClose={setShowHowToUse} />
 
     return (
+        <>
         <div className="fixed inset-0 z-100 flex items-start justify-center pt-[15vh]" onClick={() => setOpen(false)}>
             <div className="absolute inset-0 bg-black/30" />
             <div
@@ -176,5 +189,20 @@ export default function CommandPalette() {
                 </div>
             </div>
         </div>
+        <HowToUsePortal platform={platform} show={showHowToUse} onClose={setShowHowToUse} />
+        </>)
+}
+
+// Render HowToUseDialog in a portal so it survives palette unmount
+const HowToUsePortal = ({ platform, show, onClose }: { platform: string; show: boolean; onClose: (v: boolean) => void }) => {
+    if (!show) return null
+    return createPortal(
+        <div className="" onClick={() => onClose(false)}>
+          
+            <div className="" onClick={e => e.stopPropagation()}>
+                <HowToUseDialog platform={platform} open={show} onOpenChange={onClose} />
+            </div>
+        </div>,
+        document.body
     )
 }

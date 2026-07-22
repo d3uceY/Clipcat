@@ -274,7 +274,12 @@ jobs:
       - build-linux-amd64
       - build-macos
       - build-windows-amd64
-    if: failure()
+    if: |
+      always() && (
+        needs.build-linux-amd64.result == 'failure' ||
+        needs.build-macos.result == 'failure' ||
+        needs.build-windows-amd64.result == 'failure'
+      )
     permissions:
       contents: write
     steps:

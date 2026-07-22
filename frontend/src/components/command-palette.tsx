@@ -40,6 +40,7 @@ export default function CommandPalette() {
                 setOpen(false)
             }
         }
+        // Also open when search input is focused and user hasn't typed yet
         window.addEventListener("keydown", handler, true)
         return () => window.removeEventListener("keydown", handler, true)
     }, [open])
@@ -121,7 +122,7 @@ export default function CommandPalette() {
                 onClick={e => e.stopPropagation()}
             >
                 {/* Search input */}
-                <div className="flex items-center gap-2 px-4 pt-3 pb-2 border-b border-dashed border-amber-600/30">
+                <div className="flex items-center gap-2 px-4 pt-3 pb-2 border-b border-dashed border-amber-600/40">
                     <Search className="h-4 w-4 text-amber-700/50 shrink-0" />
                     <input
                         ref={inputRef}
@@ -131,7 +132,7 @@ export default function CommandPalette() {
                         onChange={e => setQuery(e.target.value)}
                         className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground/50 outline-none"
                     />
-                    <kbd className="text-[10px] text-muted-foreground/40 ml-auto">esc to close</kbd>
+                    <kbd className="text-[10px] text-muted-foreground ml-auto">esc to close</kbd>
                 </div>
 
                 {/* Command list grouped by category */}
@@ -141,14 +142,14 @@ export default function CommandPalette() {
                         if (items.length === 0) return null
                         return (
                             <div key={cat} className="mb-2 last:mb-0">
-                                <div className="px-2 py-1 text-[10px] font-semibold text-amber-700/40 uppercase tracking-wider">
+                                <div className="px-2 py-1 text-[10px] font-semibold text-amber-800/60 uppercase tracking-wider">
                                     {categoryLabels[cat]}
                                 </div>
                                 {items.map(cmd => (
                                     <button
                                         key={cmd.id}
                                         onClick={cmd.action}
-                                        className="w-full flex items-center gap-3 px-3 py-2 text-sm text-amber-900 hover:bg-amber-100/60 rounded transition-colors text-left"
+                                        className="w-full flex items-center gap-3 px-3 py-2 text-sm text-amber-950 hover:bg-amber-100/70 rounded transition-colors text-left"
                                     >
                                         <span className="text-amber-700/60 shrink-0">{cmd.icon}</span>
                                         <span className="flex-1">{cmd.label}</span>
@@ -168,7 +169,7 @@ export default function CommandPalette() {
                 </div>
 
                 {/* Footer */}
-                <div className="flex items-center gap-4 px-4 py-2 border-t border-dashed border-amber-600/30 text-[10px] text-muted-foreground/50">
+                <div className="flex items-center gap-4 px-4 py-2 border-t border-dashed border-amber-600/40 text-[10px] text-muted-foreground">
                     <span>↑↓ navigate</span>
                     <span>↵ select</span>
                     <span>esc close</span>

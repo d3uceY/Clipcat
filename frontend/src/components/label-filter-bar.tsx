@@ -27,7 +27,7 @@ function LabelFilterBar() {
 
     const label =
         activeLabels.length === 0
-            ? "Filter by label"
+            ? "Labels"
             : activeLabels.length === 1
             ? activeLabels[0]
             : `${activeLabels.length} labels`
@@ -49,7 +49,7 @@ function LabelFilterBar() {
             <button
                 ref={btnRef}
                 onClick={handleToggle}
-                className="hand-drawn-btn dashed thin flex items-center gap-2 px-3 py-1.5 text-xs bg-[#F9F5E6] text-amber-900 transition-all hover:bg-amber-50"
+                className="hand-drawn-btn dashed thin flex items-center gap-2 px-3 py-1.5 text-xs bg-[#F9F5E6] text-amber-950 transition-all hover:bg-amber-100"
             >
                 <Tag className="h-3.5 w-3.5 shrink-0 text-amber-700" />
                 {/* Full label text on lg+, icon-only below lg */}
@@ -84,7 +84,7 @@ function LabelFilterBar() {
                                 <li key={lbl}>
                                     <button
                                         onClick={() => toggleLabelFilter(lbl)}
-                                        className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-amber-900 hover:bg-amber-100/70 transition-colors text-left"
+                                        className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-amber-950 hover:bg-amber-100/80 transition-colors text-left"
                                     >
                                         <span
                                             className={`h-3.5 w-3.5 shrink-0 flex items-center justify-center rounded-sm border ${
@@ -109,7 +109,7 @@ function LabelFilterBar() {
                             <div style={{ borderTop: "dashed 1px #41403e40", margin: "2px 8px" }} />
                             <button
                                 onClick={() => { clearLabelFilters(); setOpen(false) }}
-                                className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-amber-700/60 hover:text-amber-900 hover:bg-amber-100/50 transition-colors"
+                                className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-amber-800/70 hover:text-amber-950 hover:bg-amber-100/60 transition-colors"
                             >
                                 <X className="h-3 w-3" />
                                 <span>Clear filters</span>

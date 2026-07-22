@@ -1,5 +1,5 @@
 import { useState, useRef, useMemo, memo, useEffect, lazy, Suspense } from "react"
-import { Tag, Copy, Pin, Trash2, Pencil, ClipboardPaste, ShieldAlert, ShieldCheck, X } from "lucide-react"
+import { Tag, Copy, Pin, Trash2, Pencil, ClipboardPaste, ShieldAlert, ShieldCheck, X, Network } from "lucide-react"
 import type { Clip } from '../../types/clip'
 import { useClips } from "@/context/ClipContext"
 import { useRelativeTime } from "@/hooks/use-relative-time"
@@ -253,9 +253,20 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
                     {isEditingLabel ? <X className="h-3 w-3" /> : <Tag className="h-3 w-3" />}
                 </button>
 
-                {/* Header */}
+                {/* Header — network indicator + sensitive indicator on left, time on right */}
                 <div className="mb-3 flex items-start justify-between shrink-0">
-                    <span className="text-xl"></span>
+                    <div className="flex items-center gap-1.5">
+                        {clip.source === "network" && (
+                            <span title="Synced from LAN">
+                                <Network className="h-3 w-3 text-blue-600/60" />
+                            </span>
+                        )}
+                        {clip.isHidden && (
+                            <span title="Sensitive clip" className="group-hover/card:opacity-0 transition-opacity">
+                                <ShieldAlert className="h-3 w-3 text-orange-600/60" />
+                            </span>
+                        )}
+                    </div>
                     <span className="text-xs text-muted-foreground md:hidden">{relativeTime}</span>
                 </div>
 
@@ -290,12 +301,12 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
                     </div>
                     {/* Suggestions — absolutely positioned so they never affect card layout */}
                     {isEditingLabel && labelSuggestions.length > 0 && (
-                        <div className="absolute top-full left-0 right-0 z-30 mt-0.5 bg-[#F9F5E6] border border-dashed border-amber-600/30 shadow-md overflow-y-auto">
+                        <div className="absolute top-full left-0 right-0 z-50 mt-0.5 bg-[#F9F5E6] border border-dashed border-amber-600/50 shadow-lg overflow-hidden">
                             <ScrollAreaDark className="max-h-40">
                                 {labelSuggestions.map(suggestion => (
                                     <button
                                         key={suggestion}
-                                        className="w-full text-left px-2 py-1.5 text-[11px] text-amber-700/70 hover:bg-amber-50/80 hover:text-amber-800 flex items-center gap-1.5 transition-colors"
+                                        className="w-full text-left px-2 py-1.5 text-[11px] text-amber-900 hover:bg-amber-100/70 hover:text-amber-950 flex items-center gap-1.5 transition-colors"
                                         onMouseDown={(e) => {
                                             e.preventDefault()
                                             if (isSavingLabelRef.current) return

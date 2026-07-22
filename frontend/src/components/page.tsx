@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, lazy, Suspense } from "react"
 import type { FilteredClips } from '../workers/search.worker'
 import { startTour, hasSeenTour } from "@/helpers/onboarding"
-import { Search, ShieldAlert, X, Plus } from "lucide-react"
+import { Search, ShieldAlert, X, Plus, Trash2 } from "lucide-react"
 import ClipCard from "./clip-card"
 import ClipListItem from "./clip-list-item"
 import LabelFilterBar from "./label-filter-bar"
@@ -18,6 +18,7 @@ import type { UpdateInfo } from "./about-dialog";
 
 const AboutDialog = lazy(() => import("./about-dialog"))
 const AddClipDialog = lazy(() => import("./add-clip-dialog"))
+const DeleteClipsDialog = lazy(() => import("./delete-clips-dialog"))
 
 function PageContent() {
     const [searchQuery, setSearchQuery] = useState("")
@@ -293,7 +294,7 @@ function PageContent() {
                             id="tour-search"
                             ref={searchInputRef}
                             type="text"
-                            placeholder="Search (Ctrl+F)"
+                            placeholder="Ctrl+K for command palette"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             onFocus={() => setSearchFocused(true)}
@@ -400,19 +401,32 @@ function PageContent() {
                     </section>
                 )}
 
-                {/* Floating Add Clip button — single FAB, not duplicated per section */}
+                {/* Floating action buttons — Add Clip + Delete */}
                 {!isMiniClip && (
-                    <Suspense fallback={null}>
-                        <AddClipDialog>
-                            <button
-                                id="tour-add-clip"
-                                className="fixed bottom-6 right-6 z-30 flex h-14 w-14 items-center justify-center rounded-full border-2 border-dashed border-amber-600 bg-amber-200 shadow-lg transition-all hover:scale-110 hover:bg-amber-300"
-                                title="Add new clip"
-                            >
-                                <Plus className="h-6 w-6 text-amber-800" strokeWidth="3" />
-                            </button>
-                        </AddClipDialog>
-                    </Suspense>)}
+                    <div className="fixed bottom-6 right-6 z-30 flex flex-col gap-3">
+                        <Suspense fallback={null}>
+                            <AddClipDialog>
+                                <button
+                                    id="tour-add-clip"
+                                    className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-dashed border-amber-600 bg-amber-200 shadow-lg transition-all hover:scale-110 hover:bg-amber-300"
+                                    title="Add new clip"
+                                >
+                                    <Plus className="h-5 w-5 text-amber-800" />
+                                </button>
+                            </AddClipDialog>
+                        </Suspense>
+                        <Suspense fallback={null}>
+                            <DeleteClipsDialog>
+                                <button
+                                    className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-dashed border-red-500 bg-red-100 shadow-lg transition-all hover:scale-110 hover:bg-red-200"
+                                    title="Clear clipboard history"
+                                >
+                                    <Trash2 className="h-5 w-5 text-red-700" />
+                                </button>
+                            </DeleteClipsDialog>
+                        </Suspense>
+                    </div>
+                )}
 
                 {/* Empty State — also check hidden clips when sensitive view is on */}
                 {filteredClips.pinned.length === 0 && filteredClips.recent.length === 0

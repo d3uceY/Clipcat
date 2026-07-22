@@ -1,11 +1,10 @@
-import { useRef, useState, useEffect, lazy, Suspense } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Window } from "@wailsio/runtime";
 import { useClips } from "@/context/ClipContext";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { playSound } from "@/helpers/playSound";
 import { GetPlatform } from "../../bindings/Clipcat/app";
-const DeleteClipsDialog = lazy(() => import("./delete-clips-dialog"));
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import type { UpdateInfo } from "./about-dialog";
 import SettingsPanel from "./settings-panel";
@@ -122,17 +121,6 @@ export default function WindowControls({ updateAvailable, onCheckUpdate }: Windo
                         platform={platform}
                     />
                 </div>
-            </div>
-
-            {/* --- Quick-access Delete (no settings needed) --- */}
-            <div className="mt-1">
-                <Suspense fallback={null}>
-                    <DeleteClipsDialog>
-                        <button className="hover:opacity-70 transition-opacity" title="Clear clipboard history">
-                            <img src="/delete-base.png" alt="clear history" className="h-5 shadow-md/30" />
-                        </button>
-                    </DeleteClipsDialog>
-                </Suspense>
             </div>
 
             {/* --- Windows window controls --- */}

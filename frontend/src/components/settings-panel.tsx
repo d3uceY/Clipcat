@@ -308,7 +308,7 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
                                     </p>
                                     <button
                                         onClick={() => Browser.OpenURL('https://d3ucey.github.io/Clipcat/download')}
-                                        className="inline-flex items-center gap-1.5 hand-drawn-btn lined thin text-xs px-2 py-1 font-bold hover:opacity-70 transition-opacity"
+                                        className="inline-flex items-center gap-1.5 hand-drawn-btn lined thin text-xs! px-2 py-1 font-bold hover:opacity-70 transition-opacity"
                                     >
                                         <Download size={11} /> Download Update
                                     </button>

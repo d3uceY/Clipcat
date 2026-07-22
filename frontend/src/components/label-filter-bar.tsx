@@ -53,7 +53,7 @@ function LabelFilterBar() {
             <button
                 ref={btnRef}
                 onClick={handleToggle}
-                className="hand-drawn-btn dashed thin flex items-center gap-2 px-3 py-1.5 text-xs bg-[#F9F5E6] text-amber-950 transition-all hover:bg-amber-100"
+                className="hand-drawn-btn lined thin flex items-center gap-2 px-3 py-1.5 text-xs bg-[#F9F5E6] text-amber-950 transition-all hover:bg-amber-100 relative top-2"
             >
                 <Tag className="h-3.5 w-3.5 shrink-0 text-amber-700" />
                 {/* Full label text on lg+, icon-only below lg */}
@@ -76,7 +76,7 @@ function LabelFilterBar() {
                     style={{
                         top: dropdownStyle.top,
                         right: dropdownStyle.right,
-                        border: "dashed 2px #41403e",
+                        border: "solid 2px #41403e",
                         borderRadius: "12px 4px 12px 4px / 4px 12px 4px 12px",
                         boxShadow: "4px 8px 16px -4px hsla(0,0%,0%,0.18)",
                     }}
@@ -97,7 +97,7 @@ function LabelFilterBar() {
                                                     ? "bg-amber-300 border-amber-600/70"
                                                     : "border-amber-400/50 bg-transparent"
                                             }`}
-                                            style={{ borderStyle: "dashed" }}
+                                            style={{ borderStyle: "solid" }}
                                         >
                                             {active && <Check className="h-2.5 w-2.5 text-amber-900" />}
                                         </span>
@@ -111,7 +111,7 @@ function LabelFilterBar() {
 
                     {activeLabels.length > 0 && (
                         <>
-                            <div style={{ borderTop: "dashed 1px #41403e40", margin: "2px 8px" }} />
+                            <div style={{ borderTop: "solid 1px #41403e20", margin: "2px 8px" }} />
                             <button
                                 onClick={() => { clearLabelFilters(); setOpen(false) }}
                                 className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-amber-800/70 hover:text-amber-950 hover:bg-amber-100/60 transition-colors"

@@ -76,7 +76,7 @@ function LabelFilterBar() {
                         boxShadow: "4px 8px 16px -4px hsla(0,0%,0%,0.18)",
                     }}
                 >
-                    <ScrollArea className="max-h-52">
+                    <ScrollArea className="h-52">
                     <ul className="py-1">
                         {distinctLabels.map(lbl => {
                             const active = activeLabels.includes(lbl)

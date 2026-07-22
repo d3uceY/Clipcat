@@ -1,5 +1,5 @@
 import { useState, useRef, useMemo, memo, useEffect, lazy, Suspense } from "react"
-import { Tag, Copy, Pin, Trash2, Pencil, ClipboardPaste, ShieldAlert, ShieldCheck } from "lucide-react"
+import { Tag, Copy, Pin, Trash2, Pencil, ClipboardPaste, ShieldAlert, ShieldCheck, X } from "lucide-react"
 import type { Clip } from '../../types/clip'
 import { useClips } from "@/context/ClipContext"
 import { useRelativeTime } from "@/hooks/use-relative-time"
@@ -226,13 +226,17 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
                     </button>
                 )}
 
-                {/* Tag floating button — below shield, opens label input */}
+                {/* Tag floating button — below shield, opens/closes label input */}
                 <button
-                    onClick={startEditingLabel}
-                    className="absolute top-6 -right-2 z-20 p-1.5 rounded-full text-amber-700 bg-amber-100 border border-amber-300 shadow-sm hover:bg-amber-200 hover:border-amber-400 transition-all opacity-0 group-hover/card:opacity-100"
-                    title="Add label"
+                    onClick={isEditingLabel ? cancelLabelEditing : startEditingLabel}
+                    className={`absolute top-6 -right-2 z-20 p-1.5 rounded-full border shadow-sm transition-all opacity-0 group-hover/card:opacity-100 ${
+                        isEditingLabel
+                            ? "text-red-700 bg-red-200 border-red-400 hover:bg-red-300 hover:border-red-500"
+                            : "text-amber-700 bg-amber-100 border-amber-300 hover:bg-amber-200 hover:border-amber-400"
+                    }`}
+                    title={isEditingLabel ? "Cancel label editing" : "Add label"}
                 >
-                    <Tag className="h-3 w-3" />
+                    {isEditingLabel ? <X className="h-3 w-3" /> : <Tag className="h-3 w-3" />}
                 </button>
 
                 {/* Header */}
@@ -272,7 +276,7 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
                     </div>
                     {/* Suggestions — absolutely positioned so they never affect card layout */}
                     {isEditingLabel && labelSuggestions.length > 0 && (
-                        <div className="absolute top-full left-0 right-0 z-30 mt-0.5 bg-[#F9F5E6] border border-dashed border-amber-600/30 shadow-md">
+                        <div className="absolute top-full left-0 right-0 z-30 mt-0.5 bg-[#F9F5E6] border border-dashed border-amber-600/30 shadow-md overflow-y-auto">
                             <ScrollAreaDark className="max-h-40">
                                 {labelSuggestions.map(suggestion => (
                                     <button
@@ -294,7 +298,7 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
                                         }}
                                     >
                                         <Tag className="h-2.5 w-2.5 shrink-0" />
-                                        {suggestion}
+                                        <span className="truncate">{suggestion}</span>
                                     </button>
                                 ))}
                             </ScrollAreaDark>

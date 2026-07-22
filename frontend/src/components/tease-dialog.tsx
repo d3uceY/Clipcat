@@ -6,7 +6,7 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog"
 import { useEffect, useState } from "react"
-import { X } from "lucide-react"
+
 
 interface TeaseDialogProps {
     open: boolean
@@ -55,9 +55,13 @@ export default function TeaseDialog({ open, onOpenChange, detectedWord, onClose 
                     <img src="/dialog-bg.png" alt="" className="h-full w-full object-fill" />
                 </div>
 
-                <div className="absolute right-8 top-8 opacity-70 hover:opacity-100 cursor-pointer" onClick={onClose}>
-                    <X className="h-4 w-4" />
-                </div>
+                <button
+                    onClick={onClose}
+                    className="absolute right-8 top-8 bg-[#F8F5F0] w-7 h-7 flex items-center justify-center hand-drawn-btn lined thin text-sm! font-bold hover:opacity-70 z-10"
+                    title="Close"
+                >
+                    x
+                </button>
 
                 <DialogHeader className="flex flex-col items-center justify-center text-center pt-8 pb-8 px-4">
                     <DialogTitle className="text-2xl font-serif italic mb-4">

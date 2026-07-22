@@ -1,5 +1,6 @@
 import {
     Dialog,
+    DialogClose,
     DialogContent,
     DialogDescription,
     DialogHeader,
@@ -50,7 +51,10 @@ export default function AboutDialog({ version, updateAvailable }: AboutDialogPro
                     ⓘ
                 </button>
             </DialogTrigger>
-            <DialogContent className="bg-transparent! shadow-none border-0 pt-9 max-h-[88vh]">
+            <DialogContent showCloseButton={false} className="bg-transparent! shadow-none border-0 pt-9 max-h-[88vh]">
+                <DialogClose className="absolute right-8 top-8 bg-[#F8F5F0] w-7 h-7 flex items-center justify-center hand-drawn-btn lined thin text-sm! font-bold hover:opacity-70 z-10">
+                    x
+                </DialogClose>
                 <div className="absolute h-[calc(100%+2rem)] w-full -z-1">
                     <img src="/dialog-bg.png" alt="" className=" h-full w-full" />
                 </div>

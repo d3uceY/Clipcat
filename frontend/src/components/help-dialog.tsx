@@ -1,5 +1,6 @@
 import {
     Dialog,
+    DialogClose,
     DialogContent,
     DialogDescription,
     DialogHeader,
@@ -19,7 +20,10 @@ export default function HelpDialog() {
                     ?
                 </button>
             </DialogTrigger>
-            <DialogContent className="max-w-md bg-white/95 dark:bg-zinc-900/95 backdrop-blur-sm border-zinc-200 dark:border-zinc-800">
+            <DialogContent showCloseButton={false} className="max-w-md bg-white/95 dark:bg-zinc-900/95 backdrop-blur-sm border-zinc-200 dark:border-zinc-800">
+                <DialogClose className="absolute right-4 top-4 bg-[#F8F5F0]/80 w-7 h-7 flex items-center justify-center hand-drawn-btn lined thin text-sm! font-bold hover:opacity-70 z-10">
+                    x
+                </DialogClose>
                 <DialogHeader>
                     <DialogTitle className="text-2xl font-serif italic text-purple-600 dark:text-purple-400">How to use Clipcat</DialogTitle>
                     <DialogDescription>

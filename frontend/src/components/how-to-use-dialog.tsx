@@ -1,5 +1,6 @@
 import {
     Dialog,
+    DialogClose,
     DialogContent,
     DialogTitle,
     DialogTrigger,
@@ -168,8 +169,11 @@ export default function HowToUseDialog({ platform, onOpen, hasSeenHowToUse = tru
                     )}
                 </button>
             </DialogTrigger>
-            <DialogContent className="bg-transparent! shadow-none border-0 p-0 w-[90vw] max-w-sm">
+            <DialogContent showCloseButton={false} className="bg-transparent! shadow-none border-0 p-0 w-[90vw] max-w-sm">
                 <div className="setting-dialog relative w-full h-screen! sm:h-[90vh]! max-h-100 rounded-sm overflow-hidden">
+                    <DialogClose className="absolute right-4 top-4 bg-[#F8F5F0] w-7 h-7 flex items-center justify-center hand-drawn-btn lined thin text-sm! font-bold hover:opacity-70 z-10">
+                        x
+                    </DialogClose>
                     <ScrollArea className="relative z-1 h-full pt-6 px-6 pb-4">
                         <DialogTitle className="text-lg text-center mb-4">How to Use Clipcat</DialogTitle>
                         <div className="space-y-4 pb-2">

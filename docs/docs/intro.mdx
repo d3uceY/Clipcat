@@ -21,7 +21,8 @@ Pick your platform and download the latest release:
 | **Windows** | [Clipcat-windows-amd64-installer.exe](https://github.com/d3uceY/Clipcat/releases/latest/download/Clipcat-windows-amd64-installer.exe) |
 | **macOS (Apple Silicon)** | [Clipcat-macos-arm64.dmg](https://github.com/d3uceY/Clipcat/releases/latest/download/Clipcat-macos-arm64.dmg) |
 | **macOS (Intel)** | [Clipcat-macos-amd64.dmg](https://github.com/d3uceY/Clipcat/releases/latest/download/Clipcat-macos-amd64.dmg) |
-| **Linux x86-64** | [Clipcat-linux-amd64](https://github.com/d3uceY/Clipcat/releases/latest/download/Clipcat-linux-amd64) |
+| **Linux x86-64 (binary)** | [Clipcat-linux-amd64](https://github.com/d3uceY/Clipcat/releases/latest/download/Clipcat-linux-amd64) |
+| **Linux (.deb)** | [Clipcat-linux-amd64.deb](https://github.com/d3uceY/Clipcat/releases/latest/download/Clipcat-linux-amd64.deb) |
 
 :::note[App is not code-signed]
 Clipcat is fully open source and safe, but has no code-signing certificate yet. See the first-run notes below for how to bypass the OS warning.
@@ -52,12 +53,22 @@ Clipcat needs **Accessibility** permission to simulate paste (`Cmd+V`). Grant it
 
 ### Linux
 
-Make the binary executable before running:
+**Option 1 — Standalone binary**
 
 ```bash
 chmod +x Clipcat-linux-amd64
 ./Clipcat-linux-amd64
 ```
+
+**Option 2 — .deb package (Debian / Ubuntu / Mint)**
+
+```bash
+sudo dpkg -i Clipcat-linux-amd64.deb
+# Or install missing deps if needed:
+sudo apt install -f
+```
+
+The `.deb` packages Clipcat as `/usr/local/bin/clipcat` and declares runtime dependencies on `libgtk-4-1` and `libwebkitgtk-6.0-4` for automatic resolution.
 
 Install `xdotool` for window focus and paste simulation:
 

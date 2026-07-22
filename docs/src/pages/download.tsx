@@ -56,7 +56,8 @@ const PLATFORMS = [
       </svg>
     ),
     variants: [
-      { label: 'Linux (x64) Binary', href: `${RELEASES_BASE}/Clipcat-linux-amd64`, note: 'AppImage-style binary' },
+      { label: 'Linux (x64) Binary', href: `${RELEASES_BASE}/Clipcat-linux-amd64`, note: 'Standalone binary' },
+      { label: 'Linux (.deb)', href: `${RELEASES_BASE}/Clipcat-linux-amd64.deb`, note: 'Debian / Ubuntu / Mint' },
     ],
     warning: null,
     guideHash: '/docs/intro#linux',

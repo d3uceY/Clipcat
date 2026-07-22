@@ -3,7 +3,7 @@
 All changes were made to address three user-reported problems:
 
 1. **Card overlap on initial render** - masonry grid items stacking on top of each other at startup
-2. **High memory / CPU with many clips** - app became sluggish with 500–5 000 clips loaded
+2. **High memory / CPU with many clips** - app became sluggish with 500-5 000 clips loaded
 3. **Scroll jitter** - grid layout jumping as cards entered the viewport
 
 A second batch of backend/runtime optimizations was added to keep clipboard operations cheap with encryption enabled and to keep image-heavy lists from pushing large payloads across the Go ↔ frontend bridge.

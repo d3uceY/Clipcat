@@ -3,11 +3,11 @@
 package clipboard
 
 import (
+	"fmt"
 	"os/exec"
 	"strings"
 	"sync"
 	"time"
-	"fmt"
 )
 
 //
@@ -152,7 +152,7 @@ func GetMonitorBoundsAt(px, py int) (mx, my, mw, mh int) {
 func GetWindowMonitorWorkOrigin() (ox, oy int) { return 0, 0 }
 
 //
-// Process ignore list – Linux implementation
+// Process ignore list - Linux implementation
 //
 
 // isForegroundProcessIgnored returns true if the frontmost app's process name

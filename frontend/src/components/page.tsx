@@ -272,7 +272,7 @@ function PageContent() {
             <div className="mx-auto max-w-6xl">
                 {/* Header: info (left) · search (center) · label filter (right) */}
                 <div className="mb-10 flex items-center gap-4 justify-between">
-                    {/* Left – about / version */}
+                    {/* Left - about / version */}
                     <div className="shrink-0">
                         {!isMiniClip && (
                             <div id="tour-about" className="items-center gap-2 sm:flex">
@@ -286,7 +286,7 @@ function PageContent() {
                         )}
                     </div>
 
-                    {/* Center – search */}
+                    {/* Center - search */}
                     <div className="relative flex-1 max-w-md torn-input mx-auto">
                         <div className="tape-1 absolute -top-3 left-0 h-12 w-4 bg-yellow-200/40 rotate-45 rounded-sm shadow-sm"></div>
                         <div className="tape-2 absolute -top-3 right-0 h-12 w-4 bg-yellow-200/40 -rotate-45 rounded-sm shadow-sm"></div>
@@ -314,7 +314,7 @@ function PageContent() {
                         )}
                     </div>
 
-                    {/* Right – label filter */}
+                    {/* Right - label filter */}
                     <div className="shrink-0">
                         <LabelFilterBar />
                     </div>

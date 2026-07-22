@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Linux build relies on **X11** for the global hotkey and `xdotool` for window tracking and paste simulation. Clipboard monitoring uses the cross-platform `golang.design/x/clipboard` watcher. The systray uses `github.com/getlantern/systray` backed by `libayatana-appindicator3`.
+The Linux build relies on **X11** for the global hotkey and `xdotool` for window tracking and paste simulation. Clipboard monitoring uses the cross-platform `golang.design/x/clipboard` watcher. The system tray uses the Wails v3 native `SystemTray` API.
 
 ---
 
@@ -22,7 +22,7 @@ main.go
             ├─ clipboard.SetIgnoredProcesses
             ├─ clipboard.SetOurProcessID   // no-op on Linux
             ├─ clipboard.StartFocusTracker
-            ├─ a.startTray()               // tray_other.go -> backend/tray/tray_linux.go
+            ├─ a.startTray()               // tray_other.go -> Wails v3 SystemTray
             └─ clipboard.StartClipboardListener(onChange, onHotkey)
 ```
 
@@ -101,11 +101,11 @@ app.PasteToWindow(content)
 
 ## System Tray
 
-**File:** `backend/tray/tray_linux.go`
+**File:** `tray_other.go`
 
-Uses `github.com/getlantern/systray` (requires `libayatana-appindicator3-dev` at build time). Sets up a status icon with **Show** and **Quit** menu items. `Activate()` is a no-op on Linux (`tray_other_activation.go`).
+Uses the Wails v3 native `SystemTray` API with `SetTemplateIcon` and `SetLabel`. Sets up a menu with **Show** and **Quit** items. The window is attached so left-click toggles visibility and right-click shows the menu.
 
-Root-level `tray_other.go` embeds the icon bytes and wires the systray callbacks to `runtime.WindowShow` / `runtime.Quit`.
+The previous `getlantern/systray` dependency has been removed.
 
 ---
 
@@ -134,7 +134,6 @@ Writes / removes `~/.config/autostart/clipcat.desktop`. The `.desktop` file uses
 |---|---|
 | `libgtk-3-dev` | Wails WebView |
 | `libwebkit2gtk-4.1-dev` | Wails WebView |
-| `libayatana-appindicator3-dev` | systray (`ayatana-appindicator3-0.1` pkg-config) |
 | `libX11-dev` (transitive) | X11 hotkey via CGo |
 | `xdotool` (runtime) | Window focus tracking and paste simulation |
 | `wmctrl` (runtime) | Single-instance window activation |

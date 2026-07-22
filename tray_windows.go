@@ -7,39 +7,46 @@ import (
 
 	"Clipcat/backend/lib/clipboard"
 	"Clipcat/backend/store"
-	"Clipcat/backend/tray"
+
+	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
 //go:embed build/windows/icon.ico
 var trayIcon []byte
 
 func (a *App) startTray() {
-	tray.Start(tray.Options{
-		IconBytes: trayIcon,
-		OnShow: func() {
-			a.window.Show()
-			a.window.SetAlwaysOnTop(true)
-			a.window.SetAlwaysOnTop(false)
-		},
-		OnQuit: func() {
-			a.app.Quit()
-		},
-		GetQuickPaste: func() bool {
-			v, _ := store.GetQuickPaste()
-			return v
-		},
-		SetQuickPaste: func(enabled bool) {
-			_ = store.SetQuickPaste(enabled)
-		},
-		GetPaused: func() bool {
-			return clipboard.IsPaused()
-		},
-		SetPaused: func(paused bool) {
-			if paused {
-				clipboard.PauseCapture()
-			} else {
-				clipboard.ResumeCapture()
-			}
-		},
+	systray := a.app.SystemTray.New()
+	systray.SetIcon(trayIcon)
+	systray.SetTooltip("Clipcat - press Ctrl+Shift+V to open")
+
+	menu := a.app.NewMenu()
+	menu.Add("Show Clipcat").OnClick(func(ctx *application.Context) {
+		a.window.Show()
+		a.window.SetAlwaysOnTop(true)
+		a.window.SetAlwaysOnTop(false)
 	})
+	menu.AddSeparator()
+
+	quickPaste, _ := store.GetQuickPaste()
+	menu.AddCheckbox("Quick Paste", quickPaste).OnClick(func(ctx *application.Context) {
+		enabled := ctx.ClickedMenuItem().Checked()
+		_ = store.SetQuickPaste(enabled)
+	})
+
+	paused := clipboard.IsPaused()
+	menu.AddCheckbox("Pause Capture", paused).OnClick(func(ctx *application.Context) {
+		if ctx.ClickedMenuItem().Checked() {
+			clipboard.PauseCapture()
+		} else {
+			clipboard.ResumeCapture()
+		}
+	})
+
+	menu.AddSeparator()
+	menu.Add("Quit").OnClick(func(ctx *application.Context) {
+		a.app.Quit()
+	})
+
+	systray.SetMenu(menu)
+	systray.AttachWindow(a.window)
 }

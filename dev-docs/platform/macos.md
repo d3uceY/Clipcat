@@ -27,7 +27,7 @@ main.go
             ├─ clipboard.SetIgnoredProcesses
             ├─ clipboard.SetOurProcessID(os.Getpid())   // detects own bundle ID
             ├─ clipboard.StartFocusTracker
-            ├─ a.startTray()               // tray_other.go -> backend/tray/tray_darwin.go
+            ├─ a.startTray()               // tray_other.go -> Wails v3 SystemTray
             └─ clipboard.StartClipboardListener(onChange, onHotkey)
 ```
 
@@ -135,28 +135,24 @@ app.PasteToWindow(content)
 
 ## System Tray (Menu Bar)
 
-**Files:** `tray_other.go`, `backend/tray/tray_darwin.go`, `backend/tray/tray_darwin.m`
+**Files:** `tray_other.go`
 
-The macOS tray is implemented in Objective-C (`tray_darwin.m`) and bridged into Go via CGo.
+The tray is implemented entirely via the Wails v3 `SystemTray` API:
 
-```
-tray.Start(iconBytes, showFn, quitFn)    // backend/tray/tray_darwin.go
-  └─ C.startTrayDarwin(...)              // tray_darwin.m
-
-startTrayDarwin (Objective-C)
-  └─ NSStatusBar.systemStatusBar
-  └─ NSStatusItem with NSImage icon
-       ├─ Tries iconBytes first
-       └─ Falls back to SF Symbol "doc.on.clipboard" or text "📋"
-  └─ NSMenu with "Show Clipcat" and "Quit" items
-       ├─ showAction  ->  Go showFn  ->  runtime.WindowShow
-       └─ quitAction  ->  Go quitFn  ->  runtime.Quit
-
-tray.Activate()                          // backend/tray/tray_darwin.go
-  └─ C.activateTrayDarwin()             // brings app to front via NSApp activate
+```go
+systray := a.app.SystemTray.New()
+systray.SetTemplateIcon(trayIcon)    // adapts to light/dark mode
+systray.SetLabel("Clipcat")          // menu bar label
+menu := a.app.NewMenu()
+menu.Add("Show Clipcat").OnClick(...)
+menu.Add("Quit").OnClick(...)
+systray.SetMenu(menu)
+systray.AttachWindow(a.window)
 ```
 
-`Activate()` is used on macOS when the hotkey fires to ensure the Clipcat window comes to the foreground before `WindowShow`.
+`AttachWindow` handles left-click show/hide toggle and right-click context menu automatically. The previous custom Cocoa bridge (`backend/tray/`) has been deleted.
+
+The hotkey path calls `a.window.Show()` + `a.window.Focus()` directly — no separate activation call is needed.
 
 ---
 

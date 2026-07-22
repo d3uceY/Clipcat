@@ -28,7 +28,7 @@ up the goroutine that calls `WindowShow`.
 |------|----------------|
 | `backend/lib/clipboard/listener_windows.go` | Creates the hidden Win32 window; registers the hotkey; runs the message loop |
 | `backend/lib/clipboard/window_utils_windows.go` | Loads Win32 DLL procs; tracks the previous foreground window; calls `AllowSetForegroundWindow` |
-| `app.go` `startup()` | Receives the hotkey callback; calls `tray.Activate` + `WindowShow` + `AlwaysOnTop` restore |
+| `app.go` `ServiceStartup()` | Receives the hotkey callback; calls `WindowShow` + `Focus` + `AlwaysOnTop` restore |
 
 ---
 
@@ -105,29 +105,21 @@ snapshot taken at the exact instant of the keypress, which is preferred.
 ### 4. Show Clipcat - hotkey callback in `app.go`
 
 ```go
-func() {
-    if a.ctx == nil { return }
-    tray.Activate()
-    runtime.WindowShow(a.ctx)
-    if alwaysOnTop, err := store.GetAlwaysOnTop(); err == nil {
-        runtime.WindowSetAlwaysOnTop(a.ctx, alwaysOnTop)
-    }
+a.window.Show()
+a.window.Focus()
+if alwaysOnTop, err := store.GetAlwaysOnTop(); err == nil {
+    a.window.SetAlwaysOnTop(alwaysOnTop)
 }
 ```
 
 This runs in a goroutine (spawned in step 2). By now `AllowSetForegroundWindow`
-has already been called on the message thread, so `WindowShow` (which internally
+has already been called on the message thread, so `Show` (which internally
 calls `SetForegroundWindow` / `BringWindowToTop`) succeeds and the Clipcat
 window actually takes focus.
 
-- **`tray.Activate()`** - tells the tray icon code that the window is being
-  shown manually so it can update menu state.
-- **`runtime.WindowShow(a.ctx)`** - Wails runtime call; restores the window if
-  minimised and brings it to the front.
-- **`runtime.WindowSetAlwaysOnTop`** - re-applies the user's stored
-  AlwaysOnTop preference. Previously this was a `set-true -> sleep(150ms) ->
-  set-false` hack intended to force focus; it was unreliable and broke the
-  setting for users who had AlwaysOnTop enabled.
+- **`a.window.Show()`** — restores the window if minimised and brings it forward.
+- **`a.window.Focus()`** — ensures keyboard focus lands on the webview.
+- **`a.window.SetAlwaysOnTop`** — re-applies the user's stored AlwaysOnTop preference.
 
 ### 5. After the user picks a clip - `FocusPreviousWindow` + `SimulatePaste`
 

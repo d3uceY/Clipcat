@@ -140,7 +140,7 @@ export default function HowToUseDialog({ platform, onOpen, hasSeenHowToUse = tru
         {
             icon: <Database size={14} />,
             title: "Clipboard Limit",
-            desc: "Choose how many clips to keep (100–500). Pinned clips are always preserved regardless of the limit. Adjust in Settings -> Clipboard.",
+            desc: "Choose how many clips to keep (100-500). Pinned clips are always preserved regardless of the limit. Adjust in Settings -> Clipboard.",
         },
         {
             icon: <Volume2 size={14} />,

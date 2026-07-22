@@ -7,7 +7,6 @@ import (
 	"Clipcat/backend/lib/winpos"
 	"Clipcat/backend/store"
 	lansync "Clipcat/backend/sync"
-	"Clipcat/backend/tray"
 	"bytes"
 	"context"
 	"encoding/base64"
@@ -384,8 +383,8 @@ func (a *App) onHotkeyFired() {
 		a.window.SetPosition(pos.X-ox, pos.Y-oy)
 	}
 
-	tray.Activate()
 	a.window.Show()
+	a.window.Focus()
 	if alwaysOnTop, err := store.GetAlwaysOnTop(); err == nil {
 		a.window.SetAlwaysOnTop(alwaysOnTop)
 	}

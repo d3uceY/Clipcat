@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Windows build uses Win32 message-window APIs for both clipboard monitoring and global hotkey registration. All system calls go through `syscall.NewLazyDLL` - no external C code. The systray uses `github.com/getlantern/systray`. The installer is built with NSIS via `wails build -nsis`.
+The Windows build uses Win32 message-window APIs for both clipboard monitoring and global hotkey registration. All system calls go through `syscall.NewLazyDLL` - no external C code. The system tray uses the Wails v3 native `SystemTray` API.
 
 ---
 
@@ -22,7 +22,7 @@ main.go
             ├─ clipboard.SetIgnoredProcesses
             ├─ clipboard.SetOurProcessID(os.Getpid())
             ├─ clipboard.StartFocusTracker
-            ├─ a.startTray()               // tray_windows.go -> backend/tray/tray_windows.go
+            ├─ a.startTray()               // tray_windows.go -> Wails v3 SystemTray
             └─ clipboard.StartClipboardListener(onChange, onHotkey)
 ```
 
@@ -144,13 +144,11 @@ GetForegroundWindow()
 
 ## System Tray
 
-**Files:** `tray_windows.go`, `backend/tray/tray_windows.go`
+**File:** `tray_windows.go`
 
-`tray_windows.go` (root) embeds the `.ico` from `build/windows/` and calls `tray.Start(iconBytes, showFn, quitFn)`. The `showFn` calls `runtime.WindowShow`; `quitFn` calls `runtime.Quit`.
+Uses the Wails v3 native `SystemTray` API. Embeds the `.ico` from `build/windows/` and creates a menu with Show, Quick Paste (checkbox), Pause Capture (checkbox), and Quit items. The window is attached so left-click toggles visibility.
 
-`backend/tray/tray_windows.go` runs `systray.Run` on a new goroutine, sets the icon/tooltip, and adds **Show** and **Quit** menu items.
-
-`Activate()` is a no-op on Windows (`tray_other_activation.go`).
+The previous `getlantern/systray` dependency has been removed.
 
 ---
 

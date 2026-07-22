@@ -160,7 +160,7 @@ func GetMonitorBoundsAt(px, py int) (mx, my, mw, mh int) {
 func GetWindowMonitorWorkOrigin() (ox, oy int) { return 0, 0 }
 
 //
-// Process ignore list – macOS implementation
+// Process ignore list - macOS implementation
 //
 
 func isForegroundProcessIgnored() bool {

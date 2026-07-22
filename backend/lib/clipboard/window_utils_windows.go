@@ -33,11 +33,11 @@ var (
 	procCloseHandle       = kernel32.NewProc("CloseHandle")
 	procGetModuleBaseName = psapi.NewProc("GetModuleBaseNameW")
 
-	procGetCursorPos     = user32.NewProc("GetCursorPos")
-	procMonitorFromPoint = user32.NewProc("MonitorFromPoint")
+	procGetCursorPos      = user32.NewProc("GetCursorPos")
+	procMonitorFromPoint  = user32.NewProc("MonitorFromPoint")
 	procMonitorFromWindow = user32.NewProc("MonitorFromWindow")
-	procGetMonitorInfo   = user32.NewProc("GetMonitorInfoW")
-	procFindWindowW      = user32.NewProc("FindWindowW")
+	procGetMonitorInfo    = user32.NewProc("GetMonitorInfoW")
+	procFindWindowW       = user32.NewProc("FindWindowW")
 )
 
 const (
@@ -177,13 +177,13 @@ func GetMonitorBoundsAt(px, py int) (mx, my, mw, mh int) {
 		// GetMonitorInfoW failed - fall back to the raw monitor rect.
 		return int(mi.RcMonitor.Left),
 			int(mi.RcMonitor.Top),
-			int(mi.RcMonitor.Right-mi.RcMonitor.Left),
-			int(mi.RcMonitor.Bottom-mi.RcMonitor.Top)
+			int(mi.RcMonitor.Right - mi.RcMonitor.Left),
+			int(mi.RcMonitor.Bottom - mi.RcMonitor.Top)
 	}
 	return int(mi.RcWork.Left),
 		int(mi.RcWork.Top),
-		int(mi.RcWork.Right-mi.RcWork.Left),
-		int(mi.RcWork.Bottom-mi.RcWork.Top)
+		int(mi.RcWork.Right - mi.RcWork.Left),
+		int(mi.RcWork.Bottom - mi.RcWork.Top)
 }
 
 // GetWindowMonitorWorkOrigin returns the top-left corner of the work area of
@@ -223,7 +223,7 @@ func GetWindowMonitorWorkOrigin() (ox, oy int) {
 }
 
 //
-// Process ignore list – Windows implementation
+// Process ignore list - Windows implementation
 //
 
 // isForegroundProcessIgnored returns true if the process that currently has

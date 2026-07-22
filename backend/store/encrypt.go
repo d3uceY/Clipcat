@@ -13,7 +13,7 @@ import (
 )
 
 var encKey []byte
-var encBlock cipher.Block // cached AES cipher – created once, reused forever
+var encBlock cipher.Block // cached AES cipher - created once, reused forever
 
 // InitEncryption loads (or generates on first run) the per-installation
 // encryption key from the encryption_meta table.

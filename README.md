@@ -101,7 +101,7 @@ sudo apt install wl-clipboard
 
 - **Relative Timestamps** - Clips show live-updating times like "2 minutes ago" or "yesterday"
 - **Sound Effects** - Satisfying audio feedback on every action; toggle with `Alt+S`
-- **Configurable Storage Limit** - Choose how many clips to keep (100–500); pinned clips are always preserved
+- **Configurable Storage Limit** - Choose how many clips to keep (100-500); pinned clips are always preserved
 - **Labels** - Tag any clip with a custom label to categorize and organize your history
 - **Label Filters** - Filter your clipboard history by label with one click using the filter bar above your clips
 - <img width="1918" height="1012" alt="image" src="https://github.com/user-attachments/assets/5cacae71-6e17-4062-9a2a-725ee3307ab7" />

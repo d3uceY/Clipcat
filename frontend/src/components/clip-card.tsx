@@ -229,10 +229,11 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
                 {/* Tag floating button — below shield, opens/closes label input */}
                 <button
                     onClick={isEditingLabel ? cancelLabelEditing : startEditingLabel}
+                    onMouseDown={isEditingLabel ? (e) => e.preventDefault() : undefined}
                     className={`absolute top-6 -right-2 z-20 p-1.5 rounded-full border shadow-sm transition-all opacity-0 group-hover/card:opacity-100 ${
                         isEditingLabel
                             ? "text-red-700 bg-red-200 border-red-400 hover:bg-red-300 hover:border-red-500"
-                            : "text-amber-700 bg-amber-100 border-amber-300 hover:bg-amber-200 hover:border-amber-400"
+                            : "text-amber-700 bg-amber-100 border-amber-300 hover:bg-amber-200 hover:border-red-400"
                     }`}
                     title={isEditingLabel ? "Cancel label editing" : "Add label"}
                 >

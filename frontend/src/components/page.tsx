@@ -333,7 +333,7 @@ function PageContent() {
                             <ShieldAlert className="h-3 w-3" />
                             {showSensitive
                                 ? `Hide ${hiddenCount} sensitive clip${hiddenCount !== 1 ? "s" : ""}`
-                                : `${hiddenCount} sensitive clip${hiddenCount !== 1 ? "s" : ""} hidden — click to reveal`
+                                : `show ${hiddenCount} sensitive clip${hiddenCount !== 1 ? "s" : ""}`
                             }
                         </button>
                     </div>

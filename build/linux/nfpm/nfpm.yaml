@@ -1,14 +1,20 @@
-name: clipcat
+name: "Clipcat"
+arch: ${GOARCH}
+platform: "linux"
 version: "0.11.0"
-arch: amd64
-platform: linux
-maintainer: d3uceY <onyekwelujesse1234@gmail.com>
-description: A clipboard manager
-homepage: https://github.com/d3uceY/Clipcat
-license: MIT
+section: "default"
+priority: "extra"
+maintainer: "d3uceY <onyekwelujesse1234@gmail.com>"
+description: "A clipboard manager"
+vendor: "d3uceY"
+homepage: "https://github.com/d3uceY/Clipcat"
+license: "MIT"
+release: "1"
 
 contents:
-  - src: ../../../bin/Clipcat
-    dst: /usr/bin/clipcat
-    file_info:
-      mode: 0755
+  - src: "./bin/Clipcat"
+    dst: "/usr/local/bin/clipcat"
+
+depends:
+  - libgtk-4-1
+  - libwebkitgtk-6.0-4

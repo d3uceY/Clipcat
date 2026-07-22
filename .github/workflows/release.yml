@@ -44,10 +44,8 @@ jobs:
           sudo apt update
           sudo apt install -y build-essential pkg-config libgtk-4-dev libwebkitgtk-6.0-dev libayatana-appindicator3-dev
 
-      - name: Install Wails CLI and nfpm
-        run: |
-          go install github.com/wailsapp/wails/v3/cmd/wails3@latest
-          go install github.com/goreleaser/nfpm/v2/cmd/nfpm@latest
+      - name: Install Wails CLI
+        run: go install github.com/wailsapp/wails/v3/cmd/wails3@latest
 
       - name: go mod tidy
         run: go mod tidy
@@ -68,19 +66,16 @@ jobs:
           VERSION="${{ needs.validate-tag.outputs.version }}"
           sed -i "s/^version: .*/version: \"${VERSION}\"/" build/linux/nfpm/nfpm.yaml
 
-      - name: Build .deb package
-        run: wails3 task linux:create:deb VERSION=v${{ needs.validate-tag.outputs.version }}
-
-      - name: Build standalone binary
+      - name: Build binary and .deb package
         env:
-          CGO_ENABLED: "1"
-          GOOS: linux
           GOARCH: amd64
-        run: go build -tags production -trimpath -buildvcs=false -ldflags="-w -s" -o build/bin/Clipcat-linux-amd64
+        run: wails3 task linux:create:deb
 
       - name: Collect Linux artifacts
         run: |
-          cp bin/clipcat.deb build/bin/Clipcat-linux-amd64.deb
+          mkdir -p build/bin
+          cp bin/Clipcat build/bin/Clipcat-linux-amd64
+          cp bin/*.deb build/bin/Clipcat-linux-amd64.deb
 
       - uses: actions/upload-artifact@v4
         with:

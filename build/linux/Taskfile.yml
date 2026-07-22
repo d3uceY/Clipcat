@@ -39,7 +39,7 @@ tasks:
         vars:
           PRODUCTION: "true"
     cmds:
-      - nfpm package --config build/linux/nfpm/nfpm.yaml --packager deb --target bin/clipcat.deb
+      - wails3 tool package -name "{{.APP_NAME}}" -format deb -config ./build/linux/nfpm/nfpm.yaml -out {{.ROOT_DIR}}/bin
 
   run:
     cmds:

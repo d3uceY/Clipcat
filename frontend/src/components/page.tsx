@@ -314,30 +314,27 @@ function PageContent() {
                         )}
                     </div>
 
-                    {/* Right - label filter */}
-                    <div className="shrink-0">
+                    {/* Right - sensitive toggle + label filter, grouped like a pair of tabbed flags */}
+                    <div className="shrink-0 flex items-center gap-2">
+                        {autoHideSensitive && hiddenCount > 0 && (
+                            <button
+                                onClick={() => setShowSensitive(v => !v)}
+                                className={`hand-drawn-btn lined thin flex items-center gap-2 px-3 py-1.5 text-xs transition-all relative top-2 ${showSensitive
+                                        ? "bg-amber-200 text-amber-950"
+                                        : "bg-[#F9F5E6] text-amber-950 hover:bg-amber-100"
+                                    }`}
+                                title={showSensitive ? "Hide sensitive clips again" : "Reveal sensitive clips"}
+                            >
+                                <ShieldAlert className="h-3.5 w-3.5 shrink-0 text-amber-700" />
+                                <span className="hidden lg:inline font-medium text-sm">Sensitive</span>
+                                <span className="flex items-center justify-center h-4 w-4 rounded-full bg-amber-300 text-amber-900 text-[10px] font-bold leading-none">
+                                    {hiddenCount}
+                                </span>
+                            </button>
+                        )}
                         <LabelFilterBar />
                     </div>
                 </div>
-
-                {/* Sensitive clips indicator - only shown when auto-hide is on and there are hidden clips */}
-                {autoHideSensitive && hiddenCount > 0 && (
-                    <div className={`${!isMiniClip ? "mb-6" : "-mb-6 -mt-4"} flex items-center gap-3 flex-wrap`}>
-                        <button
-                            onClick={() => setShowSensitive(v => !v)}
-                            className={`hand-drawn-btn lined thin inline-flex items-center gap-1.5 px-3 py-1 ${isMiniClip ? "text-[10px]!" : "text-xs!"} mb-4 mt-2 transition-opacity hover:opacity-70 ${showSensitive
-                                    ? "bg-amber-200 text-amber-900"
-                                    : "bg-amber-50/80 text-amber-700/80 hover:bg-amber-100 hover:text-amber-800"
-                                }`}
-                        >
-                            <ShieldAlert className="h-3 w-3" />
-                            {showSensitive
-                                ? `Hide ${hiddenCount} sensitive clip${hiddenCount !== 1 ? "s" : ""}`
-                                : `show ${hiddenCount} sensitive clip${hiddenCount !== 1 ? "s" : ""}`
-                            }
-                        </button>
-                    </div>
-                )}
 
                 {/* Pinned Section — interleaves hidden pinned clips when showSensitive is active */}
                 {(filteredClips.pinned.length > 0 || (showSensitive && filteredClips.hiddenPinned.length > 0)) && (

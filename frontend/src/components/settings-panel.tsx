@@ -153,9 +153,13 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
             </div>
         );
 
-        // ── Section label ──────────────────────────────────────────────
+        // ── Section label — a small torn strip of washi tape, same trick as
+        //     the tape squares on the home page search bar ─────────────────
         const SectionLabel = ({ children }: { children: React.ReactNode }) => (
-            <p className="text-[10px]! uppercase tracking-widest opacity-40 mb-2">{children}</p>
+            <div className="relative inline-block mb-3 mt-1">
+                <span className="absolute -inset-x-1.5 inset-y-0.5 -rotate-1 bg-amber-200/50 rounded-[2px]" />
+                <p className="relative text-[10px]! uppercase tracking-widest font-bold text-amber-900/70 px-0.5">{children}</p>
+            </div>
         );
 
         // ── Storage limit stepper ──────────────────────────────────────
@@ -186,6 +190,17 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
 
         const tabs: SettingsTab[] = ["window", "clipboard", "system", "privacy", "network"];
 
+        const tabAccent: Record<SettingsTab, string> = {
+            window: "text-[#41403e] bg-[#F9F5E6]",
+            clipboard: "text-amber-900 bg-amber-100",
+            system: "text-[#41403e] bg-[#F9F5E6]",
+            privacy: "text-rose-900 bg-rose-100",
+            network: "text-blue-900 bg-blue-100",
+        };
+        // A hair of rotation per tab so the row reads like a set of hand-stuck
+        // paper flags rather than a uniform machined tab strip.
+        const tabTilt = ["-1deg", "0.6deg", "-0.5deg", "0.8deg", "-0.6deg"];
+
         const activeDot = (id: SettingsTab) => {
             if (id === "privacy" && ignoreList.length > 0) return ignoreList.length;
             if (id === "network" && syncEnabled && syncPeerCount > 0) return syncPeerCount;
@@ -201,6 +216,11 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
                            w-full h-full
                            md:w-[74vw] max-w-200 md:h-[74vh]" 
             >
+                {/* Notebook margin rule — the same red ruling used on the clip
+                    detail page, so Settings still reads as a page from the
+                    same notebook rather than a separate UI system. */}
+                <div className="margin hidden sm:block opacity-30" style={{ left: "2.25rem" }} />
+
                 {/* ── Header ── */} 
                 <div className="relative z-1 flex items-center justify-between px-10 max-sm:px-6 pt-10 pb-2 shrink-0">
                     <h2 className="text-lg!">Settings</h2>
@@ -209,15 +229,17 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
 
                 {/* ── Tab bar ── */}
                 <div className="relative z-1 px-10 max-sm:px-5 shrink-0">
-                    <div className="flex gap-1 flex-wrap pb-1">
-                        {tabs.map(id => {
+                    <div className="flex gap-1.5 flex-wrap pb-1">
+                        {tabs.map((id, i) => {
                             const dot = activeDot(id);
+                            const isActive = activeTab === id;
                             return (
                                 <button
                                     key={id}
                                     onClick={() => setActiveTab(id)}
-                                    className={`relative flex items-center gap-1 text-[11px]! px-3 py-1.5 capitalize transition-all hand-drawn-btn ${
-                                        activeTab === id ? "font-bold opacity-100 lined thin" : "opacity-45 hover:opacity-70"
+                                    style={{ transform: isActive ? "translateY(-2px) rotate(0deg)" : `rotate(${tabTilt[i]})` }}
+                                    className={`relative flex items-center gap-1 text-[11px]! px-3 py-1.5 capitalize transition-all hand-drawn-btn hover:rotate-0! ${
+                                        isActive ? `font-bold opacity-100 lined thin ${tabAccent[id]}` : "opacity-45 hover:opacity-70"
                                     }`}
                                 >
                                     {id}

@@ -4,12 +4,12 @@
 	},
 	"info": {
 		"0000": {
-			"ProductVersion": "{{.Info.ProductVersion}}",
-			"CompanyName": "{{.Info.CompanyName}}",
-			"FileDescription": "{{.Info.ProductName}}",
-			"LegalCopyright": "{{.Info.Copyright}}",
-			"ProductName": "{{.Info.ProductName}}",
-			"Comments": "{{.Info.Comments}}"
+			"ProductVersion": "0.11.0",
+			"CompanyName": "d3uceY",
+			"FileDescription": "Clipcat",
+			"LegalCopyright": "Copyright © 2026 d3uceY",
+			"ProductName": "Clipcat",
+			"Comments": "Built using Wails (https://wails.io)"
 		}
 	}
 }

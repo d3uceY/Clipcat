@@ -274,7 +274,7 @@ func AddClip(content string, clipType string) (*Clip, []int, int, bool, error) {
 	hidden := oldHidden
 	autolabel := oldLabel
 	if scanResult := secretscan.Scan(content); scanResult.IsSecret {
-		autolabel = "sensitive"
+		autolabel = scanResult.Label // Use the generic rule label (e.g. "Payment Key", "Cloud Access Key")
 		if autoHide, _ := GetAutoHideSensitive(); autoHide {
 			hidden = 1 // auto-hide overrides any previous visible state
 		}

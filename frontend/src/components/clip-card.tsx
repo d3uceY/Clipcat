@@ -298,10 +298,11 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
                     {isEditingLabel && labelSuggestions.length > 0 && (
                         <div className="absolute top-full left-0 right-0 z-60 mt-0.5 bg-[#F9F5E6] border border-dashed border-amber-600/50 shadow-lg overflow-hidden">
                             <ScrollAreaDark className="max-h-40">
+                                <div className="divide-y divide-amber-200/40">
                                 {labelSuggestions.map(suggestion => (
                                     <button
                                         key={suggestion}
-                                        className="w-full text-left px-2 py-1.5 text-[11px] text-amber-900 hover:bg-amber-100/70 hover:text-amber-950 flex items-center gap-1.5 transition-colors"
+                                        className="w-full text-left px-2 py-2 text-[11px] text-amber-900 hover:bg-amber-200/80 hover:text-amber-950 flex items-center gap-1.5 transition-colors"
                                         onMouseDown={(e) => {
                                             e.preventDefault()
                                             if (isSavingLabelRef.current) return
@@ -321,6 +322,7 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
                                         <span className="truncate">{suggestion}</span>
                                     </button>
                                 ))}
+                            </div>
                             </ScrollAreaDark>
                         </div>
                     )}

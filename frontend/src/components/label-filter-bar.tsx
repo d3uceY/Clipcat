@@ -82,26 +82,30 @@ function LabelFilterBar() {
                     }}
                 >
                     <ScrollArea className="h-52">
-                    <ul className="py-1">
+                    <ul className="py-1 divide-y divide-amber-200/50">
                         {distinctLabels.map(lbl => {
                             const active = activeLabels.includes(lbl)
                             return (
                                 <li key={lbl}>
                                     <button
                                         onClick={() => toggleLabelFilter(lbl)}
-                                        className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-amber-950 hover:bg-amber-100/80 transition-colors text-left"
+                                        className={`w-full flex items-center gap-2 px-3 py-2 text-xs transition-colors text-left ${
+                                            active
+                                                ? "bg-amber-200/60 text-amber-900 font-semibold"
+                                                : "text-amber-950 hover:bg-amber-200/80 hover:text-amber-950"
+                                        }`}
                                     >
                                         <span
                                             className={`h-3.5 w-3.5 shrink-0 flex items-center justify-center rounded-sm border ${
                                                 active
-                                                    ? "bg-amber-300 border-amber-600/70"
-                                                    : "border-amber-400/50 bg-transparent"
+                                                    ? "bg-amber-400 border-amber-700"
+                                                    : "border-amber-400/60 bg-transparent"
                                             }`}
                                             style={{ borderStyle: "solid" }}
                                         >
-                                            {active && <Check className="h-2.5 w-2.5 text-amber-900" />}
+                                            {active && <Check className="h-2.5 w-2.5 text-amber-950" />}
                                         </span>
-                                        <span className={active ? "font-semibold" : ""}>{lbl}</span>
+                                        <span>{lbl}</span>
                                     </button>
                                 </li>
                             )

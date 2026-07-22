@@ -4,7 +4,7 @@ import { useClips } from "@/context/ClipContext";
 import { playSound } from "@/helpers/playSound";
 import { UpdateStorageLimit, GetStorageLimit, GetClips, DeleteAllClips, DeletePinnedClips, DeleteUnpinnedClips, GetSyncSettings, SaveSyncSettings, ConfirmDelete } from "../../bindings/Clipcat/app";
 import { ScrollArea } from "./ui/scroll-area";
-import { RefreshCw, Download, Monitor, Clipboard, Wrench, ShieldCheck, Trash2, Network, Save, Eye, EyeOff } from "lucide-react";
+import { RefreshCw, Download, Trash2, Save, Eye, EyeOff } from "lucide-react";
 import type { UpdateInfo } from "./about-dialog";
 
 type SettingsTab = "window" | "clipboard" | "system" | "privacy" | "network";
@@ -122,56 +122,76 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
 
         const hasClips = () => clips.recent.length > 0 || clips.pinned.length > 0;
 
-        const MenuSwitch = (isOn: boolean, fn: () => void, disabled = false): React.JSX.Element => (
+        // ── Reusable: hand-drawn toggle ────────────────────────────────
+        const Toggle = ({ on, toggle, disabled }: { on: boolean; toggle: () => void; disabled?: boolean }) => (
             <button
-                onClick={() => {
-                    playSound(isOn ? '/sounds/switch-on.mp3' : '/sounds/switch-off.mp3', soundOn, 1);
-                    if (!disabled) fn();
-                }}
+                onClick={() => { playSound(on ? '/sounds/switch-on.mp3' : '/sounds/switch-off.mp3', soundOn, 1); if (!disabled) toggle(); }}
                 className="menu-switch-container block h-6 shrink-0 disabled:opacity-50"
                 disabled={disabled}
             >
-                {isOn
+                {on
                     ? <img src="/on.png" alt="" className="block h-full" />
                     : <img src="/off.png" alt="" className="block h-full" />}
             </button>
         );
 
-        const ClipStorageLimitSwitch = () => (
-            <div className="flex flex-col items-center">
-                <button className="block w-4 -rotate-90 disabled:opacity-50" onClick={incrementLimit} disabled={limit >= 500}>
-                    <img src="/arrow.png" alt="increment" className="h-full block" />
-                </button>
-                <span className="text-sm text-center">{limit}</span>
-                <button className="block w-4 rotate-90 disabled:opacity-50" onClick={decrementLimit} disabled={limit <= 100}>
-                    <img src="/arrow.png" alt="decrement" className="h-full block" />
-                </button>
+        // ── Reusable: a single setting row with visible description ─────
+        const Row = ({ label, desc, children }: { label: string; desc?: string; children: React.ReactNode }) => (
+            <div className="flex items-center justify-between gap-3 py-2.5">
+                <div className="flex-1 min-w-0">
+                    <p className="text-sm! leading-snug">{label}</p>
+                    {desc && <p className="text-[11px]! opacity-45 mt-0.5 leading-snug">{desc}</p>}
+                </div>
+                <div className="shrink-0">{children}</div>
             </div>
         );
 
-        const Separator = ({className}: {className?: string}) => (
-            <div className={`my-3 ${className ?? ""}`}>
+        // ── Separator ──────────────────────────────────────────────────
+        const Sep = ({ narrow }: { narrow?: boolean }) => (
+            <div className={`my-3 ${narrow ? "w-1/2 mx-auto" : ""}`}>
                 <img src="/seperator.png" alt="" className="w-full opacity-40" />
             </div>
         );
 
-        const SettingRow = ({ children, title }: { children: React.ReactNode; title?: string }) => (
-            <div className="flex items-center gap-3 justify-between py-2.5" title={title}>
-                {children}
+        // ── Section label ──────────────────────────────────────────────
+        const SectionLabel = ({ children }: { children: React.ReactNode }) => (
+            <p className="text-[10px]! uppercase tracking-widest opacity-40 mb-2">{children}</p>
+        );
+
+        // ── Storage limit stepper ──────────────────────────────────────
+        const LimitStepper = () => (
+            <div className="flex flex-col items-center">
+                <button className="block w-4 -rotate-90 disabled:opacity-50" onClick={incrementLimit} disabled={limit >= 500}>
+                    <img src="/arrow.png" alt="increase" className="h-full block" />
+                </button>
+                <span className="text-sm! text-center tabular-nums">{limit}</span>
+                <button className="block w-4 rotate-90 disabled:opacity-50" onClick={decrementLimit} disabled={limit <= 100}>
+                    <img src="/arrow.png" alt="decrease" className="h-full block" />
+                </button>
             </div>
         );
 
-        const Dot = () => (
-            <span className="flex-1 border-b border-dashed border-current opacity-20 mb-1 mx-1" />
+        // ── Action button ──────────────────────────────────────────────
+        const ActionBtn = ({ onClick, children, disabled }: {
+            onClick: () => void; children: React.ReactNode; disabled?: boolean
+        }) => (
+            <button
+                onClick={onClick}
+                disabled={disabled}
+                className="flex items-center gap-1 text-xs! px-2 py-1 hand-drawn-btn lined thin font-bold hover:opacity-70 transition-opacity disabled:opacity-40"
+            >
+                {children}
+            </button>
         );
 
-        const tabs: { id: SettingsTab; label: string; icon: React.ReactNode }[] = [
-            { id: "window", label: "Window", icon: <Monitor size={11} /> },
-            { id: "clipboard", label: "Clipboard", icon: <Clipboard size={11} /> },
-            { id: "system", label: "System", icon: <Wrench size={11} /> },
-            { id: "privacy", label: "Privacy", icon: <ShieldCheck size={11} /> },
-            { id: "network", label: "Network", icon: <Network size={11} /> },
-        ];
+        const tabs: SettingsTab[] = ["window", "clipboard", "system", "privacy", "network"];
+
+        const activeDot = (id: SettingsTab) => {
+            if (id === "privacy" && ignoreList.length > 0) return ignoreList.length;
+            if (id === "network" && syncEnabled && syncPeerCount > 0) return syncPeerCount;
+            if (id === "system" && updateAvailable) return "!";
+            return null;
+        };
 
 
         return (
@@ -183,46 +203,36 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
             >
                 {/* ── Header ── */} 
                 <div className="relative z-1 flex items-center justify-between px-10 max-sm:px-6 pt-10 pb-2 shrink-0">
-                    <h2 className="text-lg">Settings</h2>
-                    <button
-                        onClick={onClose}
-                        className="bg-[#F8F5F0] w-7 h-7 flex items-center justify-center hand-drawn-btn lined thin text-sm font-bold hover:opacity-70"
-                    >
-                        ✕
-                    </button>
+                    <h2 className="text-lg!">Settings</h2>
+                    <button onClick={onClose} className="bg-[#F8F5F0] w-7 h-7 flex items-center justify-center hand-drawn-btn lined thin text-sm! font-bold hover:opacity-70">x</button>
                 </div>
 
                 {/* ── Tab bar ── */}
                 <div className="relative z-1 px-10 max-sm:px-5 shrink-0">
                     <div className="flex gap-1 flex-wrap pb-1">
-                        {tabs.map(({ id, label, icon }) => (
-                            <button
-                                key={id}
-                                onClick={() => setActiveTab(id)}
-                                className={`flex items-center gap-1.5 !text-[11px] px-3 py-1.5 transition-all hand-drawn-btn ${activeTab === id
-                                    ? "font-bold opacity-100 lined thin"
-                                    : "opacity-45 hover:opacity-70"
+                        {tabs.map(id => {
+                            const dot = activeDot(id);
+                            return (
+                                <button
+                                    key={id}
+                                    onClick={() => setActiveTab(id)}
+                                    className={`relative flex items-center gap-1 text-[11px]! px-3 py-1.5 capitalize transition-all hand-drawn-btn ${
+                                        activeTab === id ? "font-bold opacity-100 lined thin" : "opacity-45 hover:opacity-70"
                                     }`}
-                            >
-                                {icon}
-                                {label}
-                                {id === "privacy" && ignoreList.length > 0 && (
-                                    <span className="ml-0.5 w-3.5 h-3.5 rounded-full bg-current/25 text-[9px] flex items-center justify-center leading-none font-bold">
-                                        {ignoreList.length}
-                                    </span>
-                                )}
-                                {id === "network" && syncEnabled && syncPeerCount > 0 && (
-                                    <span className="ml-0.5 w-3.5 h-3.5 rounded-full bg-green-500/70 text-[9px] flex items-center justify-center leading-none font-bold">
-                                        {syncPeerCount}
-                                    </span>
-                                )}
-                                {id === "system" && updateAvailable && (
-                                    <span className="ml-0.5 w-2 h-2 rounded-full bg-red-500 inline-block shrink-0" />
-                                )}
-                            </button>
-                        ))}
+                                >
+                                    {id}
+                                    {dot && (
+                                        <span className={`ml-0.5 min-w-3.5 h-3.5 rounded-full flex items-center justify-center text-[9px]! leading-none font-bold px-0.5 ${
+                                            dot === "!" ? "bg-red-500/25 text-red-700" : "bg-current/15"
+                                        }`}>
+                                            {dot}
+                                        </span>
+                                    )}
+                                </button>
+                            );
+                        })}
                     </div>
-                    <Separator className = "w-[80%] mx-auto"/>
+                    <Sep narrow />
                 </div>
 
                 {/* ── Tab content ── */}
@@ -231,117 +241,88 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
                     {/* ══════ WINDOW ══════ */}
                     {activeTab === "window" && (
                         <div className="pt-3">
-                            <SettingRow title="alt + m to toggle">
-                                <p className="sm:text-base text-sm">Mini Clip</p>
-                                <Dot />
-                                {MenuSwitch(isMiniClip, toggleMiniClip)}
-                            </SettingRow>
-                            <SettingRow title={isQuickPaste ? "Turn off Quick Paste to use Always on Top" : "Keep the Clipcat window always above other windows"}>
-                                <div className="flex flex-col">
-                                    <p className="sm:text-base text-sm">Always on Top</p>
-                                    {isQuickPaste && <p className="text-[10px] opacity-50">Turn off Quick Paste first</p>}
-                                </div>
-                                <Dot />
-                                {MenuSwitch(isAlwaysOnTop, toggleAlwaysOnTop, isQuickPaste)}
-                            </SettingRow>
-                            <SettingRow title="Move the window next to your cursor when Quick Paste summons it">
-                                <div className="flex flex-col">
-                                    <p className="sm:text-base text-sm">Smart Position</p>
-                                    {!isQuickPaste && <p className="text-[10px] opacity-50">Requires Quick Paste</p>}
-                                </div>
-                                <Dot />
-                                {MenuSwitch(isCursorSnap, toggleCursorSnap, !isQuickPaste)}
-                            </SettingRow>
+                            <Row label="Mini Clip" desc="Compact window that stays out of your way. Alt+M to toggle.">
+                                <Toggle on={isMiniClip} toggle={toggleMiniClip} />
+                            </Row>
+                            <Row
+                                label="Always on Top"
+                                desc={isQuickPaste ? "Turn off Quick Paste to use this." : "Keep the Clipcat window above all other windows."}
+                            >
+                                <Toggle on={isAlwaysOnTop} toggle={toggleAlwaysOnTop} disabled={isQuickPaste} />
+                            </Row>
+                            <Row
+                                label="Smart Position"
+                                desc={isQuickPaste ? "Summon next to your cursor when Quick Paste activates." : "Requires Quick Paste to be enabled."}
+                            >
+                                <Toggle on={isCursorSnap} toggle={toggleCursorSnap} disabled={!isQuickPaste} />
+                            </Row>
                         </div>
                     )}
 
                     {/* ══════ CLIPBOARD ══════ */}
                     {activeTab === "clipboard" && (
                         <div className="pt-3">
-                            <SettingRow title="Pause clipboard capture temporarily">
-                                <p className="sm:text-base text-sm">Pause Capture</p>
-                                <Dot />
-                                {MenuSwitch(isPaused, togglePause)}
-                            </SettingRow>
-                            <SettingRow title="alt + h to toggle">
-                                <p className="sm:text-base text-sm">Hide Content</p>
-                                <Dot />
-                                {MenuSwitch(hideContent, toggleHideContent, !hasClips())}
-                            </SettingRow>
-                            <SettingRow title="Automatically hide clipboard items that look like passwords, API keys, or tokens">
-                                <p className="sm:text-base text-sm">Auto-hide Sensitive</p>
-                                <Dot />
-                                {MenuSwitch(autoHideSensitive, toggleAutoHideSensitive)}
-                            </SettingRow>
-                            <SettingRow title="Limits the number of clipboard items stored">
-                                <p className="sm:text-base text-sm">Clipboard Limit</p>
-                                <Dot />
-                                <ClipStorageLimitSwitch />
-                            </SettingRow>
+                            <Row label="Pause Capture" desc="Temporarily stop recording clipboard changes.">
+                                <Toggle on={isPaused} toggle={togglePause} />
+                            </Row>
+                            <Row label="Hide Content" desc="Blur all clip content. Alt+H to toggle.">
+                                <Toggle on={hideContent} toggle={toggleHideContent} disabled={!hasClips()} />
+                            </Row>
+                            <Row label="Auto-hide Sensitive" desc="Collapse clips that look like passwords, API keys, or tokens.">
+                                <Toggle on={autoHideSensitive} toggle={toggleAutoHideSensitive} />
+                            </Row>
+                            <Row label="Clipboard Limit" desc="How many clips to keep. Older unpinned clips are removed when the limit is reached.">
+                                <LimitStepper />
+                            </Row>
                         </div>
                     )}
 
                     {/* ══════ SYSTEM ══════ */}
                     {activeTab === "system" && (
                         <div className="pt-3">
-                            <SettingRow title="alt + s to toggle">
-                                <p className="sm:text-base text-sm">Sound</p>
-                                <Dot />
-                                {MenuSwitch(soundOn, toggleSound)}
-                            </SettingRow>
-                            <SettingRow title="Enables or disables loading the app on system startup">
-                                <p className="sm:text-base text-sm">Load on Startup</p>
-                                <Dot />
-                                {MenuSwitch(isStartup, toggleStartup)}
-                            </SettingRow>
-                            <SettingRow title={`Quick Paste: hides to the tray, ${platform === "darwin" ? "Cmd" : "Ctrl"}+Shift+V summons it, paste any clip into the last window you used`}>
-                                <p className="sm:text-base text-sm">Quick Paste</p>
-                                <Dot />
-                                {MenuSwitch(isQuickPaste, onQuickPasteToggle)}
-                            </SettingRow>
+                            <Row label="Sound" desc="Audio feedback on every action. Alt+S to toggle.">
+                                <Toggle on={soundOn} toggle={toggleSound} />
+                            </Row>
+                            <Row label="Load on Startup" desc="Launch Clipcat automatically when your system starts.">
+                                <Toggle on={isStartup} toggle={toggleStartup} />
+                            </Row>
+                            <Row
+                                label="Quick Paste"
+                                desc={`Hides to the tray. ${platform === "darwin" ? "Cmd" : "Ctrl"}+Shift+V summons it, pick a clip, it pastes and vanishes.`}
+                            >
+                                <Toggle on={isQuickPaste} toggle={onQuickPasteToggle} />
+                            </Row>
 
-                            <Separator className = "w-1/2 mx-auto"/>
+                            <Sep narrow />
 
-                            <p className="text-[10px] uppercase tracking-widest opacity-40 mb-2">Updates</p>
+                            <SectionLabel>Updates</SectionLabel>
                             {updateAvailable ? (
                                 <div className="space-y-2 py-1">
                                     <div className="flex items-center gap-2">
                                         <span className="w-2 h-2 rounded-full bg-red-500 shrink-0" />
-                                        <p className="sm:text-base text-sm font-semibold">Update Available</p>
+                                        <p className="text-sm! font-semibold">Update Available</p>
                                     </div>
-                                    <p className="text-xs text-foreground/60">
-                                        Version <strong>{updateAvailable.version}</strong> is ready to download.
-                                        {updateAvailable.releaseDate && (
-                                            <> Released {new Date(updateAvailable.releaseDate).toLocaleDateString()}.</>
-                                        )}
+                                    <p className="text-xs! opacity-50">
+                                        Version <strong>{updateAvailable.version}</strong> is ready.
+                                        {updateAvailable.releaseDate && <> Released {new Date(updateAvailable.releaseDate).toLocaleDateString()}.</>}
                                     </p>
                                     <button
                                         onClick={() => Browser.OpenURL('https://d3ucey.github.io/Clipcat/download')}
-                                        className="inline-flex items-center gap-1.5 hand-drawn-btn lined thin text-xs! px-2 py-1 font-bold hover:opacity-70 transition-opacity"
+                                        className="inline-flex items-center gap-1.5 hand-drawn-btn lined thin text-xs px-2 py-1 font-bold hover:opacity-70 transition-opacity"
                                     >
-                                        <Download size={11} />
-                                        Download Update
+                                        <Download size={11} /> Download Update
                                     </button>
                                 </div>
                             ) : (
-                                <SettingRow>
-                                    <p className="sm:text-base text-sm">Check for Updates</p>
-                                    <Dot />
-                                    <button
-                                        onClick={async () => {
-                                            if (!onCheckUpdate) return;
-                                            setIsCheckingUpdate(true);
-                                            await onCheckUpdate();
-                                            setIsCheckingUpdate(false);
-                                        }}
+                                <Row label="Check for Updates" desc="See if a new version is available.">
+                                    <ActionBtn
+                                        onClick={async () => { if (!onCheckUpdate) return; setIsCheckingUpdate(true); await onCheckUpdate(); setIsCheckingUpdate(false); }}
                                         disabled={isCheckingUpdate || !onCheckUpdate}
-                                        className="flex items-center gap-1 text-xs! px-2 py-1 hand-drawn-btn lined thin font-bold hover:opacity-70 transition-opacity disabled:opacity-40"
-                                        title="Check for a new version"
                                     >
                                         <RefreshCw size={11} className={isCheckingUpdate ? "animate-spin" : ""} />
-                                        {isCheckingUpdate ? "Checking…" : "Check"}
-                                    </button>
-                                </SettingRow>
+                                        {isCheckingUpdate ? "Checking" : "Check"}
+                                    </ActionBtn>
+                                </Row>
                             )}
                         </div>
                     )}
@@ -349,76 +330,42 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
                     {/* ══════ PRIVACY ══════ */}
                     {activeTab === "privacy" && (
                         <div className="pt-3">
-                            {/* Clear History */}
-                            <p className="text-[10px] uppercase tracking-widest opacity-40 mb-2">Clear History</p>
-                            <SettingRow>
-                                <p className="sm:text-base text-sm">Delete Recents</p>
-                                <Dot />
-                                <button
-                                    onClick={handleDeleteUnpinnedClips}
-                                    className="flex items-center gap-1 text-xs! px-2 py-1 hand-drawn-btn lined thin font-bold hover:opacity-70 transition-opacity"
-                                >
-                                    <Trash2 size={11} />
-                                    Delete
-                                </button>
-                            </SettingRow>
-                            <SettingRow>
-                                <p className="sm:text-base text-sm">Delete Pinned</p>
-                                <Dot />
-                                <button
-                                    onClick={handleDeletePinnedClips}
-                                    className="flex items-center gap-1 text-xs! px-2 py-1 hand-drawn-btn lined thin font-bold hover:opacity-70 transition-opacity"
-                                >
-                                    <Trash2 size={11} />
-                                    Delete
-                                </button>
-                            </SettingRow>
-                            <SettingRow>
-                                <p className="sm:text-base text-sm">Delete All</p>
-                                <Dot />
-                                <button
-                                    onClick={handleDeleteAllClips}
-                                    className="flex items-center gap-1 text-xs! px-2 py-1 hand-drawn-btn lined thin font-bold hover:opacity-70 transition-opacity"
-                                >
-                                    <Trash2 size={11} />
-                                    Delete
-                                </button>
-                            </SettingRow>
+                            <SectionLabel>Clear History</SectionLabel>
+                            <Row label="Delete Recents">
+                                <ActionBtn onClick={handleDeleteUnpinnedClips}><Trash2 size={11} /> Delete</ActionBtn>
+                            </Row>
+                            <Row label="Delete Pinned">
+                                <ActionBtn onClick={handleDeletePinnedClips}><Trash2 size={11} /> Delete</ActionBtn>
+                            </Row>
+                            <Row label="Delete All">
+                                <ActionBtn onClick={handleDeleteAllClips}><Trash2 size={11} /> Delete</ActionBtn>
+                            </Row>
 
-                            <Separator className = "w-1/2 mx-auto" />
+                            <Sep narrow />
 
-                            {/* Blocked Apps */}
-                            <p className="text-[10px] uppercase tracking-widest opacity-40 mb-1">Blocked Apps</p>
-                            <p className="text-xs text-foreground/55 mb-3">Clipboard won't capture from these apps.</p>
+                            <SectionLabel>Blocked Apps</SectionLabel>
+                            <p className="text-xs! opacity-50 mb-3">Clipboard content from these apps is never captured.</p>
                             <div className="flex gap-1 mb-2">
                                 <input
                                     type="text"
                                     value={newIgnoreEntry}
-                                    onChange={(e) => setNewIgnoreEntry(e.target.value)}
-                                    onKeyDown={(e) => e.key === "Enter" && handleAddIgnoreEntry()}
-                                    placeholder="e.g. 1password.exe"
-                                    className="flex-1 text-xs px-2 py-1 border-b border-current bg-transparent focus:outline-none placeholder-gray-400"
+                                    onChange={e => setNewIgnoreEntry(e.target.value)}
+                                    onKeyDown={e => e.key === "Enter" && handleAddIgnoreEntry()}
+                                    placeholder="Process name, e.g. 1password.exe"
+                                    className="flex-1 text-xs! px-2 py-1 border-b border-current bg-transparent focus:outline-none placeholder-gray-400"
                                 />
-                                <button
-                                    onClick={handleAddIgnoreEntry}
-                                    className="text-xs px-2 font-bold hover:opacity-70 transition-opacity"
-                                    title="Add to block list"
-                                >
-                                    +
-                                </button>
+                                <button onClick={handleAddIgnoreEntry} className="text-xs! px-2 font-bold hover:opacity-70 transition-opacity">+</button>
                             </div>
                             {ignoreList.length > 0 && (
-                                <ul className="space-y-1 mt-1">
-                                    {ignoreList.map((entry) => (
-                                        <li key={entry} className="flex items-center justify-between text-xs">
-                                            <span className="truncate text-foreground/80">{entry}</span>
+                                <ul className="space-y-0.5 mt-1">
+                                    {ignoreList.map(entry => (
+                                        <li key={entry} className="flex items-center justify-between text-xs! group">
+                                            <span className="truncate opacity-70">{entry}</span>
                                             <button
                                                 onClick={() => removeIgnoreEntry(entry)}
-                                                className="ml-1 shrink-0 hover:text-red-600 transition-colors"
+                                                className="ml-1 shrink-0 opacity-0 group-hover:opacity-50 hover:opacity-100! hover:text-red-600 transition-all text-[10px]!"
                                                 title="Remove"
-                                            >
-                                                ✕
-                                            </button>
+                                            >x</button>
                                         </li>
                                     ))}
                                 </ul>
@@ -429,24 +376,22 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
                     {/* ══════ NETWORK ══════ */}
                     {activeTab === "network" && (
                         <div className="pt-3">
-                            <SettingRow title="Sync clipboard entries with other devices on the same LAN">
-                                <p className="sm:text-base text-sm">LAN Sync</p>
-                                <Dot />
-                                {MenuSwitch(syncEnabled, () => setSyncEnabled(v => !v))}
-                            </SettingRow>
+                            <Row label="LAN Sync" desc="Sync clips with other devices on the same local network. End-to-end encrypted.">
+                                <Toggle on={syncEnabled} toggle={() => setSyncEnabled(v => !v)} />
+                            </Row>
 
                             <div className="mt-3 mb-1">
-                                <p className="text-[10px] uppercase tracking-widest opacity-40 mb-2">Passphrase</p>
-                                <p className="text-xs text-foreground/55 mb-3">All devices must share the same passphrase. Your clipboard data is encrypted in transit.</p>
+                                <SectionLabel>Passphrase</SectionLabel>
+                                <p className="text-xs! opacity-50 mb-3">Every device must use the same passphrase. Data is encrypted in transit.</p>
                                 <div className="flex items-center gap-1">
                                     <div className="relative flex-1">
                                         <input
                                             type={showPassphrase ? "text" : "password"}
                                             value={syncPassphrase}
-                                            onChange={(e) => setSyncPassphrase(e.target.value)}
-                                            placeholder="Enter a shared passphrase…"
+                                            onChange={e => setSyncPassphrase(e.target.value)}
+                                            placeholder="Enter a shared passphrase"
                                             disabled={!syncEnabled}
-                                            className="w-full text-xs px-2 py-1 pr-7 border-b border-current bg-transparent focus:outline-none placeholder-gray-400 disabled:opacity-40 [&::-ms-reveal]:hidden [&::-webkit-credentials-auto-fill-button]:hidden"
+                                            className="w-full text-xs! px-2 py-1 pr-7 border-b border-current bg-transparent focus:outline-none placeholder-gray-400 disabled:opacity-40 [&::-ms-reveal]:hidden [&::-webkit-credentials-auto-fill-button]:hidden"
                                         />
                                         <button
                                             type="button"
@@ -462,20 +407,12 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
                             </div>
 
                             <div className="mt-4 flex items-center justify-between">
-                                <button
-                                    onClick={handleSaveSyncSettings}
-                                    disabled={isSyncSaving || (syncEnabled && syncPassphrase.trim() === "")}
-                                    className="flex items-center gap-1 text-xs! px-2 py-1 hand-drawn-btn lined thin font-bold hover:opacity-70 transition-opacity disabled:opacity-40"
-                                    title="Save sync settings"
-                                >
-                                    <Save size={11} />
-                                    {isSyncSaving ? "Saving…" : "Save"}
-                                </button>
+                                <ActionBtn onClick={handleSaveSyncSettings} disabled={isSyncSaving || (syncEnabled && syncPassphrase.trim() === "")}>
+                                    <Save size={11} /> {isSyncSaving ? "Saving" : "Save"}
+                                </ActionBtn>
                                 {syncEnabled && (
-                                    <p className="text-xs opacity-50">
-                                        {syncPeerCount === 0
-                                            ? "No peers found"
-                                            : `${syncPeerCount} peer${syncPeerCount === 1 ? "" : "s"} connected`}
+                                    <p className="text-xs! opacity-50">
+                                        {syncPeerCount === 0 ? "No peers found" : `${syncPeerCount} peer${syncPeerCount === 1 ? "" : "s"} connected`}
                                     </p>
                                 )}
                             </div>

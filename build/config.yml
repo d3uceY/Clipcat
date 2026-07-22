@@ -8,7 +8,7 @@ info:
   description: "A clipboard manager"
   copyright: "Copyright © 2026 d3uceY"
   comments: "Built using Wails (https://wails.io)"
-  version: "v0.10.12"
+  version: "v0.11.0"
 
 # Dev mode configuration
 dev_mode:

@@ -376,27 +376,34 @@ jobs:
               "https://api.github.com/repos/${REPO}/commits/${HASH}/pulls" 2>/dev/null || echo "[]")
             PR_LINE=$(echo "$PR_JSON" | jq -r \
               --arg repo "$REPO" \
-              '.[0] | select(. != null) | "- \(.title) [#\(.number)](https://github.com/\($repo)/pull/\(.number))"' \
+              --arg author "${GH_LOGIN}" \
+              '.[0] | select(. != null) | "- \(.title) [#\(.number)](https://github.com/\($repo)/pull/\(.number))" + (if $author != "" then " - @\($author)" else "" end)' \
               2>/dev/null || echo "")
             if [ -n "$PR_LINE" ]; then
               echo "$PR_LINE" >> "$PR_FILE"
               PR_FOUND=true
             fi
             if [ -n "$GH_LOGIN" ]; then
-              echo "- ${MSG} - @${GH_LOGIN}" >> "$COMMITS_FILE"
               echo "$GH_LOGIN" >> "$USERS_FILE"
+              echo "- ${MSG} - @${GH_LOGIN}" >> "$COMMITS_FILE"
             else
               echo "- ${MSG}" >> "$COMMITS_FILE"
             fi
           done < <(git log "$RANGE" --pretty=format:"%H%x09%s" --no-merges)
 
+          # Always show both PRs and commits
+          echo "## What's Changed" >> commit_log.md
+          echo "" >> commit_log.md
+
           if [ "$PR_FOUND" = true ] && [ -s "$PR_FILE" ]; then
-            echo "## What's Changed" >> commit_log.md
+            echo "### Pull Requests" >> commit_log.md
             echo "" >> commit_log.md
             sort -u "$PR_FILE" >> commit_log.md
             echo "" >> commit_log.md
-          elif [ -s "$COMMITS_FILE" ]; then
-            echo "## What's Changed" >> commit_log.md
+          fi
+
+          if [ -s "$COMMITS_FILE" ]; then
+            echo "### Commits" >> commit_log.md
             echo "" >> commit_log.md
             cat "$COMMITS_FILE" >> commit_log.md
             echo "" >> commit_log.md

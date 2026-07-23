@@ -234,7 +234,7 @@ function PageContent() {
                 <DialogContent showCloseButton={false} className="hand-drawn lined thin p-6 bg-[#F9F5E6] max-w-sm border-0 sm:rounded-none">
                     <div className="flex flex-col gap-4">
                         <div className="flex flex-col gap-2">
-                            <h2 className="text-lg font-bold">🎉 Update Available</h2>
+                            <h2 className="text-lg font-bold">Update Available</h2>
                             <p className="text-sm text-muted-foreground leading-relaxed">
                                 Version <strong>{updateInfo?.version}</strong> of Clipcat is ready to download.
                             </p>

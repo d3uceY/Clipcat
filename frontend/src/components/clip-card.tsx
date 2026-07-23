@@ -196,7 +196,7 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
             <div
                 id={tourId}
                 ref={cardRef}
-                className={`group/card hand-drawn lined thin p-3 bg-[#F9F5E6] relative flex flex-col${clip.isHidden ? " ring-1 ring-amber-500/30" : ""}`}
+                className={`group/card hand-drawn lined thin p-3 bg-[#F9F5E6] relative flex flex-col${clip.isHidden ? " ring-1 ring-amber-500/30" : ""}${isEditingLabel ? " z-50" : ""}`}
             >
                 {/* Pin indicator */}
                 {type === "pinned" && (

@@ -93,8 +93,8 @@ macOS tracks the **bundle ID** of the frontmost app rather than a window handle.
 | `SimulatePaste()` | `C.sendPasteDarwin()` - CGEvent Cmd+V |
 | `isForegroundProcessIgnored()` | `getForegroundAppNameDarwin()` (osascript bundle ID) vs ignore list |
 | `GetCursorPos()` | CGo `clipcat_cursor_pos` in `winpos_darwin.c` - `CGEventCreate(NULL)` -> `CGEventGetLocation` |
-| `GetMonitorBoundsAt(px,py)` | CGo `clipcat_monitor_bounds_at` in `winpos_darwin.c` - `CGGetDisplaysWithPoint` -> `CGDisplayBounds` |
-| `GetWindowMonitorWorkOrigin()` | Returns `(0, 0)` - Wails uses absolute screen coords on macOS |
+
+Smart Position (see `windows.md` for the full write-up) converts this physical cursor point to DIP and finds the containing monitor's work area via Wails v3's own `application.ScreenNearestPhysicalPoint` / `PhysicalToDipPoint` - no macOS-specific monitor-bounds helper is needed.
 
 ### Own-app detection
 

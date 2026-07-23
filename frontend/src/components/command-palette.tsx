@@ -29,7 +29,7 @@ export default function CommandPalette() {
         soundOn, toggleSound,
         hideContent, toggleHideContent,
         isMiniClip, toggleMiniClip,
-        isQuickPaste, toggleQuickPaste,
+        isQuickPaste, requestQuickPaste,
     } = useClips()
 
     // Close palette when HowToUseDialog opens so it doesn't cover it
@@ -63,7 +63,11 @@ export default function CommandPalette() {
             shortcut: "Ctrl+F",
             category: "clipboard",
             icon: <Search className="h-4 w-4" />,
-            action: () => { setOpen(false); document.getElementById("tour-search")?.focus() },
+            action: () => {
+                setOpen(false);
+                // Dispatch Ctrl+F so page.tsx's handler shows the search bar if hidden
+                window.dispatchEvent(new KeyboardEvent('keydown', { ctrlKey: true, key: 'f', bubbles: true }));
+            },
         },
         {
             id: "quickpaste",
@@ -71,7 +75,7 @@ export default function CommandPalette() {
             shortcut: "Ctrl+Shift+V",
             category: "display",
             icon: isQuickPaste ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />,
-            action: () => { setOpen(false); toggleQuickPaste() },
+            action: () => { setOpen(false); requestQuickPaste() },
         },
         {
             id: "miniclip",
@@ -102,7 +106,7 @@ export default function CommandPalette() {
             icon: <BookOpen className="h-4 w-4" />,
             action: () => { setShowHowToUse(true) },
         },
-    ], [isQuickPaste, isMiniClip, hideContent, soundOn, toggleQuickPaste, toggleMiniClip, toggleHideContent, toggleSound])
+    ], [isQuickPaste, isMiniClip, hideContent, soundOn, requestQuickPaste, toggleMiniClip, toggleHideContent, toggleSound])
 
     const filtered = useMemo(() => {
         if (!query.trim()) return commands

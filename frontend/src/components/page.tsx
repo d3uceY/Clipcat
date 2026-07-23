@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, lazy, Suspense } from "react"
 import type { FilteredClips } from '../workers/search.worker'
 import { startTour, hasSeenTour } from "@/helpers/onboarding"
-import { Search, ShieldAlert, X, Plus, Trash2 } from "lucide-react"
+import { Search, ShieldAlert, X, Plus, Trash2, Command } from "lucide-react"
 import ClipCard from "./clip-card"
 import ClipListItem from "./clip-list-item"
 import LabelFilterBar from "./label-filter-bar"
@@ -28,7 +28,8 @@ function PageContent() {
     const [showSensitive, setShowSensitive] = useState(false)
     const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null)
     const [showUpdateDialog, setShowUpdateDialog] = useState(false)
-    const { clips, soundOn, hideContent, clipsLoaded, activeLabels, autoHideSensitive, isMiniClip } = useClips()
+    const [searchVisible, setSearchVisible] = useState(false)
+    const { clips, soundOn, hideContent, clipsLoaded, activeLabels, autoHideSensitive, isMiniClip, isQuickPaste } = useClips()
     const searchInputRef = useRef<HTMLInputElement>(null)
 
     const checkForUpdates = async () => {
@@ -194,17 +195,32 @@ function PageContent() {
 
     const hiddenCount = filteredClips.hiddenPinned.length + filteredClips.hiddenRecent.length
 
+    // Toggles the sticky search bar shown in mini/quickpaste mode - shared by
+    // the Search button and the Ctrl+F shortcut so both behave identically.
+    const toggleSearchVisible = () => {
+        setSearchVisible(v => {
+            const next = !v
+            if (next) setTimeout(() => searchInputRef.current?.focus(), 50)
+            else setSearchQuery("")
+            return next
+        })
+    }
+
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.ctrlKey && e.key === 'f') {
                 e.preventDefault()
-                searchInputRef.current?.focus()
+                if (isMiniClip || isQuickPaste) {
+                    toggleSearchVisible()
+                } else {
+                    searchInputRef.current?.focus()
+                }
             }
         }
 
         window.addEventListener('keydown', handleKeyDown)
         return () => window.removeEventListener('keydown', handleKeyDown)
-    }, [])
+    }, [isMiniClip, isQuickPaste])
 
 
 
@@ -252,8 +268,8 @@ function PageContent() {
             <CommandPalette />
             {!curtainsDone && (
                 <>
-                    <img src="/paper-curtain.png" className="paper-curtain-1 h-screen fixed w-[53vw] left-0 top-0 bottom-0 z-10 " />
-                    <img src="/paper-curtain.png" className="paper-curtain-2 h-screen fixed w-[53vw] -right-8 top-0 bottom-0 z-10 " />
+                    <img src="/paper-curtain.png" className="paper-curtain-1 h-screen fixed w-[53vw] left-0 top-0 bottom-0 z-40 " />
+                    <img src="/paper-curtain.png" className="paper-curtain-2 h-screen fixed w-[53vw] -right-8 top-0 bottom-0 z-40 " />
                 </>
             )}
 
@@ -272,9 +288,9 @@ function PageContent() {
             <div className="mx-auto max-w-6xl">
                 {/* Header: info (left) · search (center) · label filter (right) */}
                 <div className="mb-10 flex items-center gap-4 justify-between">
-                    {/* Left - about / version */}
-                    <div className="shrink-0">
-                        {!isMiniClip && (
+                    {/* Left - about / version (normal mode) or command palette trigger (mini/quickpaste, where About is hidden) */}
+                    {!isMiniClip ? (
+                        <div className="shrink-0">
                             <div id="tour-about" className="items-center gap-2 sm:flex">
                                 {
                                     version &&
@@ -283,39 +299,65 @@ function PageContent() {
                                     </Suspense>
                                 }
                             </div>
-                        )}
-                    </div>
-
-                    {/* Center - search */}
-                    <div className="relative flex-1 max-w-md torn-input mx-auto">
-                        <div className="tape-1 absolute -top-3 left-0 h-12 w-4 bg-yellow-200/40 rotate-45 rounded-sm shadow-sm"></div>
-                        <div className="tape-2 absolute -top-3 right-0 h-12 w-4 bg-yellow-200/40 -rotate-45 rounded-sm shadow-sm"></div>
-                        <input
-                            id="tour-search"
-                            ref={searchInputRef}
-                            type="text"
-                            placeholder="Ctrl+K for command palette"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            onFocus={() => setSearchFocused(true)}
-                            onBlur={() => setSearchFocused(false)}
-                            className="w-full text-base sm:text-xl pl-4 pr-10 pt-2 text-foreground placeholder-gray-500 placeholder:text-lg focus:outline-none shadow-xl"
-                        />
-                        {searchQuery ? (
+                        </div>
+                    ) : (
+                        <div className="shrink-0">
                             <button
-                                onClick={() => { setSearchQuery(""); searchInputRef.current?.focus() }}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#c0bdbd] hover:text-foreground transition-colors"
-                                title="Clear search"
+                                onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { ctrlKey: true, key: 'k', bubbles: true }))}
+                                className="hand-drawn-btn lined thin flex items-center gap-2 px-3 py-1.5 text-xs transition-all relative top-2 bg-[#F9F5E6] text-amber-950 hover:bg-amber-100"
+                                title="Command palette (Ctrl+K)"
                             >
-                                <X className="h-5 w-5" />
+                                <Command className="h-3.5 w-3.5 shrink-0 text-amber-700" />
+                                <span className="hidden sm:inline font-medium">Menu</span>
                             </button>
-                        ) : (
-                            <Search className="absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-[#c0bdbd]" />
-                        )}
-                    </div>
+                        </div>
+                    )}
 
-                    {/* Right - sensitive toggle + label filter, grouped like a pair of tabbed flags */}
+                    {/* Center - search (full bar in normal mode only; mini/quickpaste toggle lives in the right-hand group) */}
+                    {!(isMiniClip || isQuickPaste) && (
+                        <div className="relative flex-1 max-w-md torn-input mx-auto">
+                            <div className="tape-1 absolute -top-3 left-0 h-12 w-4 bg-yellow-200/40 rotate-45 rounded-sm shadow-sm"></div>
+                            <div className="tape-2 absolute -top-3 right-0 h-12 w-4 bg-yellow-200/40 -rotate-45 rounded-sm shadow-sm"></div>
+                            <input
+                                id="tour-search"
+                                ref={searchInputRef}
+                                type="text"
+                                placeholder="Ctrl+K for command palette"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onFocus={() => setSearchFocused(true)}
+                                onBlur={() => setSearchFocused(false)}
+                                className="w-full text-base sm:text-xl pl-4 pr-10 pt-2 text-foreground placeholder-gray-500 placeholder:text-lg focus:outline-none shadow-xl"
+                            />
+                            {searchQuery ? (
+                                <button
+                                    onClick={() => { setSearchQuery(""); searchInputRef.current?.focus() }}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#c0bdbd] hover:text-foreground transition-colors"
+                                    title="Clear search"
+                                >
+                                    <X className="h-5 w-5" />
+                                </button>
+                            ) : (
+                                <Search className="absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-[#c0bdbd]" />
+                            )}
+                        </div>
+                    )}
+
+                    {/* Right - search toggle (mini/quickpaste) + sensitive toggle + label filter, grouped together */}
                     <div className="shrink-0 flex items-center gap-2">
+                        {(isMiniClip || isQuickPaste) && (
+                            <button
+                                onClick={toggleSearchVisible}
+                                className={`hand-drawn-btn lined thin flex items-center gap-2 px-3 py-1.5 text-xs transition-all relative top-2 ${searchVisible
+                                        ? "bg-amber-200 text-amber-950"
+                                        : "bg-[#F9F5E6] text-amber-950 hover:bg-amber-100"
+                                    }`}
+                                title="Search clips (Ctrl+F)"
+                            >
+                                <Search className="h-3.5 w-3.5 shrink-0 text-amber-700" />
+                                <span className="hidden sm:inline font-medium">Search</span>
+                            </button>
+                        )}
                         {autoHideSensitive && hiddenCount > 0 && (
                             <button
                                 onClick={() => setShowSensitive(v => !v)}
@@ -335,6 +377,38 @@ function PageContent() {
                         <LabelFilterBar />
                     </div>
                 </div>
+
+                {/* Sticky search bar — mini/quickpaste mode only, toggled by the Search button or Ctrl+F */}
+                {(isMiniClip || isQuickPaste) && searchVisible && (
+                    <div className="sticky top-8 md:top-10 -mx-6 md:-mx-10 px-6 md:px-10 z-20 mb-6">
+                        <div className="relative max-w-md mx-auto torn-input">
+                            <div className="tape-1 absolute -top-3 left-0 h-10 w-4 bg-yellow-200/40 rotate-45 rounded-sm shadow-sm"></div>
+                            <div className="tape-2 absolute -top-3 right-0 h-10 w-4 bg-yellow-200/40 -rotate-45 rounded-sm shadow-sm"></div>
+                            <input
+                                id="tour-search"
+                                ref={searchInputRef}
+                                type="text"
+                                placeholder="Search clips... (Ctrl + F)"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onFocus={() => setSearchFocused(true)}
+                                onBlur={() => setSearchFocused(false)}
+                                className="w-full text-base pl-4 pr-10 pt-1.5 text-foreground placeholder-gray-500 focus:outline-none shadow-xl"
+                            />
+                            {searchQuery ? (
+                                <button
+                                    onClick={() => { setSearchQuery(""); searchInputRef.current?.focus() }}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#c0bdbd] hover:text-foreground transition-colors"
+                                    title="Clear search"
+                                >
+                                    <X className="h-5 w-5" />
+                                </button>
+                            ) : (
+                                <Search className="absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-[#c0bdbd]" />
+                            )}
+                        </div>
+                    </div>
+                )}
 
                 {/* Pinned Section — interleaves hidden pinned clips when showSensitive is active */}
                 {(filteredClips.pinned.length > 0 || (showSensitive && filteredClips.hiddenPinned.length > 0)) && (
@@ -432,20 +506,6 @@ function PageContent() {
                             <p className="text-lg text-black text-center">
                                 {searchQuery ? "No clips found matching your search" : "No clips yet. Start copying!"}
                             </p>
-
-                            <div className="text-lg text-black text-center">OR</div>
-                            <div className="w-full flex justify-center">
-                                <Suspense fallback={null}>
-                                    <AddClipDialog>
-                                        <button className="hover:scale-95 p-1 bg-amber-100 transition-transform cursor-pointer hand-drawn-btn dashed thin" title="Add new clip">
-                                            <div className="flex items-center sm:gap-2 gap-1">
-                                                <span className="sm:text-xl text-lg">Add Clip</span>
-                                                <span className="sm:text-4xl text-2xl">+</span>
-                                            </div>
-                                        </button>
-                                    </AddClipDialog>
-                                </Suspense>
-                            </div>
                         </div>
                     )}
             </div>

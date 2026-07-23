@@ -82,8 +82,8 @@ gclip.Watch(ctx, FmtImage)   ├─ select loop
 | `SimulatePaste()` | `xdotool key ctrl+v` (after 80 ms sleep) |
 | `isForegroundProcessIgnored()` | Reads PID via `xdotool getactivewindow getwindowpid`, then `/proc/<pid>/comm` |
 | `GetCursorPos()` | `xdotool getmouselocation --shell` - parses `X=` / `Y=` from output |
-| `GetMonitorBoundsAt(px,py)` | Parses `xrandr` output for `WxH+X+Y` tokens; returns bounds of the monitor containing `(px,py)` |
-| `GetWindowMonitorWorkOrigin()` | Returns `(0, 0)` - Wails uses absolute screen coords on Linux |
+
+Smart Position (see `windows.md` for the full write-up) converts this physical cursor point to DIP and finds the containing monitor's work area via Wails v3's own `application.ScreenNearestPhysicalPoint` / `PhysicalToDipPoint` - no Linux-specific monitor-bounds helper is needed.
 
 ### Paste flow
 

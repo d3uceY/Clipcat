@@ -64,6 +64,11 @@ interface ClipContextType {
   // Ghost Mode
   isQuickPaste: boolean;
   toggleQuickPaste: () => Promise<void>;
+  // Quick Paste confirmation dialog (shared between command palette & settings)
+  showQuickPasteConfirm: boolean;
+  requestQuickPaste: () => void;
+  cancelQuickPaste: () => void;
+  confirmQuickPaste: () => Promise<void>;
   // Always on Top
   isAlwaysOnTop: boolean;
   toggleAlwaysOnTop: () => Promise<void>;
@@ -90,6 +95,7 @@ export function ClipProvider({ children }: { children: ReactNode }) {
   const [isPaused, setIsPaused] = useState(false);
   const [ignoreList, setIgnoreList] = useState<string[]>([]);
   const [isQuickPaste, setIsQuickPaste] = useState(false);
+  const [showQuickPasteConfirm, setShowQuickPasteConfirm] = useState(false);
   const [clipsLoaded, setClipsLoaded] = useState(false);
   const [autoHideSensitive, setAutoHideSensitive] = useState(true);
   const [isAlwaysOnTop, setIsAlwaysOnTop] = useState(false);
@@ -135,6 +141,38 @@ export function ClipProvider({ children }: { children: ReactNode }) {
       setIsAlwaysOnTop(false);
     }
   };
+
+  /** Called when the user clicks "Enable Quick Paste" from settings or command palette. */
+  const requestQuickPaste = useCallback(async () => {
+    if (isQuickPaste) {
+      // Already on — just toggle off directly
+      await toggleQuickPaste();
+      if (isMiniClip) await toggleMiniClip();
+    } else {
+      setShowQuickPasteConfirm(true);
+    }
+  }, [isQuickPaste, isMiniClip]);
+
+  const cancelQuickPaste = useCallback(() => {
+    setShowQuickPasteConfirm(false);
+  }, []);
+
+  /** Called when the user confirms Quick Paste in the dialog. Enables QP, mini clip, hides window. */
+  const confirmQuickPaste = useCallback(async () => {
+    setShowQuickPasteConfirm(false);
+    playSound('/sounds/switch-off.mp3', soundOn, 1);
+    await SetQuickPaste(true);
+    setIsQuickPaste(true);
+    if (isAlwaysOnTop) {
+      await SetAlwaysOnTop(false);
+      setIsAlwaysOnTop(false);
+    }
+    if (!isMiniClip) {
+      await MakeMiniClip(true);
+      setIsMiniClip(true);
+    }
+    // Window.Hide() is called by the component after confirm
+  }, [isAlwaysOnTop, isMiniClip, soundOn]);
 
   /* ===============================
         ALWAYS ON TOP FUNCTIONS
@@ -511,6 +549,10 @@ export function ClipProvider({ children }: { children: ReactNode }) {
         // GHOST MODE
         isQuickPaste,
         toggleQuickPaste,
+        showQuickPasteConfirm,
+        requestQuickPaste,
+        cancelQuickPaste,
+        confirmQuickPaste,
         // ALWAYS ON TOP
         isAlwaysOnTop,
         toggleAlwaysOnTop,

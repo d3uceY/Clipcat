@@ -372,22 +372,37 @@ func (a *App) GetSyncPeerCount() int {
 
 // onHotkeyFired is called when the user presses Ctrl+Shift+V. It shows the
 // Clipcat window, optionally repositioning it near the cursor first.
+//
+// Positioning is DPI/multi-monitor safe: GetCursorPos returns physical
+// (native) pixels, so it is converted to DIP via Wails' own ScreenManager
+// (application.PhysicalToDipPoint / ScreenNearestPhysicalPoint) using the
+// SAME monitor's scale factor that Wails itself will use when the window is
+// finally moved. This avoids mixing physical and DIP units - a.window.Width()
+// / Height() and SetPosition are always in DIP - which previously caused the
+// window to land on the wrong monitor or far from the cursor on any screen
+// with a scale factor other than 100%.
 func (a *App) onHotkeyFired() {
 	quickPaste, _ := store.GetQuickPaste()
 	if cursorSnap, _ := store.GetCursorSnap(); cursorSnap && quickPaste {
 		cx, cy := clipboard.GetCursorPos()
-		ww, wh := a.window.Width(), a.window.Height()
-		if ww <= 0 || wh <= 0 {
-			ww, wh = 450, 650
+		physicalCursor := application.Point{X: cx, Y: cy}
+
+		screen := application.ScreenNearestPhysicalPoint(physicalCursor)
+		if screen != nil {
+			dipCursor := application.PhysicalToDipPoint(physicalCursor)
+
+			ww, wh := a.window.Width(), a.window.Height()
+			if ww <= 0 || wh <= 0 {
+				ww, wh = 450, 650
+			}
+
+			pos := winpos.CalcWindowPos(
+				winpos.Point{X: dipCursor.X, Y: dipCursor.Y},
+				winpos.Size{W: ww, H: wh},
+				winpos.Rect{X: screen.WorkArea.X, Y: screen.WorkArea.Y, W: screen.WorkArea.Width, H: screen.WorkArea.Height},
+			)
+			a.window.SetPosition(pos.X, pos.Y)
 		}
-		mx, my, mw, mh := clipboard.GetMonitorBoundsAt(cx, cy)
-		pos := winpos.CalcWindowPos(
-			winpos.Point{X: cx, Y: cy},
-			winpos.Size{W: ww, H: wh},
-			winpos.Rect{X: mx, Y: my, W: mw, H: mh},
-		)
-		ox, oy := clipboard.GetWindowMonitorWorkOrigin()
-		a.window.SetPosition(pos.X-ox, pos.Y-oy)
 	}
 
 	a.window.Show()

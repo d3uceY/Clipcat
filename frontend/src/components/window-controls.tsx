@@ -16,12 +16,11 @@ interface WindowControlsProps {
 
 export default function WindowControls({ updateAvailable, onCheckUpdate }: WindowControlsProps) {
     const [fullScreen, setFullScreen] = useState<boolean>(false);
-    const { soundOn, isMiniClip, toggleMiniClip, isQuickPaste, toggleQuickPaste } = useClips();
+    const { soundOn, isMiniClip, isQuickPaste, showQuickPasteConfirm, requestQuickPaste, cancelQuickPaste, confirmQuickPaste } = useClips();
     const settingBtnRef    = useRef<HTMLButtonElement>(null);
     const settingDialogRef = useRef<HTMLDivElement>(null);
     const panelRef         = useRef<HTMLDivElement>(null);
     const [dialogOpen, setDialogOpen]                   = useState(false);
-    const [showQuickPasteConfirm, setShowQuickPasteConfirm] = useState(false);
     const [platform, setPlatform]                       = useState("");
 
     useEffect(() => {
@@ -29,25 +28,21 @@ export default function WindowControls({ updateAvailable, onCheckUpdate }: Windo
         Window.IsMaximised().then(setFullScreen).catch(() => {});
     }, []);
 
-    // -- Quick Paste toggle � shows confirmation when turning on --------------
+    // -- Quick Paste toggle — uses shared context flow ------------------------
 
     const handleQuickPasteToggle = async () => {
         if (isQuickPaste) {
             playSound('/sounds/switch-on.mp3', soundOn, 1);
-            await toggleQuickPaste();
-            if (isMiniClip) await toggleMiniClip();
+            await requestQuickPaste();
         } else {
-            setShowQuickPasteConfirm(true);
+            requestQuickPaste();
         }
     };
 
-    const confirmEnableQuickPaste = async () => {
+    const handleConfirmQuickPaste = async () => {
         setDialogOpen(false);
         gsap.set(settingDialogRef.current, { display: "none" });
-        playSound('/sounds/switch-off.mp3', soundOn, 1);
-        await toggleQuickPaste();
-        if (!isMiniClip) await toggleMiniClip();
-        setShowQuickPasteConfirm(false);
+        await confirmQuickPaste();
         Window.Hide();
     };
 
@@ -99,7 +94,7 @@ export default function WindowControls({ updateAvailable, onCheckUpdate }: Windo
     // -------------------------------------------------------------------------
 
     return (
-        <div className="flex flex-row-reverse items-center fixed z-10 top-0 right-0 md:mr-[2%] md:pt-3 pt-2 mr-2 gap-4">
+        <div className="flex flex-row-reverse items-center fixed z-40 top-0 right-0 md:mr-[2%] md:pt-3 pt-2 mr-2 gap-4">
 
             {/* --- Gear + settings overlay --- */}
             <div className="mt-1 relative z-10">
@@ -139,7 +134,7 @@ export default function WindowControls({ updateAvailable, onCheckUpdate }: Windo
             )}
 
             {/* --- Quick Paste confirmation dialog --- */}
-            <Dialog open={showQuickPasteConfirm} onOpenChange={(open) => { if (!open) setShowQuickPasteConfirm(false); }}>
+            <Dialog open={showQuickPasteConfirm} onOpenChange={(open) => { if (!open) cancelQuickPaste(); }}>
                 <DialogContent showCloseButton={false} className="hand-drawn lined thin p-6 bg-[#F9F5E6] max-w-sm border-0 sm:rounded-none">
                     <div className="flex flex-col gap-4">
                         <div className="flex flex-col gap-2">
@@ -148,20 +143,25 @@ export default function WindowControls({ updateAvailable, onCheckUpdate }: Windo
                                 Clipcat will slip into the system tray and stay out of your way.
                             </p>
                             <ul className="text-sm mt-1 space-y-1.5">
-                                <li><span className="font-semibold">{platform === "darwin" ? "Cmd" : "Ctrl"}+Shift+V</span> � summon Clipcat from any window</li>
+                                <li>
+                                    <kbd className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[11px] font-mono leading-none bg-foreground/10 border border-foreground/25 rounded">
+                                        {platform === "darwin" ? "⌘" : "Ctrl"}<span className="opacity-40">+</span>Shift<span className="opacity-40">+</span>V
+                                    </kbd>
+                                    {" "}summon Clipcat from any window
+                                </li>
                                 <li>Click the content on a clip to fire it into the last window you used</li>
                                 <li>The tray icon also brings Clipcat back whenever you need it (Windows only)</li>
                             </ul>
                         </div>
                         <div className="flex justify-end gap-2 pt-1">
                             <button
-                                onClick={() => setShowQuickPasteConfirm(false)}
+                                onClick={cancelQuickPaste}
                                 className="rounded px-3 py-1 text-sm bg-foreground/5 hover:bg-foreground/10 transition-colors"
                             >
                                 Cancel
                             </button>
                             <button
-                                onClick={confirmEnableQuickPaste}
+                                onClick={handleConfirmQuickPaste}
                                 className="rounded px-3 py-1 text-sm bg-foreground text-white hover:opacity-80 transition-opacity"
                             >
                                 Enable &amp; Hide

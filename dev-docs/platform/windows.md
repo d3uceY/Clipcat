@@ -78,9 +78,7 @@ All system calls use lazily-loaded DLL procs from `user32.dll`, `kernel32.dll`, 
 | `FocusPreviousWindow()` | `SetForegroundWindow(prevHWND)` |
 | `SimulatePaste()` | `keybd_event(VK_CONTROL down, VK_V down/up, VK_CONTROL up)` |
 | `isForegroundProcessIgnored()` | `GetForegroundWindow` -> `GetWindowThreadProcessId` -> `OpenProcess` -> `GetModuleBaseNameW` |
-| `GetCursorPos()` | `GetCursorPos` - returns the current cursor screen position |
-| `GetMonitorBoundsAt(px,py)` | `MonitorFromPoint(NEAREST)` -> `GetMonitorInfoW` - returns `rcWork` (taskbar excluded) of the containing monitor |
-| `GetWindowMonitorWorkOrigin()` | `FindWindowW("Clipcat")` -> `MonitorFromWindow` -> `GetMonitorInfoW` - returns the `rcWork.Left/Top` of the monitor the Wails window is currently on |
+| `GetCursorPos()` | `GetCursorPos` - returns the current cursor screen position (physical pixels) |
 
 ### Paste flow
 
@@ -101,34 +99,19 @@ app.PasteToWindow(content)
 **Setting:** `cursor_snap` in the `settings` table (default 1/on).  
 **Active only when:** both `cursor_snap` and `quick_paste` are enabled.
 
-When the global hotkey fires, before `WindowShow` is called, the backend:
+When the global hotkey fires, before `Show` is called, `app.go`'s `onHotkeyFired`:
 
-1. Reads the current cursor position via `GetCursorPos`.
-2. Looks up the work-area rectangle of the monitor under the cursor via `MonitorFromPoint` + `GetMonitorInfoW` (`rcWork`, taskbar excluded).
-3. Calls `winpos.CalcWindowPos` (`backend/lib/winpos/winpos.go`) to compute an ideal position: below-right of the cursor, flipped when a screen edge would be clipped, then hard-clamped to stay fully inside `rcWork`.
-4. **Subtracts the Wails monitor origin offset** before calling `runtime.WindowSetPosition`.
+1. Reads the current cursor position via `clipboard.GetCursorPos()` - **physical** (native) pixels, from raw Win32 `GetCursorPos`.
+2. Finds the monitor containing that point via `application.ScreenNearestPhysicalPoint()` (Wails v3's own `ScreenManager`) and converts the physical cursor point to **DIP** via `application.PhysicalToDipPoint()`, using that same monitor's scale factor.
+3. Reads that monitor's `WorkArea` (already DIP, taskbar excluded) directly from the returned `*application.Screen`.
+4. Calls `winpos.CalcWindowPos` (`backend/lib/winpos/winpos.go`) entirely in DIP - cursor point, monitor work area, and the window's own `Width()/Height()` (also DIP) - to compute an ideal position: below-right of the cursor, flipped when a screen edge would be clipped, then hard-clamped to stay fully inside the monitor's work area.
+5. Passes the result directly to `a.window.SetPosition(x, y)`, which Wails v3 treats as absolute DIP coordinates.
 
-#### The Wails offset problem
+#### Why the naive port from Wails v2 was broken
 
-Wails' `WindowSetPosition(x, y)` is **not absolute**. In `winc/controlbase.go` it does:
+The first attempt at porting this feature just called `clipboard.GetMonitorBoundsAt(cx, cy)` (a custom Win32 `MonitorFromPoint` + `GetMonitorInfoW` helper, returning **physical** pixels) and passed the result straight into `CalcWindowPos` alongside `a.window.Width()/Height()`, which Wails v3 always reports in **DIP**. Mixing physical and DIP units is harmless at 100% scaling (they're numerically identical) but produces a bogus position on any monitor with a scale factor other than 100% - explaining the reported symptoms: the window appearing outside the monitor the cursor was on, or far from the cursor, especially in multi-monitor setups where screens have different scale factors.
 
-```go
-info := getMonitorInfo(cba.hwnd)   // monitor of the CURRENT window
-workRect := info.RcWork
-w32.SetWindowPos(hwnd, ..., workRect.Left + x, workRect.Top + y, ...)
-```
-
-So passing absolute screen coordinates directly causes the origin to be added twice on any monitor whose `rcWork.Left` or `rcWork.Top` is non-zero (i.e. every secondary monitor). The window flies off screen.
-
-**Fix:** `GetWindowMonitorWorkOrigin()` finds the Wails window via `FindWindowW("Clipcat")`, calls `MonitorFromWindow` to get the monitor it is currently on, and returns that monitor's `rcWork.Left/Top`. The hotkey handler subtracts this before passing to `WindowSetPosition`:
-
-```
-ox, oy := clipboard.GetWindowMonitorWorkOrigin()  // current window monitor origin
-runtime.WindowSetPosition(ctx, pos.X - ox, pos.Y - oy)
-// Wails adds ox,oy back  ->  final position == pos.X, pos.Y  ✓
-```
-
-On macOS and Linux, `GetWindowMonitorWorkOrigin()` is a stub returning `(0, 0)` because Wails uses absolute coordinates on those platforms.
+Wails v3's own `application.PhysicalToDipPoint` / `ScreenNearestPhysicalPoint` (`pkg/application/screenmanager.go`) already do this conversion correctly per-monitor - picking the screen whose bounds contain the point and using *that* screen's `ScaleFactor`. Once cursor position, monitor work area, and window size are all in the same unit (DIP), `a.window.SetPosition` places the window in the correct spot on the correct monitor every time. The old `GetMonitorBoundsAt` and `GetWindowMonitorWorkOrigin` Win32 helpers (a leftover from the Wails v2 `winc` backend, which needed an origin-offset workaround) have been removed as dead code - Wails v3's `ScreenManager` supersedes them entirely.
 
 ### Process name resolution
 

@@ -136,7 +136,7 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
         );
 
         // ── Reusable: a single setting row with visible description ─────
-        const Row = ({ label, desc, children }: { label: string; desc?: string; children: React.ReactNode }) => (
+        const Row = ({ label, desc, children }: { label: string; desc?: React.ReactNode; children: React.ReactNode }) => (
             <div className="flex items-center justify-between gap-3 py-2.5">
                 <div className="flex-1 min-w-0">
                     <p className="text-sm! leading-snug">{label}</p>
@@ -263,7 +263,7 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
                     {/* ══════ WINDOW ══════ */}
                     {activeTab === "window" && (
                         <div className="pt-3">
-                            <Row label="Mini Clip" desc="Compact window that stays out of your way. Alt+M to toggle.">
+                            <Row label="Mini Clip" desc={<>Compact window that stays out of your way. <kbd className="text-[10px] px-1 py-0.5 bg-foreground/10 rounded">Alt+M</kbd> to toggle.</>}>
                                 <Toggle on={isMiniClip} toggle={toggleMiniClip} />
                             </Row>
                             <Row
@@ -287,7 +287,7 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
                             <Row label="Pause Capture" desc="Temporarily stop recording clipboard changes.">
                                 <Toggle on={isPaused} toggle={togglePause} />
                             </Row>
-                            <Row label="Hide Content" desc="Blur all clip content. Alt+H to toggle.">
+                            <Row label="Hide Content" desc={<>Blur all clip content. <kbd className="text-[10px] px-1 py-0.5 bg-foreground/10 rounded">Alt+H</kbd> to toggle.</>}>
                                 <Toggle on={hideContent} toggle={toggleHideContent} disabled={!hasClips()} />
                             </Row>
                             <Row label="Auto-hide Sensitive" desc="Collapse clips that look like passwords, API keys, or tokens.">
@@ -302,7 +302,7 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
                     {/* ══════ SYSTEM ══════ */}
                     {activeTab === "system" && (
                         <div className="pt-3">
-                            <Row label="Sound" desc="Audio feedback on every action. Alt+S to toggle.">
+                            <Row label="Sound" desc={<>Audio feedback on every action. <kbd className="text-[10px] px-1 py-0.5 bg-foreground/10 rounded">Alt+S</kbd> to toggle.</>}>
                                 <Toggle on={soundOn} toggle={toggleSound} />
                             </Row>
                             <Row label="Load on Startup" desc="Launch Clipcat automatically when your system starts.">
@@ -310,7 +310,9 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
                             </Row>
                             <Row
                                 label="Quick Paste"
-                                desc={`Hides to the tray. ${platform === "darwin" ? "Cmd" : "Ctrl"}+Shift+V summons it, pick a clip, it pastes and vanishes.`}
+                                desc={<>
+                                    Hides to the tray. <kbd className="text-[10px] px-1 py-0.5 bg-foreground/10 rounded">{platform === "darwin" ? "⌘" : "Ctrl"}+Shift+V</kbd> summons it, pick a clip, it pastes and vanishes.
+                                </>}
                             >
                                 <Toggle on={isQuickPaste} toggle={onQuickPasteToggle} />
                             </Row>

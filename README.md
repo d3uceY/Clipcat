@@ -90,8 +90,8 @@ sudo apt install wl-clipboard
 - **Blocked Apps** - Add any app's process name to a blocklist so its clipboard activity is never captured. Clipcat ships with common password managers pre-blocked out of the box (1Password, Bitwarden, LastPass, KeePass/KeePassXC, Dashlane, NordPass, Enpass, RoboForm). Any default can be removed from Settings - Privacy -> Blocked Apps if you'd prefer Clipcat to capture from that app
 - **Pause Capture** - Temporarily stop recording clipboard changes without closing the app
 - **Bulk Delete** - Clear all clips, only pinned, or only unpinned in one click - always with a confirmation prompt
-- **Mini Clip Mode** - Compact always-on-top window that stays out of your way; toggle with `Alt+M`. State persists between sessions
-- **Always on Top** - Keep the Clipcat window above all other windows at all times. State persists between sessions
+- **Mini Clip Mode** - Compact window that stays out of your way and stays always on top; toggle with `Alt+M`. State persists between sessions. Enables Always on Top automatically.
+- **Quick Paste Toolbar Button** - A Quick Paste button lives in the toolbar next to Search and Sensitive, so you can toggle it in one click from any mode.
 - **Smart Position** - When Quick Paste summons the window, it pops up right next to your cursor so you never have to hunt for it. Always stays fully on-screen, even on multi-monitor setups. Toggle in Settings -> Window (on by default)
 - **System Tray** - Lives quietly in your tray; summon or quit it any time
 - **LAN Sync** - Sync your clipboard to other devices on the same local network with end-to-end encryption; configure in Settings -> Network

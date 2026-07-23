@@ -215,7 +215,7 @@ function PageContent() {
         })
     }
 
-    // GSAP animate the sticky search bar in/out with a pop-in effect
+    // GSAP animate the sticky search bar — paper unfurling / rolling up
     useGSAP(() => {
         const bar = searchBarRef.current
         if (!bar) return
@@ -224,14 +224,14 @@ function PageContent() {
             gsap.set(bar, { display: 'block', height: 'auto', opacity: 0 })
             const naturalHeight = bar.offsetHeight
             gsap.fromTo(bar,
-                { height: 0, opacity: 0, scaleY: 0.7, marginBottom: 0, transformOrigin: 'top center' },
-                { height: naturalHeight, opacity: 1, scaleY: 1, marginBottom: '1.5rem', duration: 0.35, ease: 'back.out(1.7)' }
+                { height: 0, opacity: 0, scaleY: 0.6, rotation: 1, marginBottom: 0, transformOrigin: 'top center' },
+                { height: naturalHeight, opacity: 1, scaleY: 1, rotation: 0, marginBottom: '1.5rem', duration: 0.4, ease: 'power3.out' }
             )
         } else {
             gsap.to(bar, {
-                height: 0, opacity: 0, scaleY: 0.9, marginBottom: 0, duration: 0.15, ease: 'power2.in',
+                height: 0, opacity: 0, scaleY: 0.85, rotation: -0.5, marginBottom: 0, duration: 0.2, ease: 'power3.in',
                 onComplete: () => {
-                    gsap.set(bar, { display: 'none', height: 'auto', scaleY: 1 })
+                    gsap.set(bar, { display: 'none', height: 'auto', scaleY: 1, rotation: 0 })
                     setSearchQuery("")
                 }
             })

@@ -209,13 +209,13 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
             return null;
         };
 
-        // Animate tab content on switch
+        // Animate tab content on switch — paper page settle
         const tabContentRef = useRef<HTMLDivElement>(null);
         useGSAP(() => {
             if (!tabContentRef.current) return;
             gsap.fromTo(tabContentRef.current,
-                { opacity: 0, y: 8, scale: 0.97 },
-                { opacity: 1, y: 0, scale: 1, duration: 0.25, ease: 'back.out(1.4)' }
+                { opacity: 0, y: 6, rotation: 1, scale: 0.98, transformOrigin: 'center top' },
+                { opacity: 1, y: 0, rotation: 0, scale: 1, duration: 0.3, ease: 'power4.out' }
             );
         }, { dependencies: [activeTab], scope: tabContentRef });
 

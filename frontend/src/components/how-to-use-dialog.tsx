@@ -17,7 +17,6 @@ import {
     Ban,
     ShieldAlert,
     Minimize2,
-    ArrowUpToLine,
     Pause,
     Database,
     Volume2,
@@ -121,11 +120,6 @@ export default function HowToUseDialog({ platform, onOpen, hasSeenHowToUse = tru
                     A compact always-on-top window. Toggle with <Kbd>Alt</Kbd><Plus /><Kbd>M</Kbd>. State persists between sessions.
                 </>
             ),
-        },
-        {
-            icon: <ArrowUpToLine size={14} />,
-            title: "Always on Top",
-            desc: "Keep the Clipcat window above all other windows at all times. Enable in Settings -> Window. (Unavailable while Quick Paste is on.)",
         },
         {
             icon: <Crosshair size={14} />,

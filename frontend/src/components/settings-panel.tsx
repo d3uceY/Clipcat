@@ -35,7 +35,6 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
             ignoreList, addIgnoreEntry, removeIgnoreEntry,
             isQuickPaste,
             autoHideSensitive, toggleAutoHideSensitive,
-            isAlwaysOnTop, toggleAlwaysOnTop,
             isCursorSnap, toggleCursorSnap,
             getClips,
         } = useClips();
@@ -265,12 +264,6 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
                         <div className="pt-3">
                             <Row label="Mini Clip" desc={<>Compact window that stays out of your way. <kbd className="text-[10px] px-1 py-0.5 bg-foreground/10 rounded">Alt+M</kbd> to toggle.</>}>
                                 <Toggle on={isMiniClip} toggle={toggleMiniClip} />
-                            </Row>
-                            <Row
-                                label="Always on Top"
-                                desc={isQuickPaste ? "Turn off Quick Paste to use this." : "Keep the Clipcat window above all other windows."}
-                            >
-                                <Toggle on={isAlwaysOnTop} toggle={toggleAlwaysOnTop} disabled={isQuickPaste} />
                             </Row>
                             <Row
                                 label="Smart Position"

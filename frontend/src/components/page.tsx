@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, lazy, Suspense } from "react"
 import type { FilteredClips } from '../workers/search.worker'
 import { startTour, hasSeenTour } from "@/helpers/onboarding"
-import { Search, ShieldAlert, X, Plus, Trash2, Command } from "lucide-react"
+import { Search, ShieldAlert, X, Plus, Trash2, Command, Zap } from "lucide-react"
 import ClipCard from "./clip-card"
 import ClipListItem from "./clip-list-item"
 import LabelFilterBar from "./label-filter-bar"
@@ -29,8 +29,18 @@ function PageContent() {
     const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null)
     const [showUpdateDialog, setShowUpdateDialog] = useState(false)
     const [searchVisible, setSearchVisible] = useState(false)
-    const { clips, soundOn, hideContent, clipsLoaded, activeLabels, autoHideSensitive, isMiniClip, isQuickPaste } = useClips()
+    const [isSmallScreen, setIsSmallScreen] = useState(false)
+    const { clips, soundOn, hideContent, clipsLoaded, activeLabels, autoHideSensitive, isMiniClip, isQuickPaste, requestQuickPaste } = useClips()
     const searchInputRef = useRef<HTMLInputElement>(null)
+
+    // Track md breakpoint (768px) so small screens get the collapsible search bar
+    useEffect(() => {
+        const mq = window.matchMedia("(max-width: 767px)")
+        setIsSmallScreen(mq.matches)
+        const onChange = (e: MediaQueryListEvent) => setIsSmallScreen(e.matches)
+        mq.addEventListener("change", onChange)
+        return () => mq.removeEventListener("change", onChange)
+    }, [])
 
     const checkForUpdates = async () => {
         if (!version) return;
@@ -210,7 +220,7 @@ function PageContent() {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.ctrlKey && e.key === 'f') {
                 e.preventDefault()
-                if (isMiniClip || isQuickPaste) {
+                if (isSmallScreen || isMiniClip || isQuickPaste) {
                     toggleSearchVisible()
                 } else {
                     searchInputRef.current?.focus()
@@ -220,7 +230,7 @@ function PageContent() {
 
         window.addEventListener('keydown', handleKeyDown)
         return () => window.removeEventListener('keydown', handleKeyDown)
-    }, [isMiniClip, isQuickPaste])
+    }, [isSmallScreen, isMiniClip, isQuickPaste])
 
 
 
@@ -288,8 +298,8 @@ function PageContent() {
             <div className="mx-auto max-w-6xl">
                 {/* Header: info (left) · search (center) · label filter (right) */}
                 <div className="mb-10 flex items-center gap-4 justify-between">
-                    {/* Left - about / version (normal mode) or command palette trigger (mini/quickpaste, where About is hidden) */}
-                    {!isMiniClip ? (
+                    {/* Left - about / version (normal mode on large screens) or command palette trigger (small screen / mini/quickpaste) */}
+                    {!isSmallScreen && !isMiniClip ? (
                         <div className="shrink-0">
                             <div id="tour-about" className="items-center gap-2 sm:flex">
                                 {
@@ -304,7 +314,7 @@ function PageContent() {
                         <div className="shrink-0">
                             <button
                                 onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { ctrlKey: true, key: 'k', bubbles: true }))}
-                                className="hand-drawn-btn lined thin flex items-center gap-2 px-3 py-1.5 text-xs transition-all relative top-2 bg-[#F9F5E6] text-amber-950 hover:bg-amber-100"
+                                className="hand-drawn-btn lined thin flex items-center gap-2 px-3 py-1.5 text-xs! transition-all relative top-2 bg-[#F9F5E6] text-amber-950 hover:bg-amber-100"
                                 title="Command palette (Ctrl+K)"
                             >
                                 <Command className="h-3.5 w-3.5 shrink-0 text-amber-700" />
@@ -313,8 +323,8 @@ function PageContent() {
                         </div>
                     )}
 
-                    {/* Center - search (full bar in normal mode only; mini/quickpaste toggle lives in the right-hand group) */}
-                    {!(isMiniClip || isQuickPaste) && (
+                    {/* Center - search (full bar in normal mode only; hidden on small screens & mini/quickpaste) */}
+                    {!(isSmallScreen || isMiniClip || isQuickPaste) && (
                         <div className="relative flex-1 max-w-md torn-input mx-auto">
                             <div className="tape-1 absolute -top-3 left-0 h-12 w-4 bg-yellow-200/40 rotate-45 rounded-sm shadow-sm"></div>
                             <div className="tape-2 absolute -top-3 right-0 h-12 w-4 bg-yellow-200/40 -rotate-45 rounded-sm shadow-sm"></div>
@@ -343,12 +353,12 @@ function PageContent() {
                         </div>
                     )}
 
-                    {/* Right - search toggle (mini/quickpaste) + sensitive toggle + label filter, grouped together */}
+                    {/* Right - search toggle (small screen / mini/quickpaste) + quick paste + sensitive toggle + label filter, grouped together */}
                     <div className="shrink-0 flex items-center gap-2">
-                        {(isMiniClip || isQuickPaste) && (
+                        {(isSmallScreen || isMiniClip || isQuickPaste) && (
                             <button
                                 onClick={toggleSearchVisible}
-                                className={`hand-drawn-btn lined thin flex items-center gap-2 px-3 py-1.5 text-xs transition-all relative top-2 ${searchVisible
+                                className={`hand-drawn-btn lined thin flex items-center gap-2 px-3 py-1.5 text-xs! transition-all relative top-2 ${searchVisible
                                         ? "bg-amber-200 text-amber-950"
                                         : "bg-[#F9F5E6] text-amber-950 hover:bg-amber-100"
                                     }`}
@@ -358,6 +368,17 @@ function PageContent() {
                                 <span className="hidden sm:inline font-medium">Search</span>
                             </button>
                         )}
+                        <button
+                            onClick={() => requestQuickPaste()}
+                            className={`hand-drawn-btn lined thin flex items-center gap-2 px-3 py-1.5 text-xs! transition-all relative top-2 ${isQuickPaste
+                                    ? "bg-green-200 text-green-950"
+                                    : "bg-[#F9F5E6] text-amber-950 hover:bg-amber-100"
+                                }`}
+                            title={isQuickPaste ? "Disable Quick Paste" : "Enable Quick Paste"}
+                        >
+                            <Zap className={`h-3.5 w-3.5 shrink-0 ${isQuickPaste ? "text-green-700" : "text-amber-700"}`} />
+                            <span className="hidden sm:inline font-medium">Quick Paste</span>
+                        </button>
                         {autoHideSensitive && hiddenCount > 0 && (
                             <button
                                 onClick={() => setShowSensitive(v => !v)}
@@ -378,8 +399,8 @@ function PageContent() {
                     </div>
                 </div>
 
-                {/* Sticky search bar — mini/quickpaste mode only, toggled by the Search button or Ctrl+F */}
-                {(isMiniClip || isQuickPaste) && searchVisible && (
+                {/* Sticky search bar — small screen / mini/quickpaste mode, toggled by the Search button or Ctrl+F */}
+                {(isSmallScreen || isMiniClip || isQuickPaste) && searchVisible && (
                     <div className="sticky top-8 md:top-10 -mx-6 md:-mx-10 px-6 md:px-10 z-20 mb-6">
                         <div className="relative max-w-md mx-auto torn-input">
                             <div className="tape-1 absolute -top-3 left-0 h-10 w-4 bg-yellow-200/40 rotate-45 rounded-sm shadow-sm"></div>

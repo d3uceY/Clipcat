@@ -263,6 +263,17 @@ export function ClipProvider({ children }: { children: ReactNode }) {
       setIsMiniClip(res);
     });
 
+    // Mini clip mode enables always-on-top; turning it off disables it
+    if (!turningOff) {
+      // Turning ON mini clip → also enable always-on-top
+      await SetAlwaysOnTop(true);
+      setIsAlwaysOnTop(true);
+    } else {
+      // Turning OFF mini clip → also disable always-on-top
+      await SetAlwaysOnTop(false);
+      setIsAlwaysOnTop(false);
+    }
+
     // Quick paste requires mini clip - turn it off when mini clip is disabled
     if (turningOff && isQuickPaste) {
       await SetQuickPaste(false);

@@ -32,6 +32,7 @@ function PageContent() {
     const [isSmallScreen, setIsSmallScreen] = useState(false)
     const { clips, soundOn, hideContent, clipsLoaded, activeLabels, autoHideSensitive, isMiniClip, isQuickPaste, requestQuickPaste } = useClips()
     const searchInputRef = useRef<HTMLInputElement>(null)
+    const searchBarRef = useRef<HTMLDivElement>(null)
 
     // Track md breakpoint (768px) so small screens get the collapsible search bar
     useEffect(() => {
@@ -205,16 +206,37 @@ function PageContent() {
 
     const hiddenCount = filteredClips.hiddenPinned.length + filteredClips.hiddenRecent.length
 
-    // Toggles the sticky search bar shown in mini/quickpaste mode - shared by
-    // the Search button and the Ctrl+F shortcut so both behave identically.
+    // Toggles the sticky search bar — opens immediately, closes after GSAP animation.
     const toggleSearchVisible = () => {
         setSearchVisible(v => {
             const next = !v
             if (next) setTimeout(() => searchInputRef.current?.focus(), 50)
-            else setSearchQuery("")
             return next
         })
     }
+
+    // GSAP animate the sticky search bar in/out with a pop-in effect
+    useGSAP(() => {
+        const bar = searchBarRef.current
+        if (!bar) return
+
+        if (searchVisible) {
+            gsap.set(bar, { display: 'block', height: 'auto', opacity: 0 })
+            const naturalHeight = bar.offsetHeight
+            gsap.fromTo(bar,
+                { height: 0, opacity: 0, scaleY: 0.7, marginBottom: 0, transformOrigin: 'top center' },
+                { height: naturalHeight, opacity: 1, scaleY: 1, marginBottom: '1.5rem', duration: 0.35, ease: 'back.out(1.7)' }
+            )
+        } else {
+            gsap.to(bar, {
+                height: 0, opacity: 0, scaleY: 0.9, marginBottom: 0, duration: 0.15, ease: 'power2.in',
+                onComplete: () => {
+                    gsap.set(bar, { display: 'none', height: 'auto', scaleY: 1 })
+                    setSearchQuery("")
+                }
+            })
+        }
+    }, [searchVisible])
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -399,9 +421,13 @@ function PageContent() {
                     </div>
                 </div>
 
-                {/* Sticky search bar — small screen / mini/quickpaste mode, toggled by the Search button or Ctrl+F */}
-                {(isSmallScreen || isMiniClip || isQuickPaste) && searchVisible && (
-                    <div className="sticky top-8 md:top-10 -mx-6 md:-mx-10 px-6 md:px-10 z-20 mb-6">
+                {/* Sticky search bar — small screen / mini/quickpaste mode, animated by GSAP */}
+                {(isSmallScreen || isMiniClip || isQuickPaste) && (
+                    <div
+                        ref={searchBarRef}
+                        className="sticky top-8 md:top-10 -mx-6 md:-mx-10 px-6 md:px-10 z-20"
+                        style={{ display: 'none' }}
+                    >
                         <div className="relative max-w-md mx-auto torn-input">
                             <div className="tape-1 absolute -top-3 left-0 h-10 w-4 bg-yellow-200/40 rotate-45 rounded-sm shadow-sm"></div>
                             <div className="tape-2 absolute -top-3 right-0 h-10 w-4 bg-yellow-200/40 -rotate-45 rounded-sm shadow-sm"></div>

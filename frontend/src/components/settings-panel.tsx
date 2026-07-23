@@ -1,10 +1,12 @@
-import { useState, useEffect, forwardRef } from "react";
+import { useState, useEffect, useRef, forwardRef } from "react";
 import { Browser } from "@wailsio/runtime";
 import { useClips } from "@/context/ClipContext";
 import { playSound } from "@/helpers/playSound";
 import { UpdateStorageLimit, GetStorageLimit, GetClips, DeleteAllClips, DeletePinnedClips, DeleteUnpinnedClips, GetSyncSettings, SaveSyncSettings, ConfirmDelete } from "../../bindings/Clipcat/app";
 import { ScrollArea } from "./ui/scroll-area";
 import { RefreshCw, Download, Trash2, Save, Eye, EyeOff } from "lucide-react";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
 import type { UpdateInfo } from "./about-dialog";
 
 type SettingsTab = "window" | "clipboard" | "system" | "privacy" | "network";
@@ -207,6 +209,16 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
             return null;
         };
 
+        // Animate tab content on switch
+        const tabContentRef = useRef<HTMLDivElement>(null);
+        useGSAP(() => {
+            if (!tabContentRef.current) return;
+            gsap.fromTo(tabContentRef.current,
+                { opacity: 0, y: 8, scale: 0.97 },
+                { opacity: 1, y: 0, scale: 1, duration: 0.25, ease: 'back.out(1.4)' }
+            );
+        }, { dependencies: [activeTab], scope: tabContentRef });
+
 
         return (
             <div
@@ -258,6 +270,7 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
 
                 {/* ── Tab content ── */}
                 <ScrollArea className="relative z-1 flex-1 min-h-0 px-12 max-sm:px-8 pb-6">
+                    <div key={activeTab} ref={tabContentRef}>
 
                     {/* ══════ WINDOW ══════ */}
                     {activeTab === "window" && (
@@ -435,6 +448,7 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
                             </div>
                         </div>
                     )}
+                    </div>
                 </ScrollArea>
 
                 {/* Paper texture */}

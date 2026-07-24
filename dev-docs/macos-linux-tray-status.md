@@ -20,9 +20,9 @@ All platforms now use the Wails v3 native `SystemTray` API (`app.SystemTray.New(
 
 **Key files:**
 
-- [tray_windows.go](../tray_windows.go) — Windows-specific (`_ "embed"` of `.ico`, full menu with Quick Paste & Pause checkboxes)
-- [tray_other.go](../tray_other.go) — macOS + Linux (`SetTemplateIcon`, basic Show/Quit menu)
-- [app.go](../app.go) — calls `a.startTray()` during `ServiceStartup`
+- [tray_windows.go](../tray_windows.go) - Windows-specific (`_ "embed"` of `.ico`, full menu with Quick Paste & Pause checkboxes)
+- [tray_other.go](../tray_other.go) - macOS + Linux (`SetTemplateIcon`, basic Show/Quit menu)
+- [app.go](../app.go) - calls `a.startTray()` during `ServiceStartup`
 
 Both platform files use the same Wails v3 pattern:
 
@@ -47,7 +47,7 @@ The `AttachWindow` call enables automatic show/hide toggle on left-click and rig
 
 ### macOS
 
-- Uses `SetTemplateIcon(trayIcon)` — renders as a template (black + transparent), adapts to light/dark mode automatically.
+- Uses `SetTemplateIcon(trayIcon)` - renders as a template (black + transparent), adapts to light/dark mode automatically.
 - `SetLabel("Clipcat")` sets the menu bar label next to the icon.
 - `SetTemplateIcon` means the icon is treated as a macOS template image (black pixels become the system menu bar color).
 - The previous custom Cocoa bridge (`backend/tray/tray_darwin.go`, `tray_darwin.m`) has been deleted.
@@ -73,7 +73,7 @@ The `AttachWindow` call enables automatic show/hide toggle on left-click and rig
 When the global hotkey (Ctrl+Shift+V) fires, the `onHotkeyFired` callback in [app.go](../app.go):
 
 1. Optionally repositions the window near the cursor (if cursor snap + quick paste are enabled).
-2. Calls `a.window.Show()` + `a.window.Focus()` — no longer needs `tray.Activate()` since window focus is handled by Wails.
+2. Calls `a.window.Show()` + `a.window.Focus()` - no longer needs `tray.Activate()` since window focus is handled by Wails.
 3. Restores the AlwaysOnTop preference.
 
 ---

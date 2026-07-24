@@ -148,7 +148,7 @@ func ReadImage() []byte {
 // ── Wayland: wl-paste polling loop ────────────────────────────────────
 
 func startWaylandPoller() {
-	fmt.Println("[clipboard] Wayland — wl-paste polling (1s interval)")
+	fmt.Println("[clipboard] Wayland - wl-paste polling (1s interval)")
 
 	pollInterval := 1 * time.Second
 	readTimeout := 5 * time.Second
@@ -202,7 +202,7 @@ func StartClipboardListener(onChange func(), onHotkey func()) {
 
 	if isWayland() {
 		// On Wayland, XFixes via XWayland only catches XWayland-native
-		// clipboard changes — not Wayland-native copies (e.g. Firefox).
+		// clipboard changes - not Wayland-native copies (e.g. Firefox).
 		C.initClipboardX11() // for ReadText/ReadImage fallback
 		go startWaylandPoller()
 		return

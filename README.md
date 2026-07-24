@@ -62,7 +62,7 @@ Requires `xdotool` at runtime for window focus and paste simulation:
 sudo apt install xdotool
 ```
 
-Clipcat bundles its own clipboard monitoring — XFixes extension on X11 (event-driven) and wl-clipboard on Wayland (polling).
+Clipcat bundles its own clipboard monitoring - XFixes extension on X11 (event-driven) and wl-clipboard on Wayland (polling).
 
 If you're on **Wayland** (e.g. COSMIC, GNOME on Wayland), also install:
 ```bash

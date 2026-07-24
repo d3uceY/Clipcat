@@ -104,7 +104,7 @@ func handleConnection(conn net.Conn, incoming chan<- []byte) {
 	// Read 4-byte length prefix.
 	header := make([]byte, 4)
 	if _, err := io.ReadFull(conn, header); err != nil {
-		// EOF is expected — it's the heartbeat closing the connection
+		// EOF is expected - it's the heartbeat closing the connection
 		// or a keepalive probe.  No need to log it.
 		if err != io.EOF {
 			log.Printf("[sync] read header: %v", err)

@@ -145,7 +145,7 @@ export function ClipProvider({ children }: { children: ReactNode }) {
   /** Called when the user clicks "Enable Quick Paste" from settings or command palette. */
   const requestQuickPaste = useCallback(async () => {
     if (isQuickPaste) {
-      // Already on — just toggle off directly
+      // Already on - just toggle off directly
       await toggleQuickPaste();
       if (isMiniClip) await toggleMiniClip();
     } else {

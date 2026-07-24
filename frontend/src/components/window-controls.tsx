@@ -28,7 +28,7 @@ export default function WindowControls({ updateAvailable, onCheckUpdate }: Windo
         Window.IsMaximised().then(setFullScreen).catch(() => {});
     }, []);
 
-    // -- Quick Paste toggle — uses shared context flow ------------------------
+    // -- Quick Paste toggle - uses shared context flow ------------------------
 
     const handleQuickPasteToggle = async () => {
         if (isQuickPaste) {

@@ -20,7 +20,7 @@ type Peer struct {
 }
 
 // PeerMap is a concurrency-safe map of peers.  Peers are only removed when
-// RecordFailure reaches maxFailCount — there is no TTL-based eviction.
+// RecordFailure reaches maxFailCount - there is no TTL-based eviction.
 // Re-discovery via mDNS will re-add evicted peers when they come back.
 type PeerMap struct {
 	mu    sync.RWMutex

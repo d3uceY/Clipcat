@@ -24,9 +24,9 @@ interface ClipCardOverlayProps {
     onDeleteRollback: () => void
     /** Called when focus enters or leaves the overlay so the parent keeps it mounted while the user is typing */
     onFocusChange: (focused: boolean) => void
-    /** Mouse entered the overlay — cancel the parent's leave-hide timer */
+    /** Mouse entered the overlay - cancel the parent's leave-hide timer */
     onHoverEnter: () => void
-    /** Mouse left the overlay — start the parent's leave-hide timer */
+    /** Mouse left the overlay - start the parent's leave-hide timer */
     onHoverLeave: () => void
 }
 
@@ -360,7 +360,7 @@ export default function ClipCardOverlay({ clip, type, cardRect, onDelete, onDele
                 </div>
             </div>
 
-            {/* Detail dialog — rendered outside the overlay div so it isn't clipped */}
+            {/* Detail dialog - rendered outside the overlay div so it isn't clipped */}
             {dialogOpen && (
                 <Dialog open={dialogOpen} onOpenChange={(open) => {
                     setDialogOpen(open)

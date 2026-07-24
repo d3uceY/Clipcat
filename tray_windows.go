@@ -27,7 +27,7 @@ func (a *App) startTray() {
 	})
 	menu.AddSeparator()
 
-	// Default unchecked — synced from DB later via syncTrayMenu().
+	// Default unchecked - synced from DB later via syncTrayMenu().
 	quickPasteItem := menu.AddCheckbox("Quick Paste", false)
 	quickPasteItem.OnClick(func(ctx *application.Context) {
 		enabled := ctx.ClickedMenuItem().Checked()

@@ -12,7 +12,7 @@ function LabelFilterBar() {
     const btnRef = useRef<HTMLButtonElement>(null)
     const dropdownRef = useRef<HTMLDivElement>(null)
 
-    // Close on outside click — checks both the trigger container AND the portal dropdown
+    // Close on outside click - checks both the trigger container AND the portal dropdown
     useEffect(() => {
         if (!open) return
         const handler = (e: MouseEvent) => {
@@ -68,7 +68,7 @@ function LabelFilterBar() {
                 />
             </button>
 
-            {/* Dropdown panel — rendered in a portal so it's never clipped by overflow:hidden ancestors */}
+            {/* Dropdown panel - rendered in a portal so it's never clipped by overflow:hidden ancestors */}
             {open && dropdownStyle && createPortal(
                 <div
                     ref={dropdownRef}

@@ -168,7 +168,7 @@ func (a *App) handleImageClip(img []byte) {
 	a.lastMu.Unlock()
 
 	if isDup {
-		// Still add — AddImageClip handles re-insert at top.
+		// Still add - AddImageClip handles re-insert at top.
 		// Skip broadcast since peers already have it.
 		clip, prunedIDs, deletedID, _, _ := store.AddImageClip(img)
 		if deletedID > 0 {

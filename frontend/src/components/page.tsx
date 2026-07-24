@@ -206,7 +206,7 @@ function PageContent() {
 
     const hiddenCount = filteredClips.hiddenPinned.length + filteredClips.hiddenRecent.length
 
-    // Toggles the sticky search bar — opens immediately, closes after GSAP animation.
+    // Toggles the sticky search bar - opens immediately, closes after GSAP animation.
     const toggleSearchVisible = () => {
         setSearchVisible(v => {
             const next = !v
@@ -215,7 +215,7 @@ function PageContent() {
         })
     }
 
-    // GSAP animate the sticky search bar — paper unfurling / rolling up
+    // GSAP animate the sticky search bar - paper unfurling / rolling up
     useGSAP(() => {
         const bar = searchBarRef.current
         if (!bar) return
@@ -421,7 +421,7 @@ function PageContent() {
                     </div>
                 </div>
 
-                {/* Sticky search bar — small screen / mini/quickpaste mode, animated by GSAP */}
+                {/* Sticky search bar - small screen / mini/quickpaste mode, animated by GSAP */}
                 {(isSmallScreen || isMiniClip || isQuickPaste) && (
                     <div
                         ref={searchBarRef}
@@ -457,7 +457,7 @@ function PageContent() {
                     </div>
                 )}
 
-                {/* Pinned Section — interleaves hidden pinned clips when showSensitive is active */}
+                {/* Pinned Section - interleaves hidden pinned clips when showSensitive is active */}
                 {(filteredClips.pinned.length > 0 || (showSensitive && filteredClips.hiddenPinned.length > 0)) && (
                     <section className={isMiniClip ? "mb-4" : "mb-12"}>
                         <div className="flex items-center gap-8 mb-4">
@@ -488,7 +488,7 @@ function PageContent() {
                     </section>
                 )}
 
-                {/* Recent Section — interleaves hidden recent clips when showSensitive is active */}
+                {/* Recent Section - interleaves hidden recent clips when showSensitive is active */}
                 {(filteredClips.recent.length > 0 || (showSensitive && filteredClips.hiddenRecent.length > 0)) && (
                     <section>
                         <div className="flex items-center gap-8 mb-4">
@@ -519,7 +519,7 @@ function PageContent() {
                     </section>
                 )}
 
-                {/* Floating action buttons — Add Clip + Delete */}
+                {/* Floating action buttons - Add Clip + Delete */}
                 {!isMiniClip && (
                     <div className="fixed bottom-6 right-6 z-30 flex flex-col gap-3">
                         <Suspense fallback={null}>
@@ -546,7 +546,7 @@ function PageContent() {
                     </div>
                 )}
 
-                {/* Empty State — also check hidden clips when sensitive view is on */}
+                {/* Empty State - also check hidden clips when sensitive view is on */}
                 {filteredClips.pinned.length === 0 && filteredClips.recent.length === 0
                     && (!showSensitive || (filteredClips.hiddenPinned.length === 0 && filteredClips.hiddenRecent.length === 0)) && (
                         <div className="flex-col h-64 text-black flex items-center justify-center gap-2">

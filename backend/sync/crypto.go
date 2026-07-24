@@ -14,7 +14,7 @@ import (
 const (
 	// Salt is a static salt used for PBKDF2 key derivation. Since the
 	// passphrase is never transmitted over the network, a static salt is
-	// acceptable — if the passphrase is compromised, the salt doesn't
+	// acceptable - if the passphrase is compromised, the salt doesn't
 	// matter.
 	salt = "clipcat-lan-sync-v1"
 

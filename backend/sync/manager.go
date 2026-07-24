@@ -29,7 +29,7 @@ func NewManager(passphrase string) *Manager {
 	return &Manager{
 		key:     DeriveKey(passphrase),
 		peerMap: NewPeerMap(),
-		// 10 deep is enough — the event loop drains each payload
+		// 10 deep is enough - the event loop drains each payload
 		// in micros. A full buffer means the listener is overwhelmed; better
 		// to drop than pile up 1GB of encrypted blobs.
 		incoming: make(chan []byte, 10),
@@ -43,7 +43,7 @@ func (m *Manager) SetOnReceive(cb OnReceiveCallback) {
 }
 
 // Start begins LAN discovery (mDNS announce + browse), TCP listening, and
-// the event loop.  It is safe to call multiple times — subsequent calls are
+// the event loop.  It is safe to call multiple times - subsequent calls are
 // no-ops while the manager is already running.
 func (m *Manager) Start() error {
 	m.mu.Lock()

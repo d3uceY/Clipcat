@@ -117,9 +117,9 @@ has already been called on the message thread, so `Show` (which internally
 calls `SetForegroundWindow` / `BringWindowToTop`) succeeds and the Clipcat
 window actually takes focus.
 
-- **`a.window.Show()`** — restores the window if minimised and brings it forward.
-- **`a.window.Focus()`** — ensures keyboard focus lands on the webview.
-- **`a.window.SetAlwaysOnTop`** — re-applies the user's stored AlwaysOnTop preference.
+- **`a.window.Show()`** - restores the window if minimised and brings it forward.
+- **`a.window.Focus()`** - ensures keyboard focus lands on the webview.
+- **`a.window.SetAlwaysOnTop`** - re-applies the user's stored AlwaysOnTop preference.
 
 ### 5. After the user picks a clip - `FocusPreviousWindow` + `SimulatePaste`
 

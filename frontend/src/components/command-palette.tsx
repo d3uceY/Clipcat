@@ -39,7 +39,7 @@ export default function CommandPalette() {
 
     useEffect(() => { GetPlatform().then(setPlatform).catch(() => {}) }, [])
 
-    // Ctrl+K or Ctrl+Shift+P toggles the palette — Escape is handled by Dialog
+    // Ctrl+K or Ctrl+Shift+P toggles the palette - Escape is handled by Dialog
     useEffect(() => {
         const handler = (e: KeyboardEvent) => {
             const isOpenCmd =

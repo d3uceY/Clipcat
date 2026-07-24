@@ -1,4 +1,4 @@
-// x11_clipboard_linux.c — X11 clipboard reading + XFixes-based monitoring.
+// x11_clipboard_linux.c - X11 clipboard reading + XFixes-based monitoring.
 //
 // ── Data reading ──────────────────────────────────────────────────────
 // Uses select() on the X11 connection socket so reads always return within
@@ -7,7 +7,7 @@
 // ── Clipboard monitoring ──────────────────────────────────────────────
 // Uses the XFixes extension (XFixesSelectSelectionInput) to receive
 // event-driven notifications when clipboard ownership changes. This is the
-// same approach used by CopyQ and other mature clipboard managers — no
+// same approach used by CopyQ and other mature clipboard managers - no
 // polling, no 1-second delays, no risk of hanging.
 
 #include <X11/Xlib.h>
@@ -56,7 +56,7 @@ static int read_clipboard_data(
 	if (ret != Success) return -1;
 	if (!data) return 0;
 
-	// Accept data regardless of the actual atom type — clipboard owners may
+	// Accept data regardless of the actual atom type - clipboard owners may
 	// respond with STRING or text/plain instead of the requested UTF8_STRING.
 	int len = 0;
 	if (size > 0) {

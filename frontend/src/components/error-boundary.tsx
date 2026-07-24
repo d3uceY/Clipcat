@@ -37,7 +37,7 @@ export default class ErrorBoundary extends Component<Props, State> {
           <div className="mb-4 text-4xl">😿</div>
           <h2 className="text-lg font-bold mb-2">Something went wrong</h2>
           <p className="text-sm opacity-60 mb-6 leading-relaxed">
-            Clipcat hit an unexpected error. Don't worry — your clips are safe.
+            Clipcat hit an unexpected error. Don't worry - your clips are safe.
           </p>
           <button
             onClick={this.handleReload}

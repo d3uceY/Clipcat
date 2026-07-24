@@ -206,7 +206,7 @@ function PlatformDropdownBtn({ label, onDownload }: { label: string; onDownload:
 const FEATURES = [
   {
     title: 'Auto-Capture',
-    desc: 'Everything you copy — text and images — is saved instantly with no setup needed.',
+    desc: 'Everything you copy - text and images - is saved instantly with no setup needed.',
   },
   {
     title: 'Quick Paste',
@@ -372,7 +372,7 @@ function ShortcutsSection() {
             Keyboard shortcuts
           </Heading>
           <p className={styles.sectionSubtitle}>
-            Fast by design — every essential action is one key combo away.
+            Fast by design - every essential action is one key combo away.
           </p>
           <Link className={styles.shortcutsLink} to="/docs/keyboard-shortcuts">
             View all shortcuts {'->'}

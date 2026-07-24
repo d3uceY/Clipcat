@@ -1,14 +1,14 @@
 # LAN Sync
 
-Clipcat can optionally sync clipboard content (text and images) between devices on the same local network. No cloud, no accounts — just a shared passphrase.
+Clipcat can optionally sync clipboard content (text and images) between devices on the same local network. No cloud, no accounts - just a shared passphrase.
 
 ## How It Works
 
 Every Clipcat instance with sync enabled and the same passphrase automatically discovers other instances on the LAN and exchanges clipboard content in real time.
 
-- **No sender/receiver distinction** — every peer is both. Copy on one machine, it appears on all others.
-- **Peer-to-peer TCP** — data travels directly between machines, never through a server.
-- **End-to-end encrypted** — AES-256-GCM with a key derived from the passphrase via PBKDF2.
+- **No sender/receiver distinction** - every peer is both. Copy on one machine, it appears on all others.
+- **Peer-to-peer TCP** - data travels directly between machines, never through a server.
+- **End-to-end encrypted** - AES-256-GCM with a key derived from the passphrase via PBKDF2.
 
 ## Architecture
 
@@ -51,7 +51,7 @@ Open the Settings panel and scroll to the **LAN Sync** section.
 
 ### 2. Set a passphrase
 
-Enter any passphrase — it's used to derive the encryption key. **All devices must use the same passphrase.** The passphrase is never transmitted over the network.
+Enter any passphrase - it's used to derive the encryption key. **All devices must use the same passphrase.** The passphrase is never transmitted over the network.
 
 ### 3. Enable the toggle
 
@@ -84,7 +84,7 @@ Go to **System Settings -> Network -> Firewall -> Options** and add Clipcat to t
 
 ### Windows Defender
 
-Windows may prompt on first run — click **Allow access**. Or add a rule manually in **Windows Security -> Firewall & network protection -> Advanced settings -> Inbound Rules**.
+Windows may prompt on first run - click **Allow access**. Or add a rule manually in **Windows Security -> Firewall & network protection -> Advanced settings -> Inbound Rules**.
 
 ## Security Model
 
@@ -95,23 +95,23 @@ Windows may prompt on first run — click **Allow access**. Or add a rule manual
 | **Encryption**     | AES-256-GCM (authenticated encryption)                                                                      |
 | **Wrong key**      | GCM auth failure -> payload silently dropped (logged)                                                        |
 | **Max payload**    | 10 MB (larger clips are silently skipped)                                                                   |
-| **Discovery**      | mDNS advertises the service type `_clipcat._tcp` with the machine hostname — leaks no sensitive information |
+| **Discovery**      | mDNS advertises the service type `_clipcat._tcp` with the machine hostname - leaks no sensitive information |
 | **Peer eviction**  | Peers are evicted after 3 consecutive TCP failures (via heartbeat probe or failed send)                     |
 
 ## Limitations
 
-- **Subnet only** — mDNS discovery does not cross routers. All devices must be on the same LAN/subnet.
-- **mDNS required** — Linux requires `avahi-daemon` (or another mDNS responder) to be running. macOS has Bonjour built-in.
-- **Firewall required** — TCP port 47821 must be open on each machine (see above).
-- **No encryption in transit indicator** — there is no visual indicator that a specific clip arrived encrypted vs. unencrypted; all sync traffic is always encrypted.
-- **mDNS for discovery only** — once a peer is found, liveness is tracked by TCP heartbeat (60s interval). mDNS can go silent without losing peers.
-- **Peer count indicator** — shown in the main UI as a green/gray badge next to the search bar when sync is enabled.
+- **Subnet only** - mDNS discovery does not cross routers. All devices must be on the same LAN/subnet.
+- **mDNS required** - Linux requires `avahi-daemon` (or another mDNS responder) to be running. macOS has Bonjour built-in.
+- **Firewall required** - TCP port 47821 must be open on each machine (see above).
+- **No encryption in transit indicator** - there is no visual indicator that a specific clip arrived encrypted vs. unencrypted; all sync traffic is always encrypted.
+- **mDNS for discovery only** - once a peer is found, liveness is tracked by TCP heartbeat (60s interval). mDNS can go silent without losing peers.
+- **Peer count indicator** - shown in the main UI as a green/gray badge next to the search bar when sync is enabled.
 
 ## Privacy
 
 - Sync is fully opt-in and disabled by default.
 - When disabled, Clipcat does not listen on port 47821 and does not announce itself via mDNS.
-- Data is sent only over the local network — never through a cloud service or the internet.
+- Data is sent only over the local network - never through a cloud service or the internet.
 - Network-synced clips are tagged with `source: "network"` in the database and show a small Wi-Fi icon in the clip card.
 
 ## Troubleshooting

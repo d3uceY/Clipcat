@@ -62,7 +62,7 @@ func Announce(ctx context.Context, port int, instance string) error {
 // Browse discovers other Clipcat instances on the LAN.  It sends discovered
 // peers to the added channel.  The goroutine runs until ctx is cancelled.
 //
-// IMPORTANT: resolver.Browse is non-blocking — it starts background
+// IMPORTANT: resolver.Browse is non-blocking - it starts background
 // goroutines and returns immediately.  We must NOT use a "browse done"
 // signal to exit the loop; entries arrive asynchronously on the channel
 // until ctx is cancelled.
@@ -109,7 +109,7 @@ func Browse(ctx context.Context, added chan<- Peer) error {
 // resolveEntry resolves a zeroconf ServiceEntry into a Peer.  Returns nil
 // if the entry cannot be resolved to an IP address.
 func resolveEntry(entry *zeroconf.ServiceEntry) *Peer {
-	// Resolve the entry if needed — zeroconf.Browse may return entries
+	// Resolve the entry if needed - zeroconf.Browse may return entries
 	// without IP addresses depending on the network environment.
 	if len(entry.AddrIPv4) == 0 && len(entry.AddrIPv6) == 0 {
 		resolved, err := resolveInstance(entry.Instance)
@@ -151,7 +151,7 @@ func resolveInstance(instance string) (*zeroconf.ServiceEntry, error) {
 
 	go func() {
 		defer close(lookupDone)
-		// NOTE: do NOT close(entries) — same reason as Browse: the zeroconf
+		// NOTE: do NOT close(entries) - same reason as Browse: the zeroconf
 		// library's internal goroutines may still send after Lookup returns.
 		if err := resolver.Lookup(ctx, instance, serviceType, domain, entries); err != nil {
 			if ctx.Err() == nil {

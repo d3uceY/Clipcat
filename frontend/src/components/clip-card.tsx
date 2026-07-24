@@ -226,7 +226,7 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
                     </button>
                 )}
 
-                {/* Pin floating button — left side */}
+                {/* Pin floating button - left side */}
                 <button
                     onClick={handlePin}
                     className={`absolute -top-2 -left-2 z-20 p-1.5 rounded-full border shadow-sm transition-all opacity-0 group-hover/card:opacity-100 ${
@@ -239,7 +239,7 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
                     <Pin className={`h-3 w-3 ${clip.isPinned ? "fill-current" : ""}`} />
                 </button>
 
-                {/* Tag floating button — below shield, opens/closes label input */}
+                {/* Tag floating button - below shield, opens/closes label input */}
                 <button
                     onClick={isEditingLabel ? cancelLabelEditing : startEditingLabel}
                     onMouseDown={isEditingLabel ? (e) => e.preventDefault() : undefined}
@@ -253,7 +253,7 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
                     {isEditingLabel ? <X className="h-3 w-3" /> : <Tag className="h-3 w-3" />}
                 </button>
 
-                {/* Header — network indicator on left, time on right */}
+                {/* Header - network indicator on left, time on right */}
                 <div className="mb-3 flex items-start justify-between shrink-0">
                     <div className="flex items-center gap-1.5">
                         {clip.source === "network" && (
@@ -265,7 +265,7 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
                     <span className="text-xs text-muted-foreground md:hidden">{relativeTime}</span>
                 </div>
 
-                {/* Label badge — shown when not editing */}
+                {/* Label badge - shown when not editing */}
                 {clip.label && !isEditingLabel && (
                     <div className="flex items-center gap-1 text-[11px] text-amber-700/60 mb-1.5 shrink-0">
                         <Tag className="h-3 w-3 shrink-0" />
@@ -273,7 +273,7 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
                     </div>
                 )}
 
-                {/* Label input — grid 0fr→1fr for height transition */}
+                {/* Label input - grid 0fr→1fr for height transition */}
                 <div className="relative shrink-0">
                     <div
                         className={`grid overflow-hidden [transition:grid-template-rows_0.2s_ease]${isEditingLabel ? " grid-rows-[1fr]" : " grid-rows-[0fr]"}`}
@@ -294,7 +294,7 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
                             </div>
                         </div>
                     </div>
-                    {/* Suggestions — absolutely positioned so they never affect card layout */}
+                    {/* Suggestions - absolutely positioned so they never affect card layout */}
                     {isEditingLabel && labelSuggestions.length > 0 && (
                         <div className="absolute top-full left-0 right-0 z-60 mt-0.5 bg-[#F9F5E6] border border-dashed border-amber-600/50 shadow-lg overflow-hidden">
                             <ScrollAreaDark className="max-h-40">
@@ -362,7 +362,7 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
                         )}
                         <span className="hidden text-xs text-muted-foreground md:block">{relativeTime}</span>
                     </div>
-                    {/* Buttons invisible until hover — still take up space */}
+                    {/* Buttons invisible until hover - still take up space */}
                     <div className="flex gap-2 opacity-0 group-hover/card:opacity-100 transition-opacity">
                         <button
                             onClick={handleCopy}

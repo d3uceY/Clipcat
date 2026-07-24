@@ -14,7 +14,7 @@ type SettingsTab = "window" | "clipboard" | "system" | "privacy" | "network";
 interface SettingsPanelProps {
     /** Animated close triggered by the parent's GSAP timeline */
     onClose: () => void;
-    /** Forwarded to the Quick Paste switch — parent owns the confirm dialog */
+    /** Forwarded to the Quick Paste switch - parent owns the confirm dialog */
     onQuickPasteToggle: () => void;
     updateAvailable?: UpdateInfo | null;
     onCheckUpdate?: () => Promise<void>;
@@ -154,7 +154,7 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
             </div>
         );
 
-        // ── Section label — a small torn strip of washi tape, same trick as
+        // ── Section label - a small torn strip of washi tape, same trick as
         //     the tape squares on the home page search bar ─────────────────
         const SectionLabel = ({ children }: { children: React.ReactNode }) => (
             <div className="relative inline-block mb-3 mt-1">
@@ -209,7 +209,7 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
             return null;
         };
 
-        // Animate tab content on switch — paper page settle
+        // Animate tab content on switch - paper page settle
         const tabContentRef = useRef<HTMLDivElement>(null);
         useGSAP(() => {
             if (!tabContentRef.current) return;
@@ -227,7 +227,7 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
                            w-full h-full
                            md:w-[74vw] max-w-200 md:h-[74vh]" 
             >
-                {/* Notebook margin rule — the same red ruling used on the clip
+                {/* Notebook margin rule - the same red ruling used on the clip
                     detail page, so Settings still reads as a page from the
                     same notebook rather than a separate UI system. */}
                 <div className="margin hidden sm:block opacity-30" style={{ left: "2.25rem" }} />

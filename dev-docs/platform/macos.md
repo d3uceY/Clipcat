@@ -152,7 +152,7 @@ systray.AttachWindow(a.window)
 
 `AttachWindow` handles left-click show/hide toggle and right-click context menu automatically. The previous custom Cocoa bridge (`backend/tray/`) has been deleted.
 
-The hotkey path calls `a.window.Show()` + `a.window.Focus()` directly — no separate activation call is needed.
+The hotkey path calls `a.window.Show()` + `a.window.Focus()` directly - no separate activation call is needed.
 
 ---
 

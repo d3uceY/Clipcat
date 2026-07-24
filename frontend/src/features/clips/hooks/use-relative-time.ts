@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { formatTime } from '@/helpers/formatTime'
+import { formatTime } from '@/features/clips/utils/format-time'
 
 // ---------------------------------------------------------------------------
 // Single shared interval for all cards instead of one setInterval per card.

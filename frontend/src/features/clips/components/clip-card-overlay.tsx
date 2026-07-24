@@ -1,19 +1,19 @@
 import { Copy, Pin, Trash2, Pencil, ClipboardPaste, Tag, ShieldAlert, ShieldCheck } from "lucide-react"
 import { useState, useRef, useMemo, useEffect, lazy, Suspense } from "react"
 import { createPortal } from "react-dom"
-import type { Clip } from '../../types/clip'
-import { TogglePin, Delete, PasteToWindow, GetClipImage } from "../../bindings/Clipcat/app"
-import { useClips } from "@/context/ClipContext"
-import { playSound } from "@/helpers/playSound"
+import type { Clip } from '@/features/clips/types'
+import { TogglePin, Delete, PasteToWindow, GetClipImage } from "../../../../bindings/Clipcat/app"
+import { useClips } from "@/contexts/ClipContext"
+import { playSound } from "@/utils/play-sound"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
-import { useRelativeTime } from "@/hooks/use-relative-time"
-import { ScrollArea } from "./ui/scroll-area-white"
-import { ScrollArea as ScrollAreaPencil } from "./ui/scroll-area-pencil"
-import { ScrollArea as ScrollAreaDark } from "./ui/scroll-area"
-import { copyBase64ImageToClipboard } from "@/helpers/copyBase64Image"
-const EditClipDialog = lazy(() => import("./edit-clip-dialog"))
+import { useRelativeTime } from "@/features/clips/hooks/use-relative-time"
+import { ScrollArea } from "@/components/ui/scroll-area-white"
+import { ScrollArea as ScrollAreaPencil } from "@/components/ui/scroll-area-pencil"
+import { ScrollArea as ScrollAreaDark } from "@/components/ui/scroll-area"
+import { copyBase64ImageToClipboard } from "@/features/clips/utils/copy-base64-image"
+const EditClipDialog = lazy(() => import("@/components/edit-clip-dialog"))
 const ImageLightbox = lazy(() => import("./image-lightbox"))
-import { insertLinks } from "@/helpers/insertLinks"
+import { insertLinks } from "@/features/clips/utils/insert-links"
 import { Browser } from "@wailsio/runtime"
 
 interface ClipCardOverlayProps {
@@ -74,7 +74,7 @@ export default function ClipCardOverlay({ clip, type, cardRect, onDelete, onDele
         }
     }, [isEditingLabel])
 
-    // ── Handlers ─────────────────────────────────────────────────────────────
+    // â”€â”€ Handlers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     const handleCopy = async () => {
         playSound("/sounds/paper-copy.wav", soundOn, 1)
@@ -156,7 +156,7 @@ export default function ClipCardOverlay({ clip, type, cardRect, onDelete, onDele
         }
     }
 
-    // ── Render ────────────────────────────────────────────────────────────────
+    // â”€â”€ Render â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     return createPortal(
         <>
@@ -225,7 +225,7 @@ export default function ClipCardOverlay({ clip, type, cardRect, onDelete, onDele
                                     ref={labelInputRef}
                                     type="text"
                                     className="w-full text-xs px-1 py-0.5 bg-transparent border-b border-dashed border-amber-600/50 outline-none text-foreground placeholder:text-muted-foreground/50"
-                                    placeholder="Enter label…"
+                                    placeholder="Enter labelâ€¦"
                                     value={editingLabel}
                                     onChange={(e) => setEditingLabel(e.target.value)}
                                     onBlur={saveLabel}
@@ -277,7 +277,7 @@ export default function ClipCardOverlay({ clip, type, cardRect, onDelete, onDele
                             className="flex items-center gap-1 text-[11px] text-muted-foreground/40 hover:text-muted-foreground/70 transition-colors cursor-text"
                         >
                             <Tag className="h-3 w-3 shrink-0" />
-                            Add label…
+                            Add labelâ€¦
                         </button>
                     )}
                 </div>

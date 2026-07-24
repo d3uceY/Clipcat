@@ -59,9 +59,9 @@ Spawns a dedicated OS thread goroutine (Go pins it via the message loop) that:
 ```go
 case WM_HOTKEY:
     if wParam == hotkeyID {
-        capturePreviousWindow()   // ← must happen on THIS thread
+        capturePreviousWindow()   // <- must happen on THIS thread
         if onHotkeyCallback != nil {
-            go onHotkeyCallback() // ← goroutine for everything else
+            go onHotkeyCallback() // <- goroutine for everything else
         }
     }
 ```

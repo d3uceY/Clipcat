@@ -1,9 +1,9 @@
 import { Pin, Trash2, ShieldCheck } from "lucide-react"
 import { useState, memo, useEffect, useRef, useCallback } from "react"
-import type { Clip } from '../../types/clip'
-import { TogglePin, Delete, PasteToWindow, FocusAndPaste, GetClipImage } from "../../bindings/Clipcat/app"
-import { useClips } from "@/context/ClipContext"
-import { playSound } from "@/helpers/playSound"
+import type { Clip } from '@/features/clips/types'
+import { TogglePin, Delete, PasteToWindow, FocusAndPaste, GetClipImage } from "../../../../bindings/Clipcat/app"
+import { useClips } from "@/contexts/ClipContext"
+import { playSound } from "@/utils/play-sound"
 
 interface ClipListItemProps {
     clip: Clip

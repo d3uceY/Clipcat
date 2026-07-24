@@ -27,8 +27,8 @@ import {
   SetCursorSnap,
 } from "../../bindings/Clipcat/app";
 import { Events } from "@wailsio/runtime";
-import { playSound } from "../helpers/playSound";
-import type { Clip } from "../../types/clip";
+import { playSound } from "../utils/play-sound"
+import type { Clip } from "../features/clips/types"
 
 interface ClipContextType {
   clips: { pinned: Clip[]; recent: Clip[] };

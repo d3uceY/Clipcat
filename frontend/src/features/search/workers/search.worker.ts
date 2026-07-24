@@ -1,4 +1,4 @@
-import type { Clip } from '../../types/clip'
+import type { Clip } from '@/features/clips/types'
 
 interface SearchRequest {
     clips: { pinned: Clip[]; recent: Clip[] }

@@ -1,7 +1,7 @@
 import { useEffect } from "react"
-import Page from "./components/page"
+import Page from "./features/app-shell/components/page"
 import ErrorBoundary from "./components/error-boundary"
-import { preloadSounds } from "./helpers/playSound"
+import { preloadSounds } from "./utils/play-sound"
 
 function App() {
 

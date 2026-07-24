@@ -1,7 +1,7 @@
 import { gsap } from "gsap";
 import { useRef } from "react";
-import { playSound } from "@/helpers/playSound";
-import { useClips } from "@/context/ClipContext";
+import { playSound } from "@/utils/play-sound";
+import { useClips } from "@/contexts/ClipContext";
 
 export default function DeleteButton({ onClick }: { onClick?: () => void }) {
     const { soundOn } = useClips();

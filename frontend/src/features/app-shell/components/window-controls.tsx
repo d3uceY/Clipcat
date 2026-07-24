@@ -1,13 +1,13 @@
 import { useRef, useState, useEffect } from "react";
 import { Window } from "@wailsio/runtime";
-import { useClips } from "@/context/ClipContext";
+import { useClips } from "@/contexts/ClipContext";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
-import { playSound } from "@/helpers/playSound";
-import { GetPlatform } from "../../bindings/Clipcat/app";
+import { playSound } from "@/utils/play-sound";
+import { GetPlatform } from "../../../../bindings/Clipcat/app";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import type { UpdateInfo } from "./about-dialog";
-import SettingsPanel from "./settings-panel";
+import type { UpdateInfo } from "@/features/settings/components/about-dialog"
+import SettingsPanel from "@/features/settings/components/settings-panel"
 
 interface WindowControlsProps {
     updateAvailable?: UpdateInfo | null;
@@ -145,7 +145,7 @@ export default function WindowControls({ updateAvailable, onCheckUpdate }: Windo
                             <ul className="text-sm mt-1 space-y-1.5">
                                 <li>
                                     <kbd className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[11px] font-mono leading-none bg-foreground/10 border border-foreground/25 rounded">
-                                        {platform === "darwin" ? "⌘" : "Ctrl"}<span className="opacity-40">+</span>Shift<span className="opacity-40">+</span>V
+                                        {platform === "darwin" ? "âŒ˜" : "Ctrl"}<span className="opacity-40">+</span>Shift<span className="opacity-40">+</span>V
                                     </kbd>
                                     {" "}summon Clipcat from any window
                                 </li>

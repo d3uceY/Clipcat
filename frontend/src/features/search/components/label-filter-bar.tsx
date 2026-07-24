@@ -1,7 +1,7 @@
 import { memo, useState, useRef, useEffect } from "react"
 import { createPortal } from "react-dom"
 import { ChevronDown, Check, Tag, X } from "lucide-react"
-import { useClips } from "@/context/ClipContext"
+import { useClips } from "@/contexts/ClipContext"
 import { ScrollArea } from "@/components/ui/scroll-area"
 
 function LabelFilterBar() {

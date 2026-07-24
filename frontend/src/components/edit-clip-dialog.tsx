@@ -3,7 +3,7 @@ import { useState } from "react"
 import { Check, X } from "lucide-react"
 import { UpdateClipContent } from "../../bindings/Clipcat/app"
 // import TeaseDialog from "./tease-dialog"
-import type { Clip } from '../../types/clip'
+import type { Clip } from '@/features/clips/types'
 
 interface EditClipDialogProps {
     children: React.ReactNode;

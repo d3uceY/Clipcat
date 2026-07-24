@@ -4,8 +4,8 @@ import DeleteButton from "./delete-button";
 import { DeleteAllClips, DeletePinnedClips, DeleteUnpinnedClips, ConfirmDelete } from "../../bindings/Clipcat/app";
 import { useGSAP } from "@gsap/react";
 import { gsap } from "gsap";
-import { useClips } from "@/context/ClipContext";
-import { playSound } from "@/helpers/playSound";
+import { useClips } from "@/contexts/ClipContext";
+import { playSound } from "@/utils/play-sound";
 
 
 export default function DeleteClipsDialog({ children }: { children: React.ReactNode }) {

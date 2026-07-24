@@ -54,7 +54,7 @@ C.registerDarwinHotkey()          // clipboard_darwin.c (called after 500ms dela
   └─ RegisterEventHotKey(kVK_ANSI_V, controlKey|shiftKey, id='CLIP'/1)
 
 hotkeyHandler (C callback)
-  └─ darwinHotkeyFired()          ← exported Go callback
+  └─ darwinHotkeyFired()          <- exported Go callback
        ├─ capturePreviousAppDarwin()
        └─ onHotkeyCallback()       ->  app shows window
 

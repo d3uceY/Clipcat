@@ -6,9 +6,9 @@ import {
     DialogContent,
 } from "@/components/ui/dialog"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { useClips } from "@/context/ClipContext"
-import { GetPlatform } from "../../bindings/Clipcat/app"
-import HowToUseDialog from "./how-to-use-dialog"
+import { useClips } from "@/contexts/ClipContext"
+import { GetPlatform } from "../../../../bindings/Clipcat/app"
+import HowToUseDialog from "@/features/settings/components/how-to-use-dialog"
 
 interface Command {
     id: string
@@ -175,8 +175,8 @@ export default function CommandPalette() {
 
                         {/* Footer */}
                         <div className="flex items-center gap-4 pt-2 border-t border-amber-600/20 text-[10px] text-muted-foreground">
-                            <span>↑↓ navigate</span>
-                            <span>↵ select</span>
+                            <span>â†‘â†“ navigate</span>
+                            <span>â†µ select</span>
                             <span>esc close</span>
                         </div>
                     </ScrollArea>

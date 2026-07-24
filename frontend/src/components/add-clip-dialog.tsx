@@ -1,7 +1,7 @@
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
 import { useState } from "react"
 import { Check, X, Pin } from "lucide-react"
-import { useClips } from "../context/ClipContext"
+import { useClips } from "@/contexts/ClipContext"
 
 interface AddClipDialogProps {
     children: React.ReactNode;

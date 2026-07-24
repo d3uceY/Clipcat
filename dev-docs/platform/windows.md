@@ -55,7 +55,7 @@ The 150 ms debounce is enforced in the message handler itself using `lastClipboa
 RegisterHotKey(hwnd, id=1, MOD_CONTROL|MOD_SHIFT, VK_V)
 
 wndProc(WM_HOTKEY, wParam=1)
-  ├─ capturePreviousWindow()   ← snapshot before Clipcat steals focus
+  ├─ capturePreviousWindow()   <- snapshot before Clipcat steals focus
   └─ onHotkeyCallback()        ->  app shows window, brings to front
 ```
 

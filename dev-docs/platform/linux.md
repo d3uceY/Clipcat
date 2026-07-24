@@ -45,7 +45,7 @@ initX11Hotkey()          // x11_hotkey_linux.c
 runX11EventLoop()        // blocks forever
   └─ XNextEvent loop
        └─ KeyPress + Ctrl+Shift+V match
-            └─ linuxHotkeyFired()   ← exported Go callback
+            └─ linuxHotkeyFired()   <- exported Go callback
                  ├─ capturePreviousAppLinux()
                  └─ onHotkeyCallback()  ->  app shows window
 ```

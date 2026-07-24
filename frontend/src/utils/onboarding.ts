@@ -14,7 +14,7 @@ export function startTour() {
         overlayColor: "rgba(0,0,0,0.45)",
         popoverClass: "clipcat-tour",
         nextBtnText: "Next ->",
-        prevBtnText: "← Back",
+        prevBtnText: "<- Back",
         doneBtnText: "Got it!",
         onDestroyed: () => {
             localStorage.setItem(STORAGE_KEY, "true")

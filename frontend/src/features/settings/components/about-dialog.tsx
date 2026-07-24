@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { useEffect, useState } from "react";
 import { Browser } from "@wailsio/runtime";
-import { GetPlatform } from "../../bindings/Clipcat/app";
+import { GetPlatform } from "../../../../bindings/Clipcat/app";
 import HowToUseDialog from "./how-to-use-dialog";
 
 export interface UpdateInfo {

@@ -1,19 +1,19 @@
 import { useState, useRef, useMemo, memo, useEffect, lazy, Suspense } from "react"
 import { Tag, Copy, Pin, Trash2, Pencil, ClipboardPaste, ShieldAlert, ShieldCheck, X, Network } from "lucide-react"
-import type { Clip } from '../../types/clip'
-import { useClips } from "@/context/ClipContext"
-import { useRelativeTime } from "@/hooks/use-relative-time"
-import { useCardRowSpan } from "@/hooks/use-card-row-span"
-import { insertLinks } from "@/helpers/insertLinks"
-import { TogglePin, Delete, PasteToWindow, GetClipImage } from "../../bindings/Clipcat/app"
-import { playSound } from "@/helpers/playSound"
+import type { Clip } from '@/features/clips/types'
+import { useClips } from "@/contexts/ClipContext"
+import { useRelativeTime } from "@/features/clips/hooks/use-relative-time"
+import { useCardRowSpan } from "@/features/clips/hooks/use-card-row-span"
+import { insertLinks } from "@/features/clips/utils/insert-links"
+import { TogglePin, Delete, PasteToWindow, GetClipImage } from "../../../../bindings/Clipcat/app"
+import { playSound } from "@/utils/play-sound"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
-import { ScrollArea } from "./ui/scroll-area-white"
-import { ScrollArea as ScrollAreaPencil } from "./ui/scroll-area-pencil"
-import { ScrollArea as ScrollAreaDark } from "./ui/scroll-area"
-import { copyBase64ImageToClipboard } from "@/helpers/copyBase64Image"
+import { ScrollArea } from "@/components/ui/scroll-area-white"
+import { ScrollArea as ScrollAreaPencil } from "@/components/ui/scroll-area-pencil"
+import { ScrollArea as ScrollAreaDark } from "@/components/ui/scroll-area"
+import { copyBase64ImageToClipboard } from "@/features/clips/utils/copy-base64-image"
 import { Browser } from "@wailsio/runtime"
-const EditClipDialog = lazy(() => import("./edit-clip-dialog"))
+const EditClipDialog = lazy(() => import("@/components/edit-clip-dialog"))
 const ImageLightbox = lazy(() => import("./image-lightbox"))
 
 interface ClipCardProps {
@@ -106,7 +106,7 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
         }
     }, [])
 
-    // ── Handlers ──────────────────────────────────────────────────────────────
+    // â”€â”€ Handlers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     const handleCopy = async () => {
         playSound("/sounds/paper-copy.wav", soundOn, 1)
@@ -273,7 +273,7 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
                     </div>
                 )}
 
-                {/* Label input - grid 0fr→1fr for height transition */}
+                {/* Label input - grid 0frâ†’1fr for height transition */}
                 <div className="relative shrink-0">
                     <div
                         className={`grid overflow-hidden [transition:grid-template-rows_0.2s_ease]${isEditingLabel ? " grid-rows-[1fr]" : " grid-rows-[0fr]"}`}
@@ -285,7 +285,7 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
                                     ref={labelInputRef}
                                     type="text"
                                     className="w-full text-xs px-1 py-0.5 bg-transparent border-b border-dashed border-amber-600/50 outline-none text-foreground placeholder:text-muted-foreground/50"
-                                    placeholder="Enter label…"
+                                    placeholder="Enter labelâ€¦"
                                     value={editingLabel}
                                     onChange={(e) => setEditingLabel(e.target.value)}
                                     onBlur={saveLabel}

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, lazy, Suspense } from "react"
+import { useState, useRef, useEffect, useCallback, lazy, Suspense } from "react"
 import type { FilteredClips } from '../workers/search.worker'
 import { startTour, hasSeenTour } from "@/helpers/onboarding"
 import { Search, ShieldAlert, X, Plus, Trash2, Command, Zap } from "lucide-react"
@@ -11,7 +11,7 @@ import { useGSAP } from '@gsap/react';
 import { playSound } from "@/helpers/playSound";
 import WindowControls from "./window-controls";
 import CommandPalette from "./command-palette";
-import { GetVersion } from "../../bindings/Clipcat/app";
+import { GetVersion, PasteToWindow } from "../../bindings/Clipcat/app";
 import { Browser } from "@wailsio/runtime";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import type { UpdateInfo } from "./about-dialog";
@@ -33,6 +33,42 @@ function PageContent() {
     const { clips, soundOn, hideContent, clipsLoaded, activeLabels, autoHideSensitive, isMiniClip, isQuickPaste, requestQuickPaste } = useClips()
     const searchInputRef = useRef<HTMLInputElement>(null)
     const searchBarRef = useRef<HTMLDivElement>(null)
+    const [selectedIndex, setSelectedIndex] = useState(-1)
+    // Map ref avoids context/abstraction — per-clip paste callbacks registered by ClipListItem
+    const pasteMapRef = useRef<Map<string, () => Promise<void>>>(new Map())
+
+    const registerPaste = useCallback((id: string, fn: () => Promise<void>) => {
+        pasteMapRef.current.set(id, fn)
+    }, [])
+
+    // Stable identity so ClipListItem's memo comparator isn't defeated by a fresh
+    // closure every render - index is passed as a plain prop instead.
+    const handleSelect = useCallback((index: number) => setSelectedIndex(index), [])
+
+    // Temporarily tucks the search bar away while arrow-key navigating, without
+    // clearing the typed filter - it reappears once navigation pauses.
+    const [navHideActive, setNavHideActive] = useState(false)
+    const navHideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+    const NAV_HIDE_RESTORE_DELAY = 900
+
+    const suppressSearchForNav = useCallback(() => {
+        setNavHideActive(true)
+        if (navHideTimerRef.current) clearTimeout(navHideTimerRef.current)
+        navHideTimerRef.current = setTimeout(() => {
+            setNavHideActive(false)
+            navHideTimerRef.current = null
+        }, NAV_HIDE_RESTORE_DELAY)
+    }, [])
+
+    // Genuine close (Ctrl+F / toggle button) cancels any pending nav-hide restore
+    useEffect(() => {
+        if (!searchVisible) {
+            if (navHideTimerRef.current) clearTimeout(navHideTimerRef.current)
+            setNavHideActive(false)
+        }
+    }, [searchVisible])
+
+    useEffect(() => () => { if (navHideTimerRef.current) clearTimeout(navHideTimerRef.current) }, [])
 
     // Track md breakpoint (768px) so small screens get the collapsible search bar
     useEffect(() => {
@@ -204,6 +240,36 @@ function PageContent() {
         searchWorkerRef.current?.postMessage({ clips, searchQuery, activeLabels })
     }, [clips, searchQuery, activeLabels])
 
+    // Flat list length (pinned first, then recent, then hidden pinned, then hidden recent)
+    const flatClipCount =
+        filteredClips.pinned.length +
+        filteredClips.recent.length +
+        (showSensitive ? filteredClips.hiddenPinned.length + filteredClips.hiddenRecent.length : 0)
+
+    // Reset selection when the clip list or search query changes
+    useEffect(() => {
+        setSelectedIndex(-1)
+    }, [filteredClips, searchQuery])
+
+    const handlePasteSelected = useCallback(async () => {
+        if (selectedIndex < 0) return
+        // Build flat clip array matching render order: pinned, recent, hiddenPinned, hiddenRecent
+        const flat = [
+            ...filteredClips.pinned,
+            ...filteredClips.recent,
+            ...(showSensitive ? filteredClips.hiddenPinned.concat(filteredClips.hiddenRecent) : []),
+        ]
+        const clip = flat[selectedIndex]
+        if (!clip) return
+        // Try registered paste callback first (handles image clips correctly)
+        const pasteFn = pasteMapRef.current.get(clip.id)
+        if (pasteFn) {
+            await pasteFn()
+        } else if (clip.type !== "image" && clip.content) {
+            await PasteToWindow(clip.content)
+        }
+    }, [selectedIndex, filteredClips, showSensitive])
+
     const hiddenCount = filteredClips.hiddenPinned.length + filteredClips.hiddenRecent.length
 
     // Toggles the sticky search bar - opens immediately, closes after GSAP animation.
@@ -216,11 +282,12 @@ function PageContent() {
     }
 
     // GSAP animate the sticky search bar - paper unfurling / rolling up
+    const barShown = searchVisible && !navHideActive
     useGSAP(() => {
         const bar = searchBarRef.current
         if (!bar) return
 
-        if (searchVisible) {
+        if (barShown) {
             gsap.set(bar, { display: 'block', height: 'auto', opacity: 0 })
             const naturalHeight = bar.offsetHeight
             gsap.fromTo(bar,
@@ -232,14 +299,16 @@ function PageContent() {
                 height: 0, opacity: 0, scaleY: 0.85, rotation: -0.5, marginBottom: 0, duration: 0.2, ease: 'power3.in',
                 onComplete: () => {
                     gsap.set(bar, { display: 'none', height: 'auto', scaleY: 1, rotation: 0 })
-                    setSearchQuery("")
+                    // Only wipe the filter on a genuine close - not a temporary nav-hide
+                    if (!searchVisible) setSearchQuery("")
                 }
             })
         }
-    }, [searchVisible])
+    }, [searchVisible, navHideActive])
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
+            // Search (exists) — always
             if (e.ctrlKey && e.key === 'f') {
                 e.preventDefault()
                 if (isSmallScreen || isMiniClip || isQuickPaste) {
@@ -247,12 +316,34 @@ function PageContent() {
                 } else {
                     searchInputRef.current?.focus()
                 }
+                return
+            }
+
+            // Arrow-key navigation — only in mini/quickpaste mode
+            if (!isMiniClip && !isQuickPaste) return
+
+            if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                e.preventDefault()
+                // Temporarily tuck the search bar away (filter stays intact) while navigating
+                if (searchVisible) suppressSearchForNav()
+                if (flatClipCount === 0) return
+                setSelectedIndex(prev => {
+                    if (prev < 0) return e.key === 'ArrowDown' ? 0 : flatClipCount - 1
+                    if (e.key === 'ArrowDown') return (prev + 1) % flatClipCount
+                    return (prev - 1 + flatClipCount) % flatClipCount
+                })
+            } else if (e.key === 'Enter' && selectedIndex >= 0) {
+                e.preventDefault()
+                if (searchVisible) suppressSearchForNav()
+                handlePasteSelected()
+            } else if (e.key === 'Escape') {
+                setSelectedIndex(-1)
             }
         }
 
         window.addEventListener('keydown', handleKeyDown)
         return () => window.removeEventListener('keydown', handleKeyDown)
-    }, [isSmallScreen, isMiniClip, isQuickPaste])
+    }, [isSmallScreen, isMiniClip, isQuickPaste, flatClipCount, selectedIndex, searchVisible, handlePasteSelected, suppressSearchForNav])
 
 
 
@@ -468,12 +559,13 @@ function PageContent() {
                         </div>
                         {isMiniClip ? (
                             <div className="flex flex-col gap-3">
-                                {filteredClips.pinned.map((clip) => (
-                                    <ClipListItem key={clip.id} clip={clip} />
+                                {filteredClips.pinned.map((clip, i) => (
+                                    <ClipListItem key={clip.id} clip={clip} index={i} isSelected={i === selectedIndex} onSelect={handleSelect} onPasteReady={registerPaste} />
                                 ))}
-                                {showSensitive && filteredClips.hiddenPinned.map((clip) => (
-                                    <ClipListItem key={clip.id} clip={clip} revealed />
-                                ))}
+                                {showSensitive && filteredClips.hiddenPinned.map((clip, i) => {
+                                    const idx = filteredClips.pinned.length + i
+                                    return <ClipListItem key={clip.id} clip={clip} revealed index={idx} isSelected={idx === selectedIndex} onSelect={handleSelect} onPasteReady={registerPaste} />
+                                })}
                             </div>
                         ) : (
                             <div className="free-form-grid-container">
@@ -499,12 +591,14 @@ function PageContent() {
                         </div>
                         {isMiniClip ? (
                             <div className="flex flex-col gap-3">
-                                {filteredClips.recent.map((clip) => (
-                                    <ClipListItem key={clip.id} clip={clip} />
-                                ))}
-                                {showSensitive && filteredClips.hiddenRecent.map((clip) => (
-                                    <ClipListItem key={clip.id} clip={clip} revealed />
-                                ))}
+                                {filteredClips.recent.map((clip, i) => {
+                                    const idx = filteredClips.pinned.length + (showSensitive ? filteredClips.hiddenPinned.length : 0) + i
+                                    return <ClipListItem key={clip.id} clip={clip} index={idx} isSelected={idx === selectedIndex} onSelect={handleSelect} onPasteReady={registerPaste} />
+                                })}
+                                {showSensitive && filteredClips.hiddenRecent.map((clip, i) => {
+                                    const idx = filteredClips.pinned.length + filteredClips.hiddenPinned.length + filteredClips.recent.length + i
+                                    return <ClipListItem key={clip.id} clip={clip} revealed index={idx} isSelected={idx === selectedIndex} onSelect={handleSelect} onPasteReady={registerPaste} />
+                                })}
                             </div>
                         ) : (
                             <div className="free-form-grid-container">

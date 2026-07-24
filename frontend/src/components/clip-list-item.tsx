@@ -1,5 +1,5 @@
 import { Pin, Trash2, ShieldCheck } from "lucide-react"
-import { useState, memo } from "react"
+import { useState, memo, useEffect, useRef, useCallback } from "react"
 import type { Clip } from '../../types/clip'
 import { TogglePin, Delete, PasteToWindow, FocusAndPaste, GetClipImage } from "../../bindings/Clipcat/app"
 import { useClips } from "@/context/ClipContext"
@@ -8,13 +8,20 @@ import { playSound } from "@/helpers/playSound"
 interface ClipListItemProps {
     clip: Clip
     revealed?: boolean
+    isSelected?: boolean
+    index?: number
+    // Stable callbacks from the parent (identity never changes) - index/id are passed
+    // as plain values instead of the parent baking a new closure per item per render.
+    onSelect?: (index: number) => void
+    onPasteReady?: (id: string, fn: () => Promise<void>) => void
 }
 
-function ClipListItem({ clip, revealed = false }: ClipListItemProps) {
+function ClipListItem({ clip, revealed = false, isSelected = false, index, onSelect, onPasteReady }: ClipListItemProps) {
     const [isDeleted, setIsDeleted] = useState(false)
     const { soundOn, hideContent, unhideClip } = useClips()
+    const itemRef = useRef<HTMLDivElement>(null)
 
-    const handlePaste = async () => {
+    const handlePaste = useCallback(async () => {
         playSound("/sounds/paper-copy.wav", soundOn, 1)
         try {
             if (clip.type === "image") {
@@ -33,7 +40,17 @@ function ClipListItem({ clip, revealed = false }: ClipListItemProps) {
         } catch (err) {
             console.error("Paste failed:", err)
         }
-    }
+    }, [clip, soundOn])
+
+    // Register paste callback with parent so Enter key can trigger it
+    useEffect(() => {
+        onPasteReady?.(clip.id, handlePaste)
+    }, [clip.id, handlePaste, onPasteReady])
+
+    // Keep the selected item in view while navigating with arrow keys
+    useEffect(() => {
+        if (isSelected) itemRef.current?.scrollIntoView({ block: 'nearest' })
+    }, [isSelected])
 
     const handlePin = async (e: React.MouseEvent) => {
         e.stopPropagation()
@@ -76,8 +93,14 @@ function ClipListItem({ clip, revealed = false }: ClipListItemProps) {
 
     return (
         <div
-            className={`hand-drawn lined thin p-3 bg-[#F9F5E6] cursor-pointer hover:bg-amber-50 active:bg-amber-100 transition-colors group relative ${clip.isPinned ? "mt-4" : ""}`}
-            onClick={handlePaste}
+            ref={itemRef}
+            className={`hand-drawn lined thin p-3 cursor-pointer transition-colors group relative ${clip.isPinned ? "mt-4" : ""} ${
+                isSelected
+                    ? "bg-amber-200 border-2 border-dashed border-amber-500"
+                    : "bg-[#F9F5E6] hover:bg-amber-50 active:bg-amber-100"
+            }`}
+            onClick={() => { if (index !== undefined) onSelect?.(index); handlePaste() }}
+            onMouseEnter={() => { if (index !== undefined) onSelect?.(index) }}
         >
             {/* Pinned indicator */}
             {clip.isPinned && (
@@ -134,5 +157,7 @@ export default memo(ClipListItem, (prev, next) =>
     prev.clip.image === next.clip.image &&
     prev.clip.isPinned === next.clip.isPinned &&
     prev.clip.isHidden === next.clip.isHidden &&
-    prev.revealed === next.revealed
+    prev.revealed === next.revealed &&
+    prev.isSelected === next.isSelected &&
+    prev.index === next.index
 )

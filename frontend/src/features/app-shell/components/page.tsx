@@ -251,8 +251,8 @@ function PageContent() {
                             <button
                                 onClick={toggleSearchVisible}
                                 className={`hand-drawn-btn lined thin flex items-center gap-2 px-3 py-1.5 text-xs! transition-all relative top-2 ${searchVisible
-                                        ? "bg-amber-200 text-amber-950"
-                                        : "bg-[#F9F5E6] text-amber-950 hover:bg-amber-100"
+                                    ? "bg-amber-200 text-amber-950"
+                                    : "bg-[#F9F5E6] text-amber-950 hover:bg-amber-100"
                                     }`}
                                 title="Search clips (Ctrl+F)"
                             >
@@ -263,8 +263,8 @@ function PageContent() {
                         <button
                             onClick={() => requestQuickPaste()}
                             className={`hand-drawn-btn lined thin flex items-center gap-2 px-3 py-1.5 text-xs! transition-all relative top-2 ${isQuickPaste
-                                    ? "bg-green-200 text-green-950"
-                                    : "bg-[#F9F5E6] text-amber-950 hover:bg-amber-100"
+                                ? "bg-green-200 text-green-950"
+                                : "bg-[#F9F5E6] text-amber-950 hover:bg-amber-100"
                                 }`}
                             title={isQuickPaste ? "Disable Quick Paste" : "Enable Quick Paste"}
                         >
@@ -275,14 +275,16 @@ function PageContent() {
                             <button
                                 onClick={() => setShowSensitive(v => !v)}
                                 className={`hand-drawn-btn lined thin flex items-center gap-2 px-3 py-1.5 text-xs transition-all relative top-2 ${showSensitive
-                                        ? "bg-amber-200 text-amber-950"
-                                        : "bg-[#F9F5E6] text-amber-950 hover:bg-amber-100"
+                                    ? "bg-amber-200 text-amber-950"
+                                    : "bg-[#F9F5E6] text-amber-950 hover:bg-amber-100"
                                     }`}
                                 title={showSensitive ? "Hide sensitive clips again" : "Reveal sensitive clips"}
                             >
                                 <ShieldAlert className="h-3.5 w-3.5 shrink-0 text-amber-700" />
                                 <span className="hidden lg:inline font-medium text-sm">Sensitive</span>
-                                <span className="flex items-center justify-center h-4 w-4 rounded-full bg-amber-300 text-amber-900 text-[10px] font-bold leading-none">
+                                <span className="flex items-center justify-center h-4 w-4 rounded-full bg-amber-300 text-amber-> A component file should only contain **JSX structure**, **local UI state** (`useState` for open/close, etc.), and **prop drilling down**. If a block of logic could be tested without rendering anything — it belongs in `utils/`, `hooks/`, `api/`, or `types/`.
+
+Your current `incident-metrics-table.tsx` is a good example of this discipline: it takes `metrics` as a prop, has zero data-fetching, zero business logic — just rendering. The `SEVERITY_COLORS` map could arguably live in `utils/` but it's small enough that co-locating it in the component file is acceptable. this is the frontend codebase rules of another codebase, use that here, refactor the whole codebase structure and file system for the frontend, tsx like we use here, we do not use any api hooks, redux or anything of that sort though, just make it relate with what we have in this codbase                 text-[10px] font-bold leading-none">
                                     {hiddenCount}
                                 </span>
                             </button>
@@ -292,37 +294,41 @@ function PageContent() {
                 </div>
 
                 {/* Sticky search bar - small screen / mini/quickpaste mode */}
+                {/* Outer wrapper stays 0-height so it never reserves flow space (stuck or not);
+                    overflow-visible lets the animated bar overlay the content below instead of pushing it down. */}
                 {(isSmallScreen || isMiniClip || isQuickPaste) && (
-                    <div
-                        ref={searchBarRef}
-                        className="sticky top-8 md:top-10 -mx-6 md:-mx-10 px-6 md:px-10 z-20"
-                        style={{ display: 'none' }}
-                    >
-                        <div className="relative max-w-md mx-auto torn-input">
-                            <div className="tape-1 absolute -top-3 left-0 h-10 w-4 bg-yellow-200/40 rotate-45 rounded-sm shadow-sm"></div>
-                            <div className="tape-2 absolute -top-3 right-0 h-10 w-4 bg-yellow-200/40 -rotate-45 rounded-sm shadow-sm"></div>
-                            <input
-                                id="tour-search"
-                                ref={searchInputRef}
-                                type="text"
-                                placeholder="Search clips... (Ctrl + F)"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                onFocus={() => setSearchFocused(true)}
-                                onBlur={() => setSearchFocused(false)}
-                                className="w-full text-base pl-4 pr-10 pt-1.5 text-foreground placeholder-gray-500 focus:outline-none shadow-xl"
-                            />
-                            {searchQuery ? (
-                                <button
-                                    onClick={() => { setSearchQuery(""); searchInputRef.current?.focus() }}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#c0bdbd] hover:text-foreground transition-colors"
-                                    title="Clear search"
-                                >
-                                    <X className="h-5 w-5" />
-                                </button>
-                            ) : (
-                                <Search className="absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-[#c0bdbd]" />
-                            )}
+                    <div className="sticky top-8 md:top-10 -mx-6 md:-mx-10 z-20 h-0 overflow-visible">
+                        <div
+                            ref={searchBarRef}
+                            className="px-6 md:px-10"
+                            style={{ display: 'none' }}
+                        >
+                            <div className="relative max-w-md mx-auto torn-input">
+                                <div className="tape-1 absolute -top-3 left-0 h-10 w-4 bg-yellow-200/40 rotate-45 rounded-sm shadow-sm"></div>
+                                <div className="tape-2 absolute -top-3 right-0 h-10 w-4 bg-yellow-200/40 -rotate-45 rounded-sm shadow-sm"></div>
+                                <input
+                                    id="tour-search"
+                                    ref={searchInputRef}
+                                    type="text"
+                                    placeholder="Search clips... (Ctrl + F)"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    onFocus={() => setSearchFocused(true)}
+                                    onBlur={() => setSearchFocused(false)}
+                                    className="w-full text-base pl-4 pr-10 pt-1.5 text-foreground placeholder-gray-500 focus:outline-none shadow-xl"
+                                />
+                                {searchQuery ? (
+                                    <button
+                                        onClick={() => { setSearchQuery(""); searchInputRef.current?.focus() }}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-[#c0bdbd] hover:text-foreground transition-colors"
+                                        title="Clear search"
+                                    >
+                                        <X className="h-5 w-5" />
+                                    </button>
+                                ) : (
+                                    <Search className="absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-[#c0bdbd]" />
+                                )}
+                            </div>
                         </div>
                     </div>
                 )}

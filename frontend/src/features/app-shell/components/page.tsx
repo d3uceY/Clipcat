@@ -46,11 +46,12 @@ function PageContent() {
         })
     }
 
-    const { suppressSearchForNav, barShown } = useNavHide(searchVisible)
+    const { suppressSearchForNav, navCooldown, barShown } = useNavHide(searchVisible)
     const { selectedIndex, hiddenCount, handleSelect, registerPaste } = useKeyboardNav({
         isSmallScreen, isMiniClip, isQuickPaste,
         filteredClips, showSensitive,
         searchVisible, toggleSearchVisible, suppressSearchForNav,
+        navCooldown,
         searchInputRef,
     })
 

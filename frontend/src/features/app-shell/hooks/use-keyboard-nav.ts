@@ -11,6 +11,7 @@ interface UseKeyboardNavOptions {
     searchVisible: boolean
     toggleSearchVisible: () => void
     suppressSearchForNav: () => void
+    navCooldown: boolean
     searchInputRef: React.RefObject<HTMLInputElement | null>
 }
 
@@ -18,6 +19,7 @@ export function useKeyboardNav({
     isSmallScreen, isMiniClip, isQuickPaste,
     filteredClips, showSensitive,
     searchVisible, toggleSearchVisible, suppressSearchForNav,
+    navCooldown,
     searchInputRef,
 }: UseKeyboardNavOptions) {
     const [selectedIndex, setSelectedIndex] = useState(-1)
@@ -60,6 +62,7 @@ export function useKeyboardNav({
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.ctrlKey && e.key === 'f') {
                 e.preventDefault()
+                if (navCooldown && searchVisible) return
                 if (isSmallScreen || isMiniClip || isQuickPaste) {
                     toggleSearchVisible()
                 } else {
@@ -90,7 +93,7 @@ export function useKeyboardNav({
 
         window.addEventListener('keydown', handleKeyDown)
         return () => window.removeEventListener('keydown', handleKeyDown)
-    }, [isSmallScreen, isMiniClip, isQuickPaste, flatClipCount, selectedIndex, searchVisible, handlePasteSelected, suppressSearchForNav, toggleSearchVisible, searchInputRef])
+    }, [isSmallScreen, isMiniClip, isQuickPaste, flatClipCount, selectedIndex, searchVisible, navCooldown, handlePasteSelected, suppressSearchForNav, toggleSearchVisible, searchInputRef])
 
     return { selectedIndex, hiddenCount, handleSelect, registerPaste }
 }

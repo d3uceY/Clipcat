@@ -21,6 +21,8 @@
         <string>10.13.0</string>
         <key>NSHighResolutionCapable</key>
         <string>true</string>
+        <key>LSUIElement</key>
+        <true/>
         <key>NSHumanReadableCopyright</key>
         <string>Copyright © 2026 d3uceY</string>
     </dict>

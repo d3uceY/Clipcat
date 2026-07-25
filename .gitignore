@@ -11,3 +11,8 @@ bin/
 # OS files
 .DS_Store
 Thumbs.db
+
+
+# Binary
+Clipcat
+Clipcat.exe

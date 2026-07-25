@@ -5,3 +5,9 @@ bin
 bin/
 .bin/
 .bin
+.task/
+
+
+# OS files
+.DS_Store
+Thumbs.db

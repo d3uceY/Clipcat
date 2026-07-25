@@ -38,6 +38,7 @@ func main() {
 		},
 		Mac: application.MacOptions{
 			ActivationPolicy: application.ActivationPolicyAccessory,
+			ApplicationShouldTerminateAfterLastWindowClosed: false,
 		},
 	})
 

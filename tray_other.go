@@ -8,13 +8,12 @@ import (
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
-//go:embed build/appicon.png
-var trayIcon []byte
+//go:embed build/appicon-other.png
+var trayIconOther []byte
 
 func (a *App) startTray() {
 	systray := a.app.SystemTray.New()
-	systray.SetTemplateIcon(trayIcon)
-	systray.SetLabel("Clipcat")
+	systray.SetTemplateIcon(trayIconOther)
 
 	menu := a.app.NewMenu()
 	menu.Add("Show Clipcat").OnClick(func(ctx *application.Context) {

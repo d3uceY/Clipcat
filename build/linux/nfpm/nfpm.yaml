@@ -1,7 +1,7 @@
 name: "Clipcat"
 arch: ${GOARCH}
 platform: "linux"
-version: "0.11.3"
+version: "0.11.4"
 section: "default"
 priority: "extra"
 maintainer: "d3uceY <onyekwelujesse1234@gmail.com>"

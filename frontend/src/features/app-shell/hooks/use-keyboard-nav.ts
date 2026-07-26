@@ -71,6 +71,13 @@ export function useKeyboardNav({
                 return
             }
 
+            if (e.key === 'Escape' && searchVisible) {
+                e.preventDefault()
+                setSelectedIndex(-1)
+                toggleSearchVisible()
+                return
+            }
+
             if (!isMiniClip && !isQuickPaste) return
 
             if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {

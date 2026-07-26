@@ -58,6 +58,7 @@ ManifestDPIAware true
 # Launch via explorer.exe so the app starts de-elevated (user token, not admin).
 # MUI_FINISHPAGE_RUN would inherit the installer's elevated token and break
 # the Ctrl+Shift+V global hotkey on non-elevated foreground windows.
+!define MUI_FINISHPAGE_RUN
 !define MUI_FINISHPAGE_RUN_FUNCTION LaunchAsUser
 !define MUI_FINISHPAGE_RUN_TEXT "Launch ${INFO_PRODUCTNAME}"
 

@@ -1,4 +1,4 @@
-//go:build linux
+//go:build darwin
 
 package main
 
@@ -18,10 +18,7 @@ func (a *App) startTray() {
 	menu := a.app.NewMenu()
 	menu.Add("Show Clipcat").OnClick(func(ctx *application.Context) {
 		a.window.Show()
-		// Brief always-on-top toggle helps bring the window forward on some
-		// window managers without leaving it permanently on top.
-		a.window.SetAlwaysOnTop(true)
-		a.window.SetAlwaysOnTop(false)
+		a.window.Focus()
 	})
 	menu.AddSeparator()
 	menu.Add("Quit").OnClick(func(ctx *application.Context) {

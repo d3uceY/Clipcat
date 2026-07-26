@@ -36,6 +36,10 @@ func main() {
 		Assets: application.AssetOptions{
 			Handler: application.AssetFileServerFS(assets),
 		},
+		Mac: application.MacOptions{
+			ActivationPolicy: application.ActivationPolicyAccessory,
+			ApplicationShouldTerminateAfterLastWindowClosed: false,
+		},
 	})
 
 	window := app.Window.NewWithOptions(application.WebviewWindowOptions{

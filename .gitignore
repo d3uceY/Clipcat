@@ -1,17 +1,24 @@
-build/bin
-node_modules
-frontend/dist
-bin
 bin/
 .bin/
-.bin
 .task/
+build/bin
+build/linux/appimage/build/
+build/windows/nsis/MicrosoftEdgeWebview2Setup.exe
 
+# Frontend
+frontend/dist/*
+!frontend/dist/.gitkeep
+frontend/node_modules/
+frontend/bindings/
 
 # OS files
 .DS_Store
 Thumbs.db
 
+# IDE
+.vscode/
+*.swp
+*.swo
 
 # Binary
 Clipcat

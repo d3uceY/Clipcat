@@ -273,7 +273,7 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
                     </div>
                 )}
 
-                {/* Label input - grid 0frâ†’1fr for height transition */}
+                {/* Label input - grid 0fr→1fr for height transition */}
                 <div className="relative shrink-0">
                     <div
                         className={`grid overflow-hidden [transition:grid-template-rows_0.2s_ease]${isEditingLabel ? " grid-rows-[1fr]" : " grid-rows-[0fr]"}`}
@@ -285,7 +285,7 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
                                     ref={labelInputRef}
                                     type="text"
                                     className="w-full text-xs px-1 py-0.5 bg-transparent border-b border-dashed border-amber-600/50 outline-none text-foreground placeholder:text-muted-foreground/50"
-                                    placeholder="Enter labelâ€¦"
+                                    placeholder="Enter label…"
                                     value={editingLabel}
                                     onChange={(e) => setEditingLabel(e.target.value)}
                                     onBlur={saveLabel}

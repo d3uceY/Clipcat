@@ -175,8 +175,8 @@ export default function CommandPalette() {
 
                         {/* Footer */}
                         <div className="flex items-center gap-4 pt-2 border-t border-amber-600/20 text-[10px] text-muted-foreground">
-                            <span>â†‘â†“ navigate</span>
-                            <span>â†µ select</span>
+                            <span>↑↓ navigate</span>
+                            <span>↵ select</span>
                             <span>esc close</span>
                         </div>
                     </ScrollArea>

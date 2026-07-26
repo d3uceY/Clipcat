@@ -225,7 +225,7 @@ export default function ClipCardOverlay({ clip, type, cardRect, onDelete, onDele
                                     ref={labelInputRef}
                                     type="text"
                                     className="w-full text-xs px-1 py-0.5 bg-transparent border-b border-dashed border-amber-600/50 outline-none text-foreground placeholder:text-muted-foreground/50"
-                                    placeholder="Enter labelâ€¦"
+                                    placeholder="Enter label…"
                                     value={editingLabel}
                                     onChange={(e) => setEditingLabel(e.target.value)}
                                     onBlur={saveLabel}
@@ -277,7 +277,7 @@ export default function ClipCardOverlay({ clip, type, cardRect, onDelete, onDele
                             className="flex items-center gap-1 text-[11px] text-muted-foreground/40 hover:text-muted-foreground/70 transition-colors cursor-text"
                         >
                             <Tag className="h-3 w-3 shrink-0" />
-                            Add labelâ€¦
+                            Add label…
                         </button>
                     )}
                 </div>

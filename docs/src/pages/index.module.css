@@ -352,6 +352,11 @@
   margin-right: auto;
 }
 
+.centered .sectionSub {
+  margin-left: auto;
+  margin-right: auto;
+}
+
 .headBreak {
   display: block;
 }

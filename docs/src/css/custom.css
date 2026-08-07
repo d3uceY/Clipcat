@@ -134,6 +134,9 @@ body {
 /* ── Navbar ─────────────────────────────────────────────── */
 .navbar {
   border-bottom: 1px solid var(--cc-line);
+}
+
+.navbar__inner {
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
 }

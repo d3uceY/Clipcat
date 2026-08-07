@@ -10,7 +10,7 @@ import { useGSAP } from '@gsap/react';
 import { playSound } from "@/utils/play-sound";
 import WindowControls from "./window-controls";
 import CommandPalette from "./command-palette";
-import { Browser } from "@wailsio/runtime";
+import { Browser, Events } from "@wailsio/runtime";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useSearchWorker } from "@/features/search/hooks/use-search-worker"
 import { useUpdateCheck } from "../hooks/use-update-check"
@@ -65,6 +65,21 @@ function PageContent() {
         const onChange = (e: MediaQueryListEvent) => setIsSmallScreen(e.matches)
         mq.addEventListener("change", onChange)
         return () => mq.removeEventListener("change", onChange)
+    }, [])
+
+    // Typing in search filters the list - jump back to the top so the first
+    // matching clip is visible.
+    useEffect(() => {
+        window.scrollTo(0, 0)
+    }, [searchQuery])
+
+    // Quick Paste re-summon (Ctrl+Shift+V after a paste hid the window): jump
+    // to the Recent section so the freshest clips are in view.
+    useEffect(() => {
+        const off = Events.On("window:quickpaste-shown", () => {
+            document.getElementById("recent-section")?.scrollIntoView({ block: "start" })
+        })
+        return off
     }, [])
 
     // Close sticky search bar when clicking outside it (and outside its toggle button)
@@ -379,7 +394,7 @@ function PageContent() {
 
                 {/* Recent Section */}
                 {(filteredClips.recent.length > 0 || (showSensitive && filteredClips.hiddenRecent.length > 0)) && (
-                    <section>
+                    <section id="recent-section" className="scroll-mt-[140px]">
                         <div className="flex items-center gap-8 mb-4">
                             <h2 className=" sm:flex hidden items-center gap-2 text-2xl font-bold text-foreground">
                                 <span className="text-2xl">📝</span>

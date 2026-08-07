@@ -410,6 +410,12 @@ func (a *App) onHotkeyFired() {
 	if alwaysOnTop, err := store.GetAlwaysOnTop(); err == nil {
 		a.window.SetAlwaysOnTop(alwaysOnTop)
 	}
+
+	// Quick Paste re-summon: the window was hidden by the last paste, so tell
+	// the frontend to jump to the Recent section where the freshest clips are.
+	if quickPaste {
+		a.app.Event.Emit("window:quickpaste-shown")
+	}
 }
 
 // --------------------------------------------------------------------------------

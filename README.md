@@ -12,7 +12,7 @@ A stylish clipboard manager that automatically saves everything you copy - text 
 ## Documentation
 
 Full documentation, feature guides, and keyboard shortcuts are available at:
-**[d3ucey.github.io/Clipcat](https://d3ucey.github.io/Clipcat/)**
+**[getclipcat.com](https://getclipcat.com/)**
 
 ## Download
 

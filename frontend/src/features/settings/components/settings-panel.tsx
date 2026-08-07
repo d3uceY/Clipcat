@@ -123,7 +123,7 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
 
         const hasClips = () => clips.recent.length > 0 || clips.pinned.length > 0;
 
-        // â”€â”€ Reusable: hand-drawn toggle â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        //  Reusable: hand-drawn toggle 
         const Toggle = ({ on, toggle, disabled }: { on: boolean; toggle: () => void; disabled?: boolean }) => (
             <button
                 onClick={() => { playSound(on ? '/sounds/switch-on.mp3' : '/sounds/switch-off.mp3', soundOn, 1); if (!disabled) toggle(); }}
@@ -136,7 +136,7 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
             </button>
         );
 
-        // â”€â”€ Reusable: a single setting row with visible description â”€â”€â”€â”€â”€
+        //  Reusable: a single setting row with visible description 
         const Row = ({ label, desc, children }: { label: string; desc?: React.ReactNode; children: React.ReactNode }) => (
             <div className="flex items-center justify-between gap-3 py-2.5">
                 <div className="flex-1 min-w-0">
@@ -147,15 +147,15 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
             </div>
         );
 
-        // â”€â”€ Separator â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        //  Separator 
         const Sep = ({ narrow }: { narrow?: boolean }) => (
             <div className={`my-3 ${narrow ? "w-1/2 mx-auto" : ""}`}>
                 <img src="/seperator.png" alt="" className="w-full opacity-40" />
             </div>
         );
 
-        // â”€â”€ Section label - a small torn strip of washi tape, same trick as
-        //     the tape squares on the home page search bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        //  Section label - a small torn strip of washi tape, same trick as
+        //     the tape squares on the home page search bar 
         const SectionLabel = ({ children }: { children: React.ReactNode }) => (
             <div className="relative inline-block mb-3 mt-1">
                 <span className="absolute -inset-x-1.5 inset-y-0.5 -rotate-1 bg-amber-200/50 rounded-[2px]" />
@@ -163,7 +163,7 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
             </div>
         );
 
-        // â”€â”€ Storage limit stepper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        //  Storage limit stepper 
         const LimitStepper = () => (
             <div className="flex flex-col items-center">
                 <button className="block w-4 -rotate-90 disabled:opacity-50" onClick={incrementLimit} disabled={limit >= 500}>
@@ -176,7 +176,7 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
             </div>
         );
 
-        // â”€â”€ Action button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        //  Action button 
         const ActionBtn = ({ onClick, children, disabled }: {
             onClick: () => void; children: React.ReactNode; disabled?: boolean
         }) => (
@@ -232,13 +232,13 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
                     same notebook rather than a separate UI system. */}
                 <div className="margin hidden sm:block opacity-30" style={{ left: "2.25rem" }} />
 
-                {/* â”€â”€ Header â”€â”€ */} 
+                {/*  Header  */} 
                 <div className="relative z-1 flex items-center justify-between px-10 max-sm:px-6 pt-10 pb-2 shrink-0">
                     <h2 className="text-lg!">Settings</h2>
                     <button onClick={onClose} className="bg-[#F8F5F0] w-7 h-7 flex items-center justify-center hand-drawn-btn lined thin text-sm! font-bold hover:opacity-70">x</button>
                 </div>
 
-                {/* â”€â”€ Tab bar â”€â”€ */}
+                {/*  Tab bar  */}
                 <div className="relative z-1 px-10 max-sm:px-5 shrink-0">
                     <div className="flex gap-1.5 flex-wrap pb-1">
                         {tabs.map((id, i) => {
@@ -268,7 +268,7 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
                     <Sep narrow />
                 </div>
 
-                {/* â”€â”€ Tab content â”€â”€ */}
+                {/*  Tab content  */}
                 <ScrollArea className="relative z-1 flex-1 min-h-0 px-12 max-sm:px-8 pb-6">
                     <div key={activeTab} ref={tabContentRef}>
 

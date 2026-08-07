@@ -261,20 +261,18 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
 
             const cleanups: Array<() => void> = [];
             tabs.forEach((tab) => {
-                const move = contextSafe((e: MouseEvent) => {
+                // gsap.quickTo reuses a single tween per property instead of
+                // creating a new tween on every mousemove — much cheaper.
+                const xTo = gsap.quickTo(tab, "x", { duration: 0.35, ease: "power2.out" });
+                const rotTo = gsap.quickTo(tab, "rotation", { duration: 0.35, ease: "power2.out" });
+
+                const move = (e: MouseEvent) => {
                     const rect = tab.getBoundingClientRect();
                     const dx = e.clientX - (rect.left + rect.width / 2);
                     const tilt = parseFloat(tab.dataset.tilt || "0");
-                    const active = tab.dataset.active === "true";
-                    gsap.to(tab, {
-                        x: dx * 0.22,
-                        rotation: tilt + dx * 0.05,
-                        y: active ? -3 : 0,
-                        duration: 0.35,
-                        ease: "power2.out",
-                        overwrite: "auto",
-                    });
-                });
+                    xTo(dx * 0.22);
+                    rotTo(tilt + dx * 0.05);
+                };
                 const leave = contextSafe(() => {
                     const tilt = parseFloat(tab.dataset.tilt || "0");
                     const active = tab.dataset.active === "true";
@@ -488,7 +486,7 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
                                     data-tilt={tabTilt[i]}
                                     data-active={isActive ? "true" : "false"}
                                     onClick={() => setActiveTab(id)}
-                                    className={`relative flex items-center gap-1.5 text-[11px]! px-3 py-1.5 capitalize transition-colors hand-drawn-btn focus-visible:ring-2 focus-visible:ring-amber-500/60 focus-visible:outline-none ${
+                                    className={`relative flex items-center gap-1.5 text-[11px]! px-3 py-1.5 capitalize transition-colors hand-drawn-btn will-change-transform focus-visible:ring-2 focus-visible:ring-amber-500/60 focus-visible:outline-none ${
                                         isActive
                                             ? `font-bold lined thin ${tabAccent[id]} shadow-[0_8px_16px_-8px_rgba(0,0,0,0.35)]`
                                             : "opacity-45 hover:opacity-75"

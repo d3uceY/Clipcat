@@ -1,13 +1,15 @@
-import { useState, useEffect, useRef, forwardRef } from "react";
+import { useState, useEffect, useRef, useCallback, forwardRef, useOptimistic } from "react";
 import { Browser } from "@wailsio/runtime";
 import { useClips } from "@/contexts/ClipContext";
 import { playSound } from "@/utils/play-sound";
 import { UpdateStorageLimit, GetStorageLimit, GetClips, DeleteAllClips, DeletePinnedClips, DeleteUnpinnedClips, GetSyncSettings, SaveSyncSettings, ConfirmDelete } from "../../../../bindings/Clipcat/app";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { RefreshCw, Download, Trash2, Save, Eye, EyeOff } from "lucide-react";
+import { RefreshCw, Download, Trash2, Save, Eye, EyeOff, AppWindow, ClipboardList, Cpu, ShieldCheck, Network, type LucideIcon } from "lucide-react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import type { UpdateInfo } from "./about-dialog";
+
+gsap.registerPlugin(useGSAP);
 
 type SettingsTab = "window" | "clipboard" | "system" | "privacy" | "network";
 
@@ -19,6 +21,8 @@ interface SettingsPanelProps {
     updateAvailable?: UpdateInfo | null;
     onCheckUpdate?: () => Promise<void>;
     platform: string;
+    /** True while the panel is open — gates the ink entrance choreography. */
+    open?: boolean;
 }
 
 /**
@@ -26,7 +30,7 @@ interface SettingsPanelProps {
  * Uses forwardRef so the parent (WindowControls) can animate it with GSAP.
  */
 const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
-    ({ onClose, onQuickPasteToggle, updateAvailable, onCheckUpdate, platform }, ref) => {
+    ({ onClose, onQuickPasteToggle, updateAvailable, onCheckUpdate, platform, open = false }, ref) => {
         const {
             soundOn, toggleSound,
             isMiniClip, toggleMiniClip,
@@ -52,6 +56,35 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
         const [syncPeerCount, setSyncPeerCount] = useState(0);
         const [isSyncSaving, setIsSyncSaving] = useState(false);
         const [showPassphrase, setShowPassphrase] = useState(false);
+
+
+        const [optimisticMiniClip, setOptimisticMiniClip] = useOptimistic(
+            isMiniClip,
+            (_state, next: boolean) => next
+        );
+
+        const handleToggleMiniClip = () => {
+            setOptimisticMiniClip(!optimisticMiniClip);
+            void toggleMiniClip();
+        };
+
+        // --- Animation refs & helpers -----------------------------------------
+        const tabStripRef = useRef<HTMLDivElement>(null);
+        const tabContentRef = useRef<HTMLDivElement>(null);
+        const limitRef = useRef<HTMLSpanElement>(null);
+        const ctxSafeRef = useRef<((fn: () => void) => () => void) | null>(null);
+
+        // Local, non-nullable ref for GSAP scoping — stays in sync with the
+        // forwarded ref so the parent (WindowControls) can still animate the root.
+        const rootRef = useRef<HTMLDivElement>(null);
+        const setRootRef = useCallback((el: HTMLDivElement | null) => {
+            rootRef.current = el;
+            if (typeof ref === "function") ref(el);
+            else if (ref) (ref as React.MutableRefObject<HTMLDivElement | null>).current = el;
+        }, [ref]);
+
+        const prefersReducedMotion = () =>
+            typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
         useEffect(() => {
             GetStorageLimit().then(setLimit).catch(() => { });
@@ -121,24 +154,184 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
             }
         };
 
+        // ------------------------------------------------------------------
+        //  Motion choreography — ink on paper
+        // ------------------------------------------------------------------
+
+        // Small rubber-stamp press shared by toggles, steppers and action buttons.
+        const press = (el: HTMLElement | null, r = -4, s = 0.78) => {
+            if (!el || !ctxSafeRef.current || prefersReducedMotion()) return;
+            const run = ctxSafeRef.current(() => {
+                gsap.fromTo(
+                    el,
+                    { scale: s, rotation: r },
+                    { scale: 1, rotation: 0, duration: 0.45, ease: "elastic.out(1, 0.5)" }
+                );
+            });
+            run();
+        };
+
+        // Entrance: the giant "Settings" writes itself in, the rubber stamp and
+        // tape land, then the flags and first page's rows get stamped down.
+        // Runs once per open (parent drives open via the `open` prop).
+        useGSAP(() => {
+            if (!open || prefersReducedMotion()) return;
+            const tl = gsap.timeline({ defaults: { ease: "expo.out" } });
+            tl.fromTo(
+                ".settings-title-char",
+                { y: 70, rotation: -10, opacity: 0, transformOrigin: "left bottom" },
+                { y: 0, rotation: 0, opacity: 1, duration: 0.6, stagger: 0.05, ease: "expo.out" },
+                0.1
+            )
+                .fromTo(".settings-tagline", { y: 14, opacity: 0 }, { y: 0, opacity: 1, duration: 0.45 }, "-=0.4")
+                .fromTo(".settings-stamp", { scale: 0.4, rotation: -24, opacity: 0 }, { scale: 1, rotation: 5, duration: 0.5, ease: "back.out(2.4)" }, "-=0.3")
+                .fromTo(".settings-tape", { scaleX: 0, opacity: 0 }, { scaleX: 1, opacity: 1, duration: 0.35, ease: "power3.out", stagger: 0.07 }, "-=0.3")
+                .fromTo("[data-tab]", { y: 18, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, stagger: 0.045 }, "-=0.35")
+                .to('[data-tab][data-active="true"]', { y: -3, scale: 1.06, rotation: 0, duration: 0.4, ease: "back.out(1.5)" }, "-=0.3")
+                .fromTo(
+                    ".settings-label",
+                    { y: -16, rotation: -6, opacity: 0, transformOrigin: "left top" },
+                    { y: 0, rotation: 0, opacity: 1, duration: 0.45, ease: "back.out(2)" },
+                    "-=0.2"
+                )
+                .fromTo(
+                    ".settings-row",
+                    { y: 24, rotation: 1.2, opacity: 0, transformOrigin: "left center" },
+                    { y: 0, rotation: 0, opacity: 1, duration: 0.5, ease: "back.out(1.7)", stagger: 0.06 },
+                    "-=0.3"
+                );
+        }, { dependencies: [open], scope: rootRef, revertOnUpdate: true });
+
+        // Tab switch: settle the flags and stamp the new page's rows in.
+        useGSAP(() => {
+            if (!open || prefersReducedMotion()) return;
+
+            if (tabStripRef.current) {
+                const tabs = Array.from(tabStripRef.current.querySelectorAll<HTMLElement>("[data-tab]"));
+                tabs.forEach((tab) => {
+                    const tilt = parseFloat(tab.dataset.tilt || "0");
+                    const active = tab.dataset.active === "true";
+                    gsap.to(tab, {
+                        y: active ? -3 : 0,
+                        rotation: active ? 0 : tilt,
+                        scale: active ? 1.06 : 1,
+                        duration: 0.45,
+                        ease: "back.out(1.5)",
+                        overwrite: "auto",
+                    });
+                });
+            }
+
+            if (tabContentRef.current) {
+                gsap.fromTo(
+                    tabContentRef.current,
+                    { opacity: 0, y: 6, rotation: 0.5, scale: 0.99, transformOrigin: "center top" },
+                    { opacity: 1, y: 0, rotation: 0, scale: 1, duration: 0.28, ease: "power2.out" }
+                );
+            }
+            gsap.fromTo(
+                ".settings-label",
+                { y: -16, rotation: -6, opacity: 0, transformOrigin: "left top" },
+                { y: 0, rotation: 0, opacity: 1, duration: 0.45, ease: "back.out(2)" }
+            );
+            gsap.fromTo(
+                ".settings-row",
+                { y: 24, rotation: 1.2, opacity: 0, transformOrigin: "left center" },
+                { y: 0, rotation: 0, opacity: 1, duration: 0.5, ease: "back.out(1.7)", stagger: 0.06, delay: 0.06 }
+            );
+        }, { dependencies: [activeTab], scope: rootRef, revertOnUpdate: true });
+
+        // Magnetic tab flags + resting tilt. Attach once for the panel's lifetime
+        // so switching tabs never rebuilds listeners.
+        useGSAP((_ctx, contextSafe) => {
+            if (contextSafe) ctxSafeRef.current = contextSafe;
+            const strip = tabStripRef.current;
+            if (!strip) return;
+            const tabs = Array.from(strip.querySelectorAll<HTMLElement>("[data-tab]"));
+            if (tabs.length === 0) return;
+
+            tabs.forEach((tab) => {
+                const tilt = parseFloat(tab.dataset.tilt || "0");
+                const active = tab.dataset.active === "true";
+                gsap.set(tab, { rotation: active ? 0 : tilt, y: active ? -3 : 0, scale: active ? 1.06 : 1 });
+            });
+
+            if (!contextSafe) return;
+            if (!window.matchMedia("(hover: hover)").matches || prefersReducedMotion()) return;
+
+            const cleanups: Array<() => void> = [];
+            tabs.forEach((tab) => {
+                const move = contextSafe((e: MouseEvent) => {
+                    const rect = tab.getBoundingClientRect();
+                    const dx = e.clientX - (rect.left + rect.width / 2);
+                    const tilt = parseFloat(tab.dataset.tilt || "0");
+                    const active = tab.dataset.active === "true";
+                    gsap.to(tab, {
+                        x: dx * 0.22,
+                        rotation: tilt + dx * 0.05,
+                        y: active ? -3 : 0,
+                        duration: 0.35,
+                        ease: "power2.out",
+                        overwrite: "auto",
+                    });
+                });
+                const leave = contextSafe(() => {
+                    const tilt = parseFloat(tab.dataset.tilt || "0");
+                    const active = tab.dataset.active === "true";
+                    gsap.to(tab, {
+                        x: 0,
+                        rotation: active ? 0 : tilt,
+                        y: active ? -3 : 0,
+                        scale: active ? 1.06 : 1,
+                        duration: 0.55,
+                        ease: "elastic.out(1, 0.4)",
+                    });
+                });
+                tab.addEventListener("mousemove", move);
+                tab.addEventListener("mouseleave", leave);
+                cleanups.push(() => {
+                    tab.removeEventListener("mousemove", move);
+                    tab.removeEventListener("mouseleave", leave);
+                });
+            });
+            return () => cleanups.forEach((fn) => fn());
+        }, { scope: tabStripRef });
+
+        // The limit number "ticks" whenever the stepper changes it.
+        useGSAP(() => {
+            const el = limitRef.current;
+            if (!el || prefersReducedMotion()) return;
+            gsap.fromTo(el, { scale: 1.35, rotation: -3 }, { scale: 1, rotation: 0, duration: 0.45, ease: "back.out(2.5)" });
+        }, { dependencies: [limit] });
+
         const hasClips = () => clips.recent.length > 0 || clips.pinned.length > 0;
 
-        //  Reusable: hand-drawn toggle 
-        const Toggle = ({ on, toggle, disabled }: { on: boolean; toggle: () => void; disabled?: boolean }) => (
-            <button
-                onClick={() => { playSound(on ? '/sounds/switch-on.mp3' : '/sounds/switch-off.mp3', soundOn, 1); if (!disabled) toggle(); }}
-                className="menu-switch-container block h-6 shrink-0 disabled:opacity-50"
-                disabled={disabled}
-            >
-                {on
-                    ? <img src="/on.png" alt="" className="block h-full" />
-                    : <img src="/off.png" alt="" className="block h-full" />}
-            </button>
-        );
+        //  Reusable: hand-drawn toggle — the whole switch "flicks" with a press
+        const Toggle = ({ on, toggle, disabled }: { on: boolean; toggle: () => void; disabled?: boolean }) => {
+            const btnRef = useRef<HTMLButtonElement>(null);
+            return (
+                <button
+                    ref={btnRef}
+                    onClick={() => {
+                        playSound(on ? '/sounds/switch-on.mp3' : '/sounds/switch-off.mp3', soundOn, 1);
+                        if (disabled) return;
+                        press(btnRef.current, on ? -8 : 8);
+                        toggle();
+                    }}
+                    className="menu-switch-container relative block h-6 shrink-0 rounded disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-amber-500/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#F9F5E6] focus-visible:outline-none"
+                    disabled={disabled}
+                    aria-pressed={on}
+                >
+                    {on
+                        ? <img src="/on.png" alt="" className="block h-full drop-shadow-[0_2px_2px_rgba(0,0,0,0.25)]" />
+                        : <img src="/off.png" alt="" className="block h-full drop-shadow-[0_2px_2px_rgba(0,0,0,0.25)]" />}
+                </button>
+            );
+        };
 
-        //  Reusable: a single setting row with visible description 
+        //  Reusable: a single setting row — stamped onto the ruled page
         const Row = ({ label, desc, children }: { label: string; desc?: React.ReactNode; children: React.ReactNode }) => (
-            <div className="flex items-center justify-between gap-3 py-2.5">
+            <div className="settings-row flex items-center justify-between gap-3 py-3 border-b border-dashed border-foreground/10 last:border-0">
                 <div className="flex-1 min-w-0">
                     <p className="text-sm! leading-snug">{label}</p>
                     {desc && <p className="text-[11px]! opacity-45 mt-0.5 leading-snug">{desc}</p>}
@@ -147,49 +340,67 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
             </div>
         );
 
-        //  Separator 
+        //  Separator
         const Sep = ({ narrow }: { narrow?: boolean }) => (
             <div className={`my-3 ${narrow ? "w-1/2 mx-auto" : ""}`}>
                 <img src="/seperator.png" alt="" className="w-full opacity-40" />
             </div>
         );
 
-        //  Section label - a small torn strip of washi tape, same trick as
-        //     the tape squares on the home page search bar 
+        //  Section label — a torn strip of washi tape, same trick as the tape
+        //  squares on the home page search bar
         const SectionLabel = ({ children }: { children: React.ReactNode }) => (
-            <div className="relative inline-block mb-3 mt-1">
+            <div className="settings-label relative inline-block mb-3 mt-1">
                 <span className="absolute -inset-x-1.5 inset-y-0.5 -rotate-1 bg-amber-200/50 rounded-[2px]" />
                 <p className="relative text-[10px]! uppercase tracking-widest font-bold text-amber-900/70 px-0.5">{children}</p>
             </div>
         );
 
-        //  Storage limit stepper 
+        //  Storage limit stepper
         const LimitStepper = () => (
             <div className="flex flex-col items-center">
-                <button className="block w-4 -rotate-90 disabled:opacity-50" onClick={incrementLimit} disabled={limit >= 500}>
+                <button
+                    className="block w-4 -rotate-90 rounded disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-amber-500/60 focus-visible:outline-none"
+                    onClick={(e) => { press(e.currentTarget, -8); incrementLimit(); }}
+                    disabled={limit >= 500}
+                    aria-label="Increase clip limit"
+                >
                     <img src="/arrow.png" alt="increase" className="h-full block" />
                 </button>
-                <span className="text-sm! text-center tabular-nums">{limit}</span>
-                <button className="block w-4 rotate-90 disabled:opacity-50" onClick={decrementLimit} disabled={limit <= 100}>
+                <span ref={limitRef} className="inline-block text-sm! text-center tabular-nums">{limit}</span>
+                <button
+                    className="block w-4 rotate-90 rounded disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-amber-500/60 focus-visible:outline-none"
+                    onClick={(e) => { press(e.currentTarget, 8); decrementLimit(); }}
+                    disabled={limit <= 100}
+                    aria-label="Decrease clip limit"
+                >
                     <img src="/arrow.png" alt="decrease" className="h-full block" />
                 </button>
             </div>
         );
 
-        //  Action button 
+        //  Action button — a quick rubber-stamp press
         const ActionBtn = ({ onClick, children, disabled }: {
             onClick: () => void; children: React.ReactNode; disabled?: boolean
         }) => (
             <button
-                onClick={onClick}
+                onClick={(e) => { if (disabled) return; press(e.currentTarget, 2, 0.92); onClick(); }}
                 disabled={disabled}
-                className="flex items-center gap-1 text-xs! px-2 py-1 hand-drawn-btn lined thin font-bold hover:opacity-70 transition-opacity disabled:opacity-40"
+                className="flex items-center gap-1 text-xs! px-2 py-1 hand-drawn-btn lined thin font-bold hover:opacity-70 transition-opacity disabled:opacity-40 focus-visible:ring-2 focus-visible:ring-amber-500/60 focus-visible:ring-offset-1 focus-visible:outline-none"
             >
                 {children}
             </button>
         );
 
         const tabs: SettingsTab[] = ["window", "clipboard", "system", "privacy", "network"];
+
+        const tabIcons: Record<SettingsTab, LucideIcon> = {
+            window: AppWindow,
+            clipboard: ClipboardList,
+            system: Cpu,
+            privacy: ShieldCheck,
+            network: Network,
+        };
 
         const tabAccent: Record<SettingsTab, string> = {
             window: "text-[#41403e] bg-[#F9F5E6]",
@@ -200,7 +411,7 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
         };
         // A hair of rotation per tab so the row reads like a set of hand-stuck
         // paper flags rather than a uniform machined tab strip.
-        const tabTilt = ["-1deg", "0.6deg", "-0.5deg", "0.8deg", "-0.6deg"];
+        const tabTilt = [-1, 0.6, -0.5, 0.8, -0.6];
 
         const activeDot = (id: SettingsTab) => {
             if (id === "privacy" && ignoreList.length > 0) return ignoreList.length;
@@ -209,53 +420,82 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
             return null;
         };
 
-        // Animate tab content on switch - paper page settle
-        const tabContentRef = useRef<HTMLDivElement>(null);
-        useGSAP(() => {
-            if (!tabContentRef.current) return;
-            gsap.fromTo(tabContentRef.current,
-                { opacity: 0, y: 6, rotation: 1, scale: 0.98, transformOrigin: 'center top' },
-                { opacity: 1, y: 0, rotation: 0, scale: 1, duration: 0.3, ease: 'power4.out' }
-            );
-        }, { dependencies: [activeTab], scope: tabContentRef });
-
-
         return (
             <div
-                ref={ref}
+                ref={setRootRef}
                 className="setting-dialog relative z-10 flex flex-col
                            w-full h-full
-                           md:w-[74vw] max-w-200 md:h-[74vh]" 
+                           md:w-[74vw] max-w-200 md:h-[74vh]"
             >
                 {/* Notebook margin rule - the same red ruling used on the clip
                     detail page, so Settings still reads as a page from the
                     same notebook rather than a separate UI system. */}
                 <div className="margin hidden sm:block opacity-30" style={{ left: "2.25rem" }} />
 
-                {/*  Header  */} 
-                <div className="relative z-1 flex items-center justify-between px-10 max-sm:px-6 pt-10 pb-2 shrink-0">
-                    <h2 className="text-lg!">Settings</h2>
-                    <button onClick={onClose} className="bg-[#F8F5F0] w-7 h-7 flex items-center justify-center hand-drawn-btn lined thin text-sm! font-bold hover:opacity-70">x</button>
-                </div>
+                {/* Washi tape holding the page to the backdrop */}
+                <div className="settings-tape pointer-events-none absolute -top-2.5 left-6 z-2 h-5 w-14 -rotate-6 rounded-[2px] bg-amber-200/40 shadow-sm" />
+                <div className="settings-tape pointer-events-none absolute -top-2.5 right-8 z-2 h-5 w-14 rotate-6 rounded-[2px] bg-amber-200/40 shadow-sm" />
 
-                {/*  Tab bar  */}
-                <div className="relative z-1 px-10 max-sm:px-5 shrink-0">
-                    <div className="flex gap-1.5 flex-wrap pb-1">
+                {/*  Header — giant ink title, rubber stamp + close  */}
+                <header className="relative z-1 shrink-0 px-10 max-sm:px-6 pt-9 pb-1">
+                    <div className="flex items-start justify-between gap-4">
+                        <div className="relative min-w-0">
+                            <h2
+                                aria-label="Settings"
+                                className="settings-title -rotate-1 font-bold leading-none tracking-tight text-foreground"
+                                style={{ fontSize: "clamp(2.5rem, 6.5vw, 4rem)" }}
+                            >
+                                {"Settings".split("").map((ch, i) => (
+                                    <span key={i} className="settings-title-char inline-block" aria-hidden="true">
+                                        {ch === " " ? "\u00A0" : ch}
+                                    </span>
+                                ))}
+                            </h2>
+                            <p className="settings-tagline mt-1.5 pl-1.5 text-[12px]! italic opacity-40">
+                                a fresh page for every tweak
+                            </p>
+                            <div className="settings-tape absolute -bottom-2.5 left-2 z-0 h-4 w-24 -rotate-2 rounded-[2px] bg-amber-200/40 shadow-sm" />
+                        </div>
+
+                        <div className="flex items-start gap-3">
+                            <span className="settings-stamp mt-1 hidden rotate-3 items-center rounded-sm border-2 border-dashed border-red-400/50 px-2 py-0.5 text-[10px]! font-bold uppercase tracking-widest text-red-400/70 sm:inline-flex">
+                                Clipcat
+                            </span>
+                            <button
+                                onClick={onClose}
+                                aria-label="Close settings"
+                                className="bg-[#F8F5F0] flex h-8 w-8 items-center justify-center hand-drawn-btn lined thin text-sm! font-bold transition-all hover:rotate-90 hover:opacity-70 focus-visible:ring-2 focus-visible:ring-amber-500/60 focus-visible:outline-none"
+                            >
+                                x
+                            </button>
+                        </div>
+                    </div>
+                </header>
+
+                {/*  Tab bar — paper flags, magnetic on hover  */}
+                <div ref={tabStripRef} className="relative z-1 px-10 max-sm:px-5 shrink-0">
+                    <div className="flex items-end gap-1.5 flex-wrap pb-1">
                         {tabs.map((id, i) => {
                             const dot = activeDot(id);
                             const isActive = activeTab === id;
+                            const Icon = tabIcons[id];
                             return (
                                 <button
                                     key={id}
+                                    data-tab
+                                    data-tilt={tabTilt[i]}
+                                    data-active={isActive ? "true" : "false"}
                                     onClick={() => setActiveTab(id)}
-                                    style={{ transform: isActive ? "translateY(-2px) rotate(0deg)" : `rotate(${tabTilt[i]})` }}
-                                    className={`relative flex items-center gap-1 text-[11px]! px-3 py-1.5 capitalize transition-all hand-drawn-btn hover:rotate-0! ${
-                                        isActive ? `font-bold opacity-100 lined thin ${tabAccent[id]}` : "opacity-45 hover:opacity-70"
+                                    className={`relative flex items-center gap-1.5 text-[11px]! px-3 py-1.5 capitalize transition-colors hand-drawn-btn focus-visible:ring-2 focus-visible:ring-amber-500/60 focus-visible:outline-none ${
+                                        isActive
+                                            ? `font-bold lined thin ${tabAccent[id]} shadow-[0_8px_16px_-8px_rgba(0,0,0,0.35)]`
+                                            : "opacity-45 hover:opacity-75"
                                     }`}
                                 >
-                                    {id}
+                                    <Icon size={12} strokeWidth={2.5} className="shrink-0" />
+                                    <span className="leading-none">{id}</span>
                                     {dot && (
-                                        <span className={`ml-0.5 min-w-3.5 h-3.5 rounded-full flex items-center justify-center text-[9px]! leading-none font-bold px-0.5 ${
+                                        <span className={`ml-0.5 flex min-w-3.5 h-3.5 items-center justify-center rounded-full px-0.5 text-[9px]! font-bold leading-none ${
                                             dot === "!" ? "bg-red-500/25 text-red-700" : "bg-current/15"
                                         }`}>
                                             {dot}
@@ -276,7 +516,7 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
                     {activeTab === "window" && (
                         <div className="pt-3">
                             <Row label="Mini Clip" desc={<>Compact window that stays out of your way. <kbd className="text-[10px] px-1 py-0.5 bg-foreground/10 rounded">Alt+M</kbd> to toggle.</>}>
-                                <Toggle on={isMiniClip} toggle={toggleMiniClip} />
+                                <Toggle on={optimisticMiniClip} toggle={handleToggleMiniClip} />
                             </Row>
                             <Row
                                 label="Smart Position"

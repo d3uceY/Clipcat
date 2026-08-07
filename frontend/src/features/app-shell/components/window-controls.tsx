@@ -114,6 +114,7 @@ export default function WindowControls({ updateAvailable, onCheckUpdate }: Windo
                         updateAvailable={updateAvailable}
                         onCheckUpdate={onCheckUpdate}
                         platform={platform}
+                        open={dialogOpen}
                     />
                 </div>
             </div>

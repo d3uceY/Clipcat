@@ -5,7 +5,7 @@
 <h1>Clipcat</h1>
 </div>
 
-A stylish clipboard manager that automatically saves everything you copy - text and images - so you can find it, reuse it, and manage it without thinking about it.
+A stylish clipboard manager that automatically saves everything you copy - text and images - so you can find it, reuse it, and manage it.
 
 <img width="1917" height="1026" alt="image" src="https://github.com/user-attachments/assets/b836545a-0bdd-496f-b3da-f722199357e4" />
 
@@ -87,7 +87,7 @@ sudo apt install wl-clipboard
 - **Privacy Mode** - Instantly blur all clip content for screen sharing or shoulder-surfing situations; toggle with `Alt+H`
 - <img width="1918" height="1017" alt="image" src="https://github.com/user-attachments/assets/7989e737-d9b9-4b1d-a008-9fd2ad3fd079" />
 
-- **Blocked Apps** - Add any app's process name to a blocklist so its clipboard activity is never captured. Clipcat ships with common password managers pre-blocked out of the box (1Password, Bitwarden, LastPass, KeePass/KeePassXC, Dashlane, NordPass, Enpass, RoboForm). Any default can be removed from Settings - Privacy -> Blocked Apps if you'd prefer Clipcat to capture from that app
+- **Blocked Apps** - Add any app's process name to a blocklist so its clipboard activity is never captured. Clipcat ships with common password managers pre-blocked (1Password, Bitwarden, LastPass, KeePass/KeePassXC, Dashlane, NordPass, Enpass, RoboForm). Any default can be removed from Settings - Privacy -> Blocked Apps if you'd prefer Clipcat to capture from that app
 - **Pause Capture** - Temporarily stop recording clipboard changes without closing the app
 - **Bulk Delete** - Clear all clips, only pinned, or only unpinned in one click - always with a confirmation prompt
 - **Mini Clip Mode** - Compact window that stays out of your way and stays always on top; toggle with `Alt+M`. State persists between sessions. Enables Always on Top automatically.

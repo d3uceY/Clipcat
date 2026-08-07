@@ -71,7 +71,8 @@ const config: Config = {
     image: 'img/app-screenshot.png',
     colorMode: {
       defaultMode: 'light',
-      respectPrefersColorScheme: true,
+      disableSwitch: true,
+      respectPrefersColorScheme: false,
     },
     navbar: {
       title: 'Clipcat',

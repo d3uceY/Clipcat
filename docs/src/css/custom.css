@@ -218,7 +218,7 @@ body {
 
 /* Search box (local search) */
 .navbar__search input {
-  background: var(--cc-surface) !important;
+  background-color: var(--cc-surface) !important;
   border: 1px solid var(--cc-line) !important;
   border-radius: 999px !important;
   color: var(--cc-ink) !important;

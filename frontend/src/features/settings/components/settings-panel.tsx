@@ -432,9 +432,11 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
                     same notebook rather than a separate UI system. */}
                 <div className="margin hidden sm:block opacity-30" style={{ left: "2.25rem" }} />
 
-                {/* Washi tape holding the page to the backdrop */}
-                <div className="settings-tape pointer-events-none absolute -top-2.5 left-6 z-2 h-5 w-14 -rotate-6 rounded-[2px] bg-amber-200/40 shadow-sm" />
-                <div className="settings-tape pointer-events-none absolute -top-2.5 right-8 z-2 h-5 w-14 rotate-6 rounded-[2px] bg-amber-200/40 shadow-sm" />
+                {/* Washi tape holding the page to the backdrop — bigger on desktop.
+                    The extra height grows upward into the empty backdrop space, so
+                    the tapes never cover the title, stamp, close button or tab bar. */}
+                <div className="settings-tape pointer-events-none absolute -top-2.5 left-6 z-2 h-5 w-14 -rotate-6 rounded-[2px] bg-amber-200/40 shadow-sm md:-top-7 md:left-8 md:h-12 md:w-24" />
+                <div className="settings-tape pointer-events-none absolute -top-2.5 right-8 z-2 h-5 w-14 rotate-6 rounded-[2px] bg-amber-200/40 shadow-sm md:-top-7 md:right-10 md:h-12 md:w-24" />
 
                 {/*  Header — giant ink title, rubber stamp + close  */}
                 <header className="relative z-1 shrink-0 px-10 max-sm:px-6 pt-9 pb-1">

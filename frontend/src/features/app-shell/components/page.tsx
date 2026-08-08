@@ -74,13 +74,26 @@ function PageContent() {
     }, [searchQuery])
 
     // Quick Paste re-summon (Ctrl+Shift+V after a paste hid the window): jump
-    // to the Recent section so the freshest clips are in view.
+    // to the Recent section so the freshest clips are in view, and focus the
+    // most recent clip - the one at the top of the section.
+    //
+    // A ref (reassigned on every render) lets the handler read fresh clip data
+    // without re-subscribing to the event whenever the clips list changes.
+    const recentFocusIndexRef = useRef(-1)
+    recentFocusIndexRef.current =
+        filteredClips.recent.length > 0
+            ? filteredClips.pinned.length + (showSensitive ? filteredClips.hiddenPinned.length : 0)
+            : -1
+
     useEffect(() => {
         const off = Events.On("window:quickpaste-shown", () => {
             document.getElementById("recent-section")?.scrollIntoView({ block: "start" })
+            if (recentFocusIndexRef.current >= 0) {
+                handleSelect(recentFocusIndexRef.current)
+            }
         })
         return off
-    }, [])
+    }, [handleSelect])
 
     // Close sticky search bar when clicking outside it (and outside its toggle button)
     useEffect(() => {

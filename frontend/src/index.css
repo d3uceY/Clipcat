@@ -471,6 +471,18 @@ body:before {
     /* Adjust the pixel value for desired blur level */
 }
 
+/* Mini Clip / Quick Paste render every clip as a list item. content-visibility
+   lets the browser skip painting off-screen rows, so toggling Hide Content only
+   blurs the rows actually on screen and the first paint on hotkey re-summon
+   stays cheap. CAUTION: its paint containment clips anything drawn outside a
+   row box, so the pinned indicator must live INSIDE the row (see the in-row
+   red Pin badge in clip-list-item.tsx) and hand-drawn box-shadows are clipped
+   to the row box. */
+.clip-list-item {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 96px;
+}
+
 .setting-dialog {
   position: relative;
   & .settings-bg {

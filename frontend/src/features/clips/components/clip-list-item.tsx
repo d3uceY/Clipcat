@@ -94,7 +94,7 @@ function ClipListItem({ clip, revealed = false, isSelected = false, index, onSel
     return (
         <div
             ref={itemRef}
-            className={`hand-drawn lined thin p-3 cursor-pointer transition-colors group relative ${clip.isPinned ? "mt-4" : ""} ${
+            className={`clip-list-item hand-drawn lined thin p-3 cursor-pointer transition-colors group relative ${clip.isPinned ? "mt-4" : ""} ${
                 isSelected
                     ? "bg-amber-200 border-2 border-dashed border-amber-500"
                     : "bg-[#F9F5E6] hover:bg-amber-50 active:bg-amber-100"
@@ -102,13 +102,6 @@ function ClipListItem({ clip, revealed = false, isSelected = false, index, onSel
             onClick={() => { if (index !== undefined) onSelect?.(index); handlePaste() }}
             onMouseEnter={() => { if (index !== undefined) onSelect?.(index) }}
         >
-            {/* Pinned indicator */}
-            {clip.isPinned && (
-                <div className="h-8 -top-4 right-[40%] absolute pointer-events-none">
-                    <img src="pin.png" alt="" className="h-full" />
-                </div>
-            )}
-
             {/* Content */}
             {clip.type === "image" && clip.image ? (
                 <img
@@ -123,28 +116,32 @@ function ClipListItem({ clip, revealed = false, isSelected = false, index, onSel
                 </p>
             )}
 
-            {/* Actions - shown on hover, top-right */}
+            {/* Actions - the pin stays visible and red while the clip is pinned
+                (so the pinned state is always obvious); otherwise the actions
+                only appear on hover. Delete is always hover-only. The pin button
+                doubles as the pinned indicator because content-visibility's paint
+                containment clips anything drawn outside the row box. */}
             <div
-                className="absolute top-2 right-2 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                className="absolute top-2 right-2 flex items-center gap-0.5"
                 onClick={(e) => e.stopPropagation()}
             >
                 <button
+                    onClick={handleDelete}
+                    className="p-1 rounded text-foreground/30 opacity-0 group-hover:opacity-100 transition-opacity hover:text-red-500"
+                    title="Delete"
+                >
+                    <Trash2 className="h-3.5 w-3.5" />
+                </button>
+                <button
                     onClick={handlePin}
-                    className={`p-1 rounded transition-colors ${
+                    className={`p-1 rounded transition ${
                         clip.isPinned
-                            ? "text-yellow-600 hover:text-red-500"
-                            : "text-foreground/30 hover:text-yellow-600"
+                            ? "text-red-600 hover:text-red-700"
+                            : "text-foreground/30 opacity-0 group-hover:opacity-100 hover:text-yellow-600"
                     }`}
                     title={clip.isPinned ? "Unpin" : "Pin"}
                 >
                     <Pin className={`h-3.5 w-3.5 ${clip.isPinned ? "fill-current" : ""}`} />
-                </button>
-                <button
-                    onClick={handleDelete}
-                    className="p-1 rounded text-foreground/30 hover:text-red-500 transition-colors"
-                    title="Delete"
-                >
-                    <Trash2 className="h-3.5 w-3.5" />
                 </button>
             </div>
         </div>

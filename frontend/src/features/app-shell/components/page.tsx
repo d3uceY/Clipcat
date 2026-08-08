@@ -8,6 +8,7 @@ import { useClips } from "@/contexts/ClipContext"
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { playSound } from "@/utils/play-sound";
+import { killAllAnimations } from "@/utils/kill-animations";
 import WindowControls from "./window-controls";
 import CommandPalette from "./command-palette";
 import { Browser, Events } from "@wailsio/runtime";
@@ -108,9 +109,23 @@ function PageContent() {
         return () => document.removeEventListener('pointerdown', handlePointerDown)
     }, [searchVisible])
 
+    // Keep the latest "utility mode" flag for the entrance animation without
+    // re-running it when the mode flips (so exiting Mini Clip back into full
+    // screen never replays the curtain).
+    const utilityModeRef = useRef(false)
+    utilityModeRef.current = isMiniClip || isQuickPaste
+
     // Curtain entrance animation
     useGSAP(() => {
         if (!clipsLoaded) return;
+        // Mini Clip / Quick Paste are utility modes - skip the paper-curtain
+        // entrance entirely. Once the window is hidden to the tray the WebView
+        // stops ticking rAF, so a running timeline stalls mid-flight and
+        // resumes on the next hotkey summon (the "freezes at first" jank).
+        if (utilityModeRef.current) {
+            setCurtainsDone(true)
+            return
+        }
         const tl = gsap.timeline({
             onComplete: () => {
                 gsap.set('.pussy', { clearProps: 'transform' })
@@ -138,6 +153,17 @@ function PageContent() {
             }, '-=0.5')
             .to('h1, .torn-input', { rotation: 0, duration: 0.3, ease: "power2.out" })
     }, [clipsLoaded])
+
+    // Entering Mini Clip or Quick Paste: hard-stop and clean up every
+    // animation at the mode switch. A window hidden to the tray leaves rAF
+    // throttled, so any in-flight timeline stalls and would resume frozen on
+    // the next re-show - killing it here keeps the first paint after a hotkey
+    // summon clean.
+    useEffect(() => {
+        if (!isMiniClip && !isQuickPaste) return
+        killAllAnimations()
+        setCurtainsDone(true)
+    }, [isMiniClip, isQuickPaste])
 
     // Sticky search bar GSAP animation
     useGSAP(() => {

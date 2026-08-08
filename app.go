@@ -719,7 +719,6 @@ func (a *App) makeMiniClip(value bool) {
 	a.window.UnMaximise()
 
 	if value {
-		a.window.SetPosition(20, 20)
 		a.window.SetMaxSize(450, 650)
 	} else {
 		a.window.SetMaxSize(0, 0)

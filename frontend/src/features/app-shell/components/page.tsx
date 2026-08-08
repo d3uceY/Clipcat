@@ -14,6 +14,7 @@ import CommandPalette from "./command-palette";
 import { Browser, Events } from "@wailsio/runtime";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useSearchWorker } from "@/features/search/hooks/use-search-worker"
+import { useDebounce } from "@/utils/use-debounce"
 import { useUpdateCheck } from "../hooks/use-update-check"
 import { useNavHide } from "../hooks/use-nav-hide"
 import { useKeyboardNav } from "../hooks/use-keyboard-nav"
@@ -38,7 +39,10 @@ function PageContent() {
     // --- Hooks: extracted logic (testable without rendering) ---
 
     const { version, updateInfo, showUpdateDialog, setShowUpdateDialog, checkForUpdates } = useUpdateCheck()
-    const filteredClips = useSearchWorker({ clips, searchQuery, activeLabels })
+    // Debounce the query fed to the worker so filtering only runs once the
+    // user pauses typing (~200ms), not on every keystroke.
+    const debouncedSearchQuery = useDebounce(searchQuery, 200)
+    const filteredClips = useSearchWorker({ clips, searchQuery: debouncedSearchQuery, activeLabels })
 
     const toggleSearchVisible = () => {
         setSearchVisible(v => {

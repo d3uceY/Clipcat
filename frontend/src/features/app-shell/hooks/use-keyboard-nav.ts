@@ -63,7 +63,19 @@ export function useKeyboardNav({
             if (e.ctrlKey && e.key === 'f') {
                 e.preventDefault()
                 if (navCooldown && searchVisible) return
-                if (isSmallScreen || isMiniClip || isQuickPaste) {
+                if (isMiniClip || isQuickPaste) {
+                    // Utility modes: a shown-but-unfocused bar gets focused;
+                    // an already-focused bar gets closed; a hidden bar opens.
+                    if (searchVisible) {
+                        if (document.activeElement === searchInputRef.current) {
+                            toggleSearchVisible()
+                        } else {
+                            searchInputRef.current?.focus()
+                        }
+                    } else {
+                        toggleSearchVisible()
+                    }
+                } else if (isSmallScreen) {
                     toggleSearchVisible()
                 } else {
                     searchInputRef.current?.focus()

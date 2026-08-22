@@ -301,7 +301,7 @@ export function ClipProvider({ children }: { children: ReactNode }) {
 
   const addClip = async (content: string, pinned: boolean) => {
     await AddClip(content, pinned);
-    // getClips() is triggered by the clipboard:changed event emitted from Go.
+    // AddClip emits clip:added / clip:pruned events that update state reactively.
   };
 
   const renameClip = async (id: string, label: string) => {
@@ -446,11 +446,6 @@ export function ClipProvider({ children }: { children: ReactNode }) {
       });
     });
 
-    // Fallback for bulk operations (delete all, etc.)
-    const offChanged = Events.On("clipboard:changed", () => {
-      getClips();
-    });
-
     // Safety-net: Go emits fresh distinct labels after every RenameClip call.
     const offLabels = Events.On("labels:updated", () => {
       // Nothing to do - distinctLabels is derived reactively from clips state.
@@ -484,7 +479,6 @@ export function ClipProvider({ children }: { children: ReactNode }) {
       offPruned();
       offUpdated();
       offPinToggled();
-      offChanged();
       offLabels();
       offUnhidden();
       offHidden();

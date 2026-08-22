@@ -139,7 +139,7 @@ Clipcat/
 
 3. **Data Storage** - Clips are saved to SQLite with HMAC-based duplicate detection. Automatic cleanup keeps only the most recent N clips, always preserving pinned ones.
 
-4. **Frontend Updates** - The backend emits `clipboard:changed` events; React context re-fetches and re-renders.
+4. **Frontend Updates** - The backend emits granular events (`clip:added`, `clip:deleted`, `clip:pruned`, etc.); React context updates state reactively from them.
 
 5. **User Actions** - Copy (browser clipboard API), paste to window (focus prev window + simulate platform-native paste keystroke), pin/delete (DB update + re-render), search (client-side filter).
 
@@ -230,7 +230,7 @@ All clip content is encrypted at rest with AES-256-GCM using a per-installation 
 ### Frontend State (`ClipContext.tsx`)
 
 - Splits clips into `pinned` and `recent` arrays
-- Listens for `clipboard:changed` events from the backend
+- Updates state from granular events emitted by the backend (`clip:added`, `clip:deleted`, `clip:pruned`, `clip:updated`, `clip:pinToggled`, `clip:unhidden`, `clip:hidden`)
 - Manages all settings: sound, privacy mode, mini clip, startup, pause, blocked apps, Quick Paste, always-on-top, auto-hide sensitive
 - All toggle functions call the corresponding Go backend method and update local React state
 - Settings that need to survive restarts (always-on-top, mini-clip, Quick Paste, auto-hide sensitive) are persisted to SQLite via the Go layer; others (sound, hide-content) use `localStorage`

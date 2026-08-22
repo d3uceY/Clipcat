@@ -562,7 +562,7 @@ select,
 
 
 
-/* this is for the scroll thumb pencil design that is in scroll-area-pencil.tsx */
+/* this is for the scroll thumb pencil design (variant="pencil") in scroll-area.tsx */
 .triangle {
   display: inline-block;
   width: 0;

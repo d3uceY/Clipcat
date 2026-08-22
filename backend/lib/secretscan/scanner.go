@@ -10,9 +10,7 @@
 package secretscan
 
 import (
-	"context"
 	"math"
-	"sync"
 )
 
 // Result is returned by Scan.
@@ -24,69 +22,27 @@ type Result struct {
 	Label string
 }
 
-// Scan runs all detection rules concurrently against text and returns the
-// first match found.  The function is safe for concurrent use.
+// Scan runs all detection rules against text and returns the first match
+// found.  Clipboard-sized strings make a serial loop over the compiled
+// regexes negligible, so no fan-out is needed.
 func Scan(text string) Result {
 	if len(text) == 0 {
 		return Result{}
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	// Buffered channel so goroutines that win the race don't block.
-	ch := make(chan string, 1)
-
-	var wg sync.WaitGroup
-
-	// Fan-out: one goroutine per regexp rule.
 	for _, r := range rules {
-		wg.Add(1)
-		go func(r rule) {
-			defer wg.Done()
-			// Bail early if another goroutine already won.
-			select {
-			case <-ctx.Done():
-				return
-			default:
-			}
-			if r.re.MatchString(text) {
-				select {
-				case ch <- r.label:
-					cancel() // signal all other goroutines to stop
-				default:
-				}
-			}
-		}(r)
+		if r.re.MatchString(text) {
+			return Result{IsSecret: true, Label: r.label}
+		}
 	}
 
-	// Additional goroutine: Shannon-entropy check combined with a keyword
-	// context requirement to keep the false-positive rate low.
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		select {
-		case <-ctx.Done():
-			return
-		default:
-		}
-		if label, ok := entropyCheck(text); ok {
-			select {
-			case ch <- label:
-				cancel()
-			default:
-			}
-		}
-	}()
+	// Shannon-entropy check combined with a keyword context requirement to
+	// keep the false-positive rate low.
+	if label, ok := entropyCheck(text); ok {
+		return Result{IsSecret: true, Label: label}
+	}
 
-	// Close ch once all goroutines finish so the receive below terminates.
-	go func() {
-		wg.Wait()
-		close(ch)
-	}()
-
-	label, ok := <-ch
-	return Result{IsSecret: ok, Label: label}
+	return Result{}
 }
 
 // entropyCheck flags strings that have very high Shannon entropy AND contain

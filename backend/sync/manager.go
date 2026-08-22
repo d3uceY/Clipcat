@@ -106,20 +106,6 @@ func (m *Manager) Stop() {
 
 	cancel()
 	m.wg.Wait()
-	m.peerMap.Stop()
-}
-
-// Restart stops the manager with a new passphrase and starts it again.
-func (m *Manager) Restart(passphrase string) error {
-	m.Stop()
-
-	m.mu.Lock()
-	m.key = DeriveKey(passphrase)
-	m.peerMap = NewPeerMap()
-	m.incoming = make(chan []byte, 10)
-	m.mu.Unlock()
-
-	return m.Start()
 }
 
 // Broadcast encrypts the payload and sends it to all currently known peers
@@ -170,13 +156,6 @@ func (m *Manager) Broadcast(payload []byte) {
 // PeerCount returns the number of currently known peers.
 func (m *Manager) PeerCount() int {
 	return m.peerMap.Len()
-}
-
-// Running returns whether the manager is currently started.
-func (m *Manager) Running() bool {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	return m.running
 }
 
 func (m *Manager) eventLoop(ctx context.Context, added <-chan Peer) {

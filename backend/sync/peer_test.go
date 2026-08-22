@@ -7,7 +7,6 @@ import (
 
 func TestPeerMapAddOrUpdate(t *testing.T) {
 	pm := NewPeerMap()
-	defer pm.Stop()
 
 	pm.AddOrUpdate("peer1", "192.168.1.10:47821")
 	pm.AddOrUpdate("peer2", "192.168.1.11:47821")
@@ -28,7 +27,6 @@ func TestPeerMapAddOrUpdate(t *testing.T) {
 
 func TestPeerMapUpdateRefreshesLastSeen(t *testing.T) {
 	pm := NewPeerMap()
-	defer pm.Stop()
 
 	pm.AddOrUpdate("peer1", "192.168.1.10:47821")
 	time.Sleep(10 * time.Millisecond)
@@ -43,21 +41,8 @@ func TestPeerMapUpdateRefreshesLastSeen(t *testing.T) {
 	}
 }
 
-func TestPeerMapRemove(t *testing.T) {
-	pm := NewPeerMap()
-	defer pm.Stop()
-
-	pm.AddOrUpdate("peer1", "192.168.1.10:47821")
-	pm.Remove("peer1")
-
-	if pm.Len() != 0 {
-		t.Fatal("expected 0 peers after removal")
-	}
-}
-
 func TestPeerMapRecordFailureEvictsAfterThree(t *testing.T) {
 	pm := NewPeerMap()
-	defer pm.Stop()
 
 	pm.AddOrUpdate("peer1", "192.168.1.10:47821")
 
@@ -81,7 +66,6 @@ func TestPeerMapRecordFailureEvictsAfterThree(t *testing.T) {
 
 func TestPeerMapResetFailures(t *testing.T) {
 	pm := NewPeerMap()
-	defer pm.Stop()
 
 	pm.AddOrUpdate("peer1", "192.168.1.10:47821")
 
@@ -103,7 +87,6 @@ func TestPeerMapResetFailures(t *testing.T) {
 
 func TestPeerMapAddOrUpdateResetsFailures(t *testing.T) {
 	pm := NewPeerMap()
-	defer pm.Stop()
 
 	pm.AddOrUpdate("peer1", "192.168.1.10:47821")
 	pm.RecordFailure("peer1")
@@ -125,7 +108,6 @@ func TestPeerMapAddOrUpdateResetsFailures(t *testing.T) {
 
 func TestPeerMapGetPeersSnapshot(t *testing.T) {
 	pm := NewPeerMap()
-	defer pm.Stop()
 
 	pm.AddOrUpdate("peer1", "192.168.1.10:47821")
 

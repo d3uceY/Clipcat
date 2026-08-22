@@ -3,7 +3,6 @@ import { useState, useEffect } from "react"
 import { Check, X } from "lucide-react"
 import { UpdateClipContent } from "../../bindings/Clipcat/app"
 import { getFullText } from "@/features/clips/utils/get-full-text"
-// import TeaseDialog from "./tease-dialog"
 import type { Clip } from '@/features/clips/types'
 
 interface EditClipDialogProps {

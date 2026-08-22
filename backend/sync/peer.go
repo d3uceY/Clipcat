@@ -95,20 +95,9 @@ func (pm *PeerMap) GetPeers() []Peer {
 	return result
 }
 
-// Remove deletes a peer by ID.
-func (pm *PeerMap) Remove(id string) {
-	pm.mu.Lock()
-	defer pm.mu.Unlock()
-	delete(pm.peers, id)
-}
-
 // Len returns the number of currently known peers.
 func (pm *PeerMap) Len() int {
 	pm.mu.RLock()
 	defer pm.mu.RUnlock()
 	return len(pm.peers)
 }
-
-// Stop is a no-op kept for interface compatibility.  No background
-// goroutines to shut down.
-func (pm *PeerMap) Stop() {}

@@ -7,9 +7,7 @@ import { useClips } from "@/contexts/ClipContext"
 import { playSound } from "@/utils/play-sound"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { useRelativeTime } from "@/features/clips/hooks/use-relative-time"
-import { ScrollArea } from "@/components/ui/scroll-area-white"
-import { ScrollArea as ScrollAreaPencil } from "@/components/ui/scroll-area-pencil"
-import { ScrollArea as ScrollAreaDark } from "@/components/ui/scroll-area"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { copyBase64ImageToClipboard } from "@/features/clips/utils/copy-base64-image"
 const EditClipDialog = lazy(() => import("@/components/edit-clip-dialog"))
 const ImageLightbox = lazy(() => import("./image-lightbox"))
@@ -244,7 +242,7 @@ export default function ClipCardOverlay({ clip, type, cardRect, onDelete, onDele
                             </div>
                             {labelSuggestions.length > 0 && (
                                 <div className="absolute top-full left-0 right-0 z-30 mt-0.5 bg-[#F9F5E6] border border-dashed border-amber-600/30 shadow-md">
-                                    <ScrollAreaDark className="max-h-40">
+                                    <ScrollArea className="max-h-40">
                                     {labelSuggestions.map(suggestion => (
                                         <button
                                             key={suggestion}
@@ -268,7 +266,7 @@ export default function ClipCardOverlay({ clip, type, cardRect, onDelete, onDele
                                             {suggestion}
                                         </button>
                                     ))}
-                                    </ScrollAreaDark>
+                                    </ScrollArea>
                                 </div>
                             )}
                         </>
@@ -411,12 +409,12 @@ export default function ClipCardOverlay({ clip, type, cardRect, onDelete, onDele
                                     <DialogDescription>Created {relativeTime}</DialogDescription>
                                     <img src="/separator.svg" alt="" className="w-full" />
                                 </DialogHeader>
-                                <ScrollAreaPencil
+                                <ScrollArea variant="pencil"
                                     className={`max-h-[60vh] pr-4 overflow-x-hidden pb-90 ${hideContent ? "hard-to-read" : ""}`}
                                     onClick={handleLinkClick}
                                 >
                                     <p className="whitespace-pre-wrap wrap-break-word text-sm" dangerouslySetInnerHTML={{ __html: fullLinkedContent }} />
-                                </ScrollAreaPencil>
+                                </ScrollArea>
                             </div>
                         </DialogContent>
                     )}

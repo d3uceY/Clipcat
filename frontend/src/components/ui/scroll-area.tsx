@@ -3,11 +3,14 @@ import * as ScrollAreaPrimitive from "@radix-ui/react-scroll-area"
 
 import { cn } from "@/utils/cn"
 
+type ScrollAreaVariant = "default" | "white" | "pencil"
+
 function ScrollArea({
   className,
   children,
+  variant = "default",
   ...props
-}: React.ComponentProps<typeof ScrollAreaPrimitive.Root>) {
+}: React.ComponentProps<typeof ScrollAreaPrimitive.Root> & { variant?: ScrollAreaVariant }) {
   return (
     <ScrollAreaPrimitive.Root
       data-slot="scroll-area"
@@ -20,7 +23,7 @@ function ScrollArea({
       >
         {children}
       </ScrollAreaPrimitive.Viewport>
-      <ScrollBar />
+      <ScrollBar variant={variant} />
       <ScrollAreaPrimitive.Corner />
     </ScrollAreaPrimitive.Root>
   )
@@ -29,8 +32,9 @@ function ScrollArea({
 function ScrollBar({
   className,
   orientation = "vertical",
+  variant = "default",
   ...props
-}: React.ComponentProps<typeof ScrollAreaPrimitive.ScrollAreaScrollbar>) {
+}: React.ComponentProps<typeof ScrollAreaPrimitive.ScrollAreaScrollbar> & { variant?: ScrollAreaVariant }) {
   return (
     <ScrollAreaPrimitive.ScrollAreaScrollbar
       data-slot="scroll-area-scrollbar"
@@ -45,10 +49,24 @@ function ScrollBar({
       )}
       {...props}
     >
-      <ScrollAreaPrimitive.ScrollAreaThumb
-        data-slot="scroll-area-thumb"
-        className="bg-black  blur-[1px] relative flex-1 rounded-full cursor-move"
-      />
+      {variant === "pencil" ? (
+        <ScrollAreaPrimitive.ScrollAreaThumb
+          data-slot="scroll-area-thumb"
+          className="relative flex-1 rounded-full cursor-move"
+        >
+          <div className="triangle"></div>
+          <div className="stalk"></div>
+          <div className="eraser"></div>
+        </ScrollAreaPrimitive.ScrollAreaThumb>
+      ) : (
+        <ScrollAreaPrimitive.ScrollAreaThumb
+          data-slot="scroll-area-thumb"
+          className={cn(
+            "relative flex-1 rounded-full cursor-move",
+            variant === "white" ? "bg-white blur-[1px]" : "bg-black blur-[1px]"
+          )}
+        />
+      )}
     </ScrollAreaPrimitive.ScrollAreaScrollbar>
   )
 }

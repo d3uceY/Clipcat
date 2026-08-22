@@ -9,6 +9,21 @@ function isStable(version: string) {
     return !version.endsWith("-dev") && !version.endsWith("-beta") && !version.endsWith("-alpha")
 }
 
+async function fetchLatest(version: string): Promise<UpdateInfo | null> {
+    try {
+        const response = await fetch(GITHUB_API)
+        if (!response.ok) return null
+        const data = await response.json()
+        const latest = data.tag_name
+        if (latest !== version && isStable(version)) {
+            return { version: latest, releaseUrl: data.html_url, releaseDate: data.published_at }
+        }
+        return null
+    } catch {
+        return null
+    }
+}
+
 export function useUpdateCheck() {
     const [version, setVersion] = useState("")
     const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null)
@@ -30,48 +45,27 @@ export function useUpdateCheck() {
     useEffect(() => {
         if (!version) return
         const run = async () => {
-            try {
-                const response = await fetch(GITHUB_API)
-                if (!response.ok) return
-                const data = await response.json()
-                const latest = data.tag_name
-                if (latest !== version && isStable(version)) {
-                    const info: UpdateInfo = {
-                        version: latest,
-                        releaseUrl: data.html_url,
-                        releaseDate: data.published_at,
-                    }
-                    setUpdateInfo(info)
-                    const seenKey = `update-seen-${latest}`
-                    if (!localStorage.getItem(seenKey)) {
-                        localStorage.setItem(seenKey, "1")
-                        setShowUpdateDialog(true)
-                        if ('Notification' in window && Notification.permission === 'granted') {
-                            playSound("/sounds/notification.wav", localStorage.getItem("soundOn") !== "false", 1)
-                            new Notification('Clipcat update available', {
-                                body: `Version ${latest} is ready to download.`,
-                            })
-                        }
-                    }
+            const info = await fetchLatest(version)
+            if (!info) return
+            setUpdateInfo(info)
+            const seenKey = `update-seen-${info.version}`
+            if (!localStorage.getItem(seenKey)) {
+                localStorage.setItem(seenKey, "1")
+                setShowUpdateDialog(true)
+                if ('Notification' in window && Notification.permission === 'granted') {
+                    playSound("/sounds/notification.wav", localStorage.getItem("soundOn") !== "false", 1)
+                    new Notification('Clipcat update available', {
+                        body: `Version ${info.version} is ready to download.`,
+                    })
                 }
-            } catch { /* silently ignore network errors */ }
+            }
         }
         run()
     }, [version])
 
     const checkForUpdates = async () => {
         if (!version) return
-        try {
-            const response = await fetch(GITHUB_API)
-            if (!response.ok) return
-            const data = await response.json()
-            const latest = data.tag_name
-            if (latest !== version && isStable(version)) {
-                setUpdateInfo({ version: latest, releaseUrl: data.html_url, releaseDate: data.published_at })
-            } else {
-                setUpdateInfo(null)
-            }
-        } catch { /* silently ignore */ }
+        setUpdateInfo(await fetchLatest(version))
     }
 
     return { version, updateInfo, showUpdateDialog, setShowUpdateDialog, checkForUpdates }

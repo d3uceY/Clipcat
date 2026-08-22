@@ -13,117 +13,77 @@ func ClaimStartupDefault() bool {
 	return n > 0
 }
 
-func GetQuickPaste() (bool, error) {
+// getBool reads a boolean settings column, returning def when the row/column
+// is missing (defaults live at the call site, not here).
+func getBool(col string, def bool) (bool, error) {
 	var v int
-	err := DB.QueryRow(`SELECT ghost_mode FROM settings WHERE id = 0`).Scan(&v)
-	if err != nil {
-		return false, err
+	if err := DB.QueryRow(`SELECT ` + col + ` FROM settings WHERE id = 0`).Scan(&v); err != nil {
+		return def, err
 	}
 	return v == 1, nil
+}
+
+// setBool writes a boolean settings column.
+func setBool(col string, v bool) error {
+	val := 0
+	if v {
+		val = 1
+	}
+	_, err := DB.Exec(`UPDATE settings SET `+col+` = ? WHERE id = 0`, val)
+	return err
+}
+
+func GetQuickPaste() (bool, error) {
+	return getBool("ghost_mode", false)
 }
 
 func SetQuickPaste(enabled bool) error {
-	val := 0
-	if enabled {
-		val = 1
-	}
-	_, err := DB.Exec(`UPDATE settings SET ghost_mode = ? WHERE id = 0`, val)
-	return err
+	return setBool("ghost_mode", enabled)
 }
 
 func GetAutoHideSensitive() (bool, error) {
-	var v int
-	err := DB.QueryRow(`SELECT auto_hide_sensitive FROM settings WHERE id = 0`).Scan(&v)
-	if err != nil {
-		return true, err // default on
-	}
-	return v == 1, nil
+	return getBool("auto_hide_sensitive", true) // default on
 }
 
 func SetAutoHideSensitive(enabled bool) error {
-	val := 0
-	if enabled {
-		val = 1
-	}
-	_, err := DB.Exec(`UPDATE settings SET auto_hide_sensitive = ? WHERE id = 0`, val)
-	return err
+	return setBool("auto_hide_sensitive", enabled)
 }
 
 func GetAlwaysOnTop() (bool, error) {
-	var v int
-	err := DB.QueryRow(`SELECT always_on_top FROM settings WHERE id = 0`).Scan(&v)
-	if err != nil {
-		return false, err
-	}
-	return v == 1, nil
+	return getBool("always_on_top", false)
 }
 
 func SetAlwaysOnTop(enabled bool) error {
-	val := 0
-	if enabled {
-		val = 1
-	}
-	_, err := DB.Exec(`UPDATE settings SET always_on_top = ? WHERE id = 0`, val)
-	return err
+	return setBool("always_on_top", enabled)
 }
 
 func GetMiniClip() (bool, error) {
-	var v int
-	err := DB.QueryRow(`SELECT mini_clip FROM settings WHERE id = 0`).Scan(&v)
-	if err != nil {
-		return false, err
-	}
-	return v == 1, nil
+	return getBool("mini_clip", false)
 }
 
 func SetMiniClip(enabled bool) error {
-	val := 0
-	if enabled {
-		val = 1
-	}
-	_, err := DB.Exec(`UPDATE settings SET mini_clip = ? WHERE id = 0`, val)
-	return err
+	return setBool("mini_clip", enabled)
 }
 
 // GetCursorSnap returns whether Smart Position (cursor-aware window
 // placement) is enabled.  Defaults to true when the row is missing.
 func GetCursorSnap() (bool, error) {
-	var v int
-	err := DB.QueryRow(`SELECT cursor_snap FROM settings WHERE id = 0`).Scan(&v)
-	if err != nil {
-		return true, err // default on
-	}
-	return v == 1, nil
+	return getBool("cursor_snap", true) // default on
 }
 
 // SetCursorSnap persists the Smart Position preference.
 func SetCursorSnap(enabled bool) error {
-	val := 0
-	if enabled {
-		val = 1
-	}
-	_, err := DB.Exec(`UPDATE settings SET cursor_snap = ? WHERE id = 0`, val)
-	return err
+	return setBool("cursor_snap", enabled)
 }
 
 // GetSyncEnabled returns whether LAN sync is enabled.
 func GetSyncEnabled() (bool, error) {
-	var v int
-	err := DB.QueryRow(`SELECT sync_enabled FROM settings WHERE id = 0`).Scan(&v)
-	if err != nil {
-		return false, err
-	}
-	return v == 1, nil
+	return getBool("sync_enabled", false)
 }
 
 // SetSyncEnabled persists the LAN sync enabled state.
 func SetSyncEnabled(enabled bool) error {
-	val := 0
-	if enabled {
-		val = 1
-	}
-	_, err := DB.Exec(`UPDATE settings SET sync_enabled = ? WHERE id = 0`, val)
-	return err
+	return setBool("sync_enabled", enabled)
 }
 
 // GetSyncPassphrase returns the stored sync passphrase (empty string if none).

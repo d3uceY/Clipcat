@@ -103,12 +103,6 @@ export function GetCursorSnap(): $CancellablePromise<boolean> {
     return $Call.ByID(3752887157);
 }
 
-export function GetDistinctLabels(): $CancellablePromise<string[]> {
-    return $Call.ByID(1333104408).then(($result: any) => {
-        return $$createType2($result);
-    });
-}
-
 export function GetIgnoreList(): $CancellablePromise<string[]> {
     return $Call.ByID(1882610001).then(($result: any) => {
         return $$createType2($result);
@@ -133,13 +127,6 @@ export function GetQuickPaste(): $CancellablePromise<boolean> {
  */
 export function GetStorageLimit(): $CancellablePromise<number> {
     return $Call.ByID(1034248375);
-}
-
-/**
- * GetSyncPeerCount returns the number of currently connected LAN peers.
- */
-export function GetSyncPeerCount(): $CancellablePromise<number> {
-    return $Call.ByID(516677299);
 }
 
 /**

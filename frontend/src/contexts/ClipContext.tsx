@@ -446,11 +446,6 @@ export function ClipProvider({ children }: { children: ReactNode }) {
       });
     });
 
-    // Safety-net: Go emits fresh distinct labels after every RenameClip call.
-    const offLabels = Events.On("labels:updated", () => {
-      // Nothing to do - distinctLabels is derived reactively from clips state.
-    });
-
     const offUnhidden = Events.On("clip:unhidden", (e) => {
       const id: string = e.data;
       setClips((prev) => {
@@ -479,7 +474,6 @@ export function ClipProvider({ children }: { children: ReactNode }) {
       offPruned();
       offUpdated();
       offPinToggled();
-      offLabels();
       offUnhidden();
       offHidden();
       offSensitive();

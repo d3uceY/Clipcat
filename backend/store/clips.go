@@ -44,6 +44,44 @@ func TrimContent(s string) string {
 	return string(r[:MaxPreviewChars]) + "..."
 }
 
+// buildClip assembles a Clip from a clips row's scanned columns: trims text
+// previews and normalizes/encodes image thumbnails. Shared by GetClips and
+// getClipByRowID so both paths build clips identically.
+func buildClip(rowID int, content sql.NullString, image, thumbnail []byte, clipType string, pinned bool, createdAt, label string, hidden bool, source string) Clip {
+	clip := Clip{
+		ID:        fmt.Sprintf("clip_%03d", rowID),
+		Type:      clipType,
+		Pinned:    pinned,
+		CreatedAt: createdAt,
+		Label:     label,
+		Hidden:    hidden,
+		Source:    source,
+	}
+
+	if clipType == "text" && content.Valid {
+		preview := TrimContent(content.String)
+		clip.Content = &preview
+	}
+
+	if clipType == "image" {
+		// Fall back to the full image for clips inserted before the
+		// thumbnail column was added.
+		thumbBytes := thumbnail
+		if len(thumbBytes) == 0 {
+			thumbBytes = image
+		}
+		if len(thumbBytes) > 0 {
+			if normalized, err := normalizeImageToPNG(thumbBytes); err == nil {
+				thumbBytes = normalized
+			}
+			encoded := base64.StdEncoding.EncodeToString(thumbBytes)
+			clip.Image = &encoded
+		}
+	}
+
+	return clip
+}
+
 func GetStorageLimit() (int, error) {
 	query := `SELECT limit_count FROM clip_storage_limit WHERE id = 0`
 	var limit int
@@ -105,38 +143,7 @@ func GetClips() ([]Clip, error) {
 			return nil, err
 		}
 
-		clip := Clip{
-			ID:        fmt.Sprintf("clip_%03d", id),
-			Type:      clipType,
-			Pinned:    pinned,
-			CreatedAt: createdAt,
-			Label:     label,
-			Hidden:    hidden,
-			Source:    source,
-		}
-
-		if clipType == "text" && content.Valid {
-			preview := TrimContent(content.String)
-			clip.Content = &preview
-		}
-
-		if clipType == "image" {
-			// Fall back to the full image for clips inserted before the
-			// thumbnail column was added.
-			thumbBytes := thumbnail
-			if len(thumbBytes) == 0 {
-				thumbBytes = image
-			}
-			if len(thumbBytes) > 0 {
-				if normalized, err := normalizeImageToPNG(thumbBytes); err == nil {
-					thumbBytes = normalized
-				}
-				encoded := base64.StdEncoding.EncodeToString(thumbBytes)
-				clip.Image = &encoded
-			}
-		}
-
-		clips = append(clips, clip)
+		clips = append(clips, buildClip(id, content, image, thumbnail, clipType, pinned, createdAt, label, hidden, source))
 	}
 
 	return clips, nil
@@ -163,35 +170,7 @@ func getClipByRowID(id int64) (*Clip, error) {
 		return nil, err
 	}
 
-	clip := Clip{
-		ID:        fmt.Sprintf("clip_%03d", rowID),
-		Type:      clipType,
-		Pinned:    pinned,
-		CreatedAt: createdAt,
-		Label:     label,
-		Hidden:    hidden,
-		Source:    source,
-	}
-
-	if clipType == "text" && content.Valid {
-		preview := TrimContent(content.String)
-		clip.Content = &preview
-	}
-
-	if clipType == "image" {
-		thumbBytes := thumbnail
-		if len(thumbBytes) == 0 {
-			thumbBytes = img
-		}
-		if len(thumbBytes) > 0 {
-			if normalized, err := normalizeImageToPNG(thumbBytes); err == nil {
-				thumbBytes = normalized
-			}
-			encoded := base64.StdEncoding.EncodeToString(thumbBytes)
-			clip.Image = &encoded
-		}
-	}
-
+	clip := buildClip(rowID, content, img, thumbnail, clipType, pinned, createdAt, label, hidden, source)
 	return &clip, nil
 }
 
@@ -599,24 +578,6 @@ func DeleteUnpinnedClips() error {
 	return nil
 }
 
-// GetDistinctLabels returns all distinct non-empty labels across all clips, sorted.
-func GetDistinctLabels() ([]string, error) {
-	rows, err := DB.Query(`SELECT DISTINCT label FROM clips WHERE label != '' ORDER BY label`)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var labels []string
-	for rows.Next() {
-		var l string
-		if err := rows.Scan(&l); err != nil {
-			return nil, err
-		}
-		labels = append(labels, l)
-	}
-	return labels, nil
-}
-
 // RenameClip updates the label/nickname for a clip identified by its row ID.
 func RenameClip(clipID int, label string) error {
 	query := `UPDATE clips SET label = ? WHERE id = ?`
@@ -648,88 +609,6 @@ func UnhideClip(clipID int) error {
 func HideClip(clipID int) error {
 	_, err := DB.Exec(`UPDATE clips SET hidden = 1 WHERE id = ?`, clipID)
 	return err
-}
-
-// SeedTestImageClips finds the most recent image clip in the DB and inserts n
-// duplicates of it directly, bypassing duplicate checks and storage-limit
-// pruning. Intended for performance testing only.
-func SeedTestImageClips(n int) error {
-	var (
-		imgData []byte
-		thumb   []byte
-	)
-	err := DB.QueryRow(
-		`SELECT image, thumbnail FROM clips WHERE type = 'image' ORDER BY created_at DESC LIMIT 1`,
-	).Scan(&imgData, &thumb)
-	if err != nil {
-		return fmt.Errorf("seedTestImageClips: no image clip found: %w", err)
-	}
-
-	tx, err := DB.Begin()
-	if err != nil {
-		return fmt.Errorf("seedTestImageClips: begin tx: %w", err)
-	}
-	defer tx.Rollback()
-
-	stmt, err := tx.Prepare(`INSERT INTO clips (image, thumbnail, content_hash, type, encrypted, created_at)
-		VALUES (?, ?, ?, 'image', ?, datetime('now', ?))`)
-	if err != nil {
-		return fmt.Errorf("seedTestImageClips: prepare: %w", err)
-	}
-	defer stmt.Close()
-
-	for i := 0; i < n; i++ {
-		// Append a dummy byte sequence to make the content distinct each iteration.
-		unique := append(append([]byte{}, imgData...), byte(i), byte(i>>8), byte(i>>16))
-		hash := hashContent(unique)
-		offset := fmt.Sprintf("-%d seconds", i)
-		if _, err := stmt.Exec(unique, thumb, hash, 0, offset); err != nil {
-			return fmt.Errorf("seedTestImageClips: insert %d: %w", i+1, err)
-		}
-	}
-
-	return tx.Commit()
-}
-
-// SeedTestClips inserts n test clips directly into the DB, bypassing duplicate
-// checks and storage-limit pruning. Intended for performance testing only.
-func SeedTestClips(n int) error {
-	samples := []string{
-		"Short test clip #%d",
-		"This is a medium-length test clip number %d with some extra text to make it a bit more realistic.",
-		"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Test clip #%d.",
-		"package main\n\nimport \"fmt\"\n\nfunc main() {\n\tfmt.Println(\"Hello from clip #%d\")\n}",
-		"https://example.com/test/%d?query=value&page=1",
-		"Line one\nLine two\nLine three\nLine four\nLine five\nClip #%d",
-	}
-
-	tx, err := DB.Begin()
-	if err != nil {
-		return fmt.Errorf("seedTestClips: begin tx: %w", err)
-	}
-	defer tx.Rollback()
-
-	stmt, err := tx.Prepare(`INSERT INTO clips (content, content_hash, type, pinned, encrypted, created_at)
-		VALUES (?, ?, 'text', 0, 0, datetime('now', ?))`)
-	if err != nil {
-		return fmt.Errorf("seedTestClips: prepare: %w", err)
-	}
-	defer stmt.Close()
-
-	for i := 0; i < n; i++ {
-		content := fmt.Sprintf(samples[i%len(samples)], i+1)
-		hash := hashContent([]byte(content))
-		offset := fmt.Sprintf("-%d seconds", i)
-		if _, err := stmt.Exec(content, hash, offset); err != nil {
-			return fmt.Errorf("seedTestClips: insert clip %d: %w", i+1, err)
-		}
-	}
-
-	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("seedTestClips: commit: %w", err)
-	}
-	// Rebuild the FTS index so search perf tests see the seeded clips.
-	return initSearchIndex()
 }
 
 // AddNetworkClip inserts a clip received from the LAN.  No secret scanning

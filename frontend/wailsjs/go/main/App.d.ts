@@ -31,8 +31,6 @@ export function GetClips():Promise<Array<store.Clip>>;
 
 export function GetCursorSnap():Promise<boolean>;
 
-export function GetDistinctLabels():Promise<Array<string>>;
-
 export function GetIgnoreList():Promise<Array<string>>;
 
 export function GetPlatform():Promise<string>;
@@ -40,8 +38,6 @@ export function GetPlatform():Promise<string>;
 export function GetQuickPaste():Promise<boolean>;
 
 export function GetStorageLimit():Promise<number>;
-
-export function GetSyncPeerCount():Promise<number>;
 
 export function GetSyncSettings():Promise<main.SyncSettings>;
 

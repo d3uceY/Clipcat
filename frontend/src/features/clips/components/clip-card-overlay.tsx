@@ -397,7 +397,7 @@ export default function ClipCardOverlay({ clip, type, cardRect, onDelete, onDele
                                 <DialogHeader className="sm:pt-7">
                                     <DialogTitle>Clip Content</DialogTitle>
                                     <DialogDescription>Created {relativeTime}</DialogDescription>
-                                    <img src="/seperator.png" alt="" className="w-full" />
+                                    <img src="/separator.svg" alt="" className="w-full" />
                                 </DialogHeader>
                                 <ScrollAreaPencil
                                     className={`max-h-[60vh] pr-4 overflow-x-hidden pb-90 ${hideContent ? "hard-to-read" : ""}`}

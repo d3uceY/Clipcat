@@ -351,7 +351,7 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
         //  Separator
         const Sep = ({ narrow }: { narrow?: boolean }) => (
             <div className={`my-3 ${narrow ? "w-1/2 mx-auto" : ""}`}>
-                <img src="/seperator.png" alt="" className="w-full opacity-40" />
+                <img src="/separator.svg" alt="" className="w-full opacity-40" />
             </div>
         );
 

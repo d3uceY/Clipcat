@@ -75,6 +75,15 @@ export function GetAutoHideSensitive(): $CancellablePromise<boolean> {
     return $Call.ByID(43147748);
 }
 
+/**
+ * GetClipContent returns the full, untruncated text of a clip. List/search
+ * payloads only carry a truncated preview, so copy/edit/view fetch the full
+ * text through this binding.
+ */
+export function GetClipContent(clipID: number): $CancellablePromise<string> {
+    return $Call.ByID(2561889774, clipID);
+}
+
 export function GetClipImage(clipID: number): $CancellablePromise<string> {
     return $Call.ByID(2045734190, clipID);
 }
@@ -92,12 +101,6 @@ export function GetClips(): $CancellablePromise<store$0.Clip[]> {
 
 export function GetCursorSnap(): $CancellablePromise<boolean> {
     return $Call.ByID(3752887157);
-}
-
-export function GetDistinctLabels(): $CancellablePromise<string[]> {
-    return $Call.ByID(1333104408).then(($result: any) => {
-        return $$createType2($result);
-    });
 }
 
 export function GetIgnoreList(): $CancellablePromise<string[]> {
@@ -124,13 +127,6 @@ export function GetQuickPaste(): $CancellablePromise<boolean> {
  */
 export function GetStorageLimit(): $CancellablePromise<number> {
     return $Call.ByID(1034248375);
-}
-
-/**
- * GetSyncPeerCount returns the number of currently connected LAN peers.
- */
-export function GetSyncPeerCount(): $CancellablePromise<number> {
-    return $Call.ByID(516677299);
 }
 
 /**
@@ -203,6 +199,17 @@ export function ResumeCapture(): $CancellablePromise<void> {
  */
 export function SaveSyncSettings(enabled: boolean, passphrase: string): $CancellablePromise<void> {
     return $Call.ByID(3943863286, enabled, passphrase);
+}
+
+/**
+ * SearchClips returns clips whose stored text matches the query. Search runs
+ * on the backend (clips are no longer stored encrypted), returning the same
+ * []Clip model as GetClips with truncated previews.
+ */
+export function SearchClips(query: string): $CancellablePromise<store$0.Clip[]> {
+    return $Call.ByID(3919633220, query).then(($result: any) => {
+        return $$createType1($result);
+    });
 }
 
 export function SetAlwaysOnTop(enabled: boolean): $CancellablePromise<void> {

@@ -85,9 +85,6 @@ func (a *App) ServiceStartup(ctx context.Context, options application.ServiceOpt
 		_ = startup.EnableStartupWindows()
 	}
 
-	// store.SeedTestClips(500)      // PERF TEST: uncomment to insert n test text clips on startup
-	// store.SeedTestImageClips(1000) // PERF TEST: uncomment to duplicate the last image clip n times on startup
-
 	// Sync the ignore list from the DB into the in-memory clipboard filter.
 	if ignoreList, err := store.GetIgnoreList(); err == nil {
 		clipboard.SetIgnoredProcesses(ignoreList)
@@ -362,14 +359,6 @@ func (a *App) SaveSyncSettings(enabled bool, passphrase string) error {
 	return nil
 }
 
-// GetSyncPeerCount returns the number of currently connected LAN peers.
-func (a *App) GetSyncPeerCount() int {
-	if a.syncManager == nil {
-		return 0
-	}
-	return a.syncManager.PeerCount()
-}
-
 // onHotkeyFired is called when the user presses Ctrl+Shift+V. It shows the
 // Clipcat window, optionally repositioning it near the cursor first.
 //
@@ -436,14 +425,27 @@ func (a *App) GetClips() ([]store.Clip, error) {
 	return store.GetClips()
 }
 
+// SearchClips returns clips whose stored text matches the query. Search runs
+// on the backend (clips are no longer stored encrypted), returning the same
+// []Clip model as GetClips with truncated previews.
+func (a *App) SearchClips(query string) ([]store.Clip, error) {
+	return store.SearchClips(query)
+}
+
+// GetClipContent returns the full, untruncated text of a clip. List/search
+// payloads only carry a truncated preview, so copy/edit/view fetch the full
+// text through this binding.
+func (a *App) GetClipContent(clipID int) (string, error) {
+	return store.GetClipContent(clipID)
+}
+
 func (a *App) UpdateClipContent(clipID int, newContent string) error {
 	if err := store.UpdateClipContent(clipID, newContent); err != nil {
 		return err
 	}
 	a.app.Event.Emit("clip:updated", map[string]interface{}{
 		"id":      fmt.Sprintf("clip_%03d", clipID),
-		"content": newContent,
-		"length":  len(newContent),
+		"content": store.TrimContent(newContent),
 	})
 	return nil
 }
@@ -472,18 +474,8 @@ func (a *App) GetClipImage(clipID int) (string, error) {
 	return store.GetClipImage(clipID)
 }
 
-func (a *App) GetDistinctLabels() ([]string, error) {
-	return store.GetDistinctLabels()
-}
-
 func (a *App) RenameClip(clipID int, label string) error {
-	if err := store.RenameClip(clipID, label); err != nil {
-		return err
-	}
-	if labels, err := store.GetDistinctLabels(); err == nil {
-		a.app.Event.Emit("labels:updated", labels)
-	}
-	return nil
+	return store.RenameClip(clipID, label)
 }
 
 func (a *App) GetAutoHideSensitive() (bool, error) {

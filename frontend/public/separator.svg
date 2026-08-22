@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 80" color="#41403e" fill="none" aria-hidden="true">
+  <!--
+    Hand-drawn separator for Clipcat.
+    A wobbly pencil double-stroke line with a small cat-paw doodle stamped
+    in the middle — the same ink colour (#41403e) as the .hand-drawn buttons.
+    Drawn at 11.25:1 so it scales exactly like the old seperator.png at w-full.
+  -->
+
+  <!-- Pencil line, first pass -->
+  <path
+    d="M16 41 C 62 35 100 48 150 42 C 200 36 238 49 290 42 C 342 35 380 48 430 42 C 480 36 518 49 570 42 C 622 35 660 48 710 42 C 758 36 790 47 884 41"
+    stroke="currentColor"
+    stroke-width="3"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    opacity="0.85" />
+
+  <!-- Pencil line, second pass (slight offset = hand-drawn double stroke) -->
+  <path
+    d="M16 44 C 62 38 100 51 150 45 C 200 39 238 52 290 45 C 342 38 380 51 430 45 C 480 39 518 52 570 45 C 622 38 660 51 710 45 C 758 39 790 50 884 44"
+    stroke="currentColor"
+    stroke-width="2.2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    opacity="0.5" />
+
+  <!-- Cat paw doodle — big pad (wider at top, tapering toward the wrist) -->
+  <path
+    d="M431 52 C 431 43 438 37 450 37 C 462 37 469 43 469 52 C 470 60 463 64 455 65 C 448 66 443 65 438 62 C 433 58 430 58 431 52 Z"
+    stroke="currentColor"
+    stroke-width="3"
+    stroke-linecap="round"
+    stroke-linejoin="round" />
+
+  <!-- Toe beans (outer-left) -->
+  <path
+    d="M422 45 C 419 39 424 35 428 37 C 432 39 432 45 429 49 C 427 52 424 50 422 45 Z"
+    stroke="currentColor"
+    stroke-width="3"
+    stroke-linecap="round"
+    stroke-linejoin="round" />
+
+  <!-- Toe beans (inner-left) -->
+  <path
+    d="M436 34 C 433 29 437 25 441 27 C 445 29 445 34 442 38 C 440 40 438 38 436 34 Z"
+    stroke="currentColor"
+    stroke-width="3"
+    stroke-linecap="round"
+    stroke-linejoin="round" />
+
+  <!-- Toe beans (inner-right) -->
+  <path
+    d="M458 27 C 454 25 457 20 461 22 C 465 24 465 29 462 33 C 460 35 460 30 458 27 Z"
+    stroke="currentColor"
+    stroke-width="3"
+    stroke-linecap="round"
+    stroke-linejoin="round" />
+
+  <!-- Toe beans (outer-right) -->
+  <path
+    d="M472 38 C 468 36 471 31 475 33 C 479 35 480 41 476 44 C 473 47 473 42 472 38 Z"
+    stroke="currentColor"
+    stroke-width="3"
+    stroke-linecap="round"
+    stroke-linejoin="round" />
+</svg>

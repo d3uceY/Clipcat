@@ -87,10 +87,12 @@ func RunMigrations() {
 	MigrateEncryptionColumns()
 	MigrateIndexes()
 	MigrateThumbnailColumn()
+	// The legacy key is still needed to decrypt rows an older version stored
+	// with encryption enabled.
 	if err := InitEncryption(); err != nil {
 		panic(err)
 	}
-	MigrateEncryptOldClips()
+	MigrateDecryptClips()
 	MigrateLabelColumn()
 	MigrateHiddenColumn()
 	MigrateAutoHideSetting()
@@ -101,6 +103,9 @@ func RunMigrations() {
 	MigrateSyncSettings()
 	MigrateIgnoreDefaultsColumn()
 	SeedDefaultIgnoreList()
+	if err := initSearchIndex(); err != nil {
+		fmt.Printf("search index init warning: %v\n", err)
+	}
 }
 
 // MigrateIgnoreDefaultsColumn adds the flag that prevents the built-in
@@ -168,8 +173,71 @@ func MigrateThumbnailColumn() {
 	_, _ = DB.Exec(`ALTER TABLE clips ADD COLUMN thumbnail BLOB`)
 }
 
-// MigrateEncryptOldClips re-encrypts every pre-existing unencrypted row so
-// that all clip data at rest is protected after the first run of a new version.
+// MigrateDecryptClips converts every row an older version stored with
+// encrypted = 1 back to plaintext, so at-rest encryption is fully removed
+// after the first run of this version. Safe to call on every startup - it
+// only touches rows still marked encrypted.
+func MigrateDecryptClips() {
+	type legacyRow struct {
+		id        int
+		content   sql.NullString
+		image     []byte
+		thumbnail []byte
+		clipType  string
+	}
+
+	rows, err := DB.Query(`SELECT id, content, image, thumbnail, type FROM clips WHERE encrypted = 1`)
+	if err != nil {
+		return
+	}
+
+	var clips []legacyRow
+	for rows.Next() {
+		var r legacyRow
+		if err := rows.Scan(&r.id, &r.content, &r.image, &r.thumbnail, &r.clipType); err == nil {
+			clips = append(clips, r)
+		}
+	}
+	rows.Close()
+
+	for _, c := range clips {
+		switch c.clipType {
+		case "text":
+			if !c.content.Valid || c.content.String == "" {
+				continue
+			}
+			plaintext, err := decryptText(c.content.String)
+			if err != nil {
+				continue
+			}
+			hash := hashContent([]byte(plaintext))
+			_, _ = DB.Exec(
+				`UPDATE clips SET content = ?, content_hash = ?, encrypted = 0 WHERE id = ?`,
+				plaintext, hash, c.id,
+			)
+		case "image":
+			if len(c.image) == 0 {
+				continue
+			}
+			plain, err := decryptData(c.image)
+			if err != nil {
+				continue
+			}
+			thumb := c.thumbnail
+			if len(thumb) > 0 {
+				if dec, derr := decryptData(thumb); derr == nil {
+					thumb = dec
+				}
+			}
+			hash := hashContent(plain)
+			_, _ = DB.Exec(
+				`UPDATE clips SET image = ?, thumbnail = ?, content_hash = ?, encrypted = 0 WHERE id = ?`,
+				plain, thumb, hash, c.id,
+			)
+		}
+	}
+}
+
 // MigrateLabelColumn adds a label column for optional clip nicknames.
 func MigrateLabelColumn() {
 	_, _ = DB.Exec(`ALTER TABLE clips ADD COLUMN label TEXT NOT NULL DEFAULT ''`)
@@ -203,60 +271,6 @@ func MigrateMiniClipSetting() {
 // Smart Position is enabled by default (value 1).
 func MigrateCursorSnapSetting() {
 	_, _ = DB.Exec(`ALTER TABLE settings ADD COLUMN cursor_snap INTEGER NOT NULL DEFAULT 1`)
-}
-
-func MigrateEncryptOldClips() {
-	type legacyRow struct {
-		id       int
-		content  sql.NullString
-		image    []byte
-		clipType string
-	}
-
-	rows, err := DB.Query(`SELECT id, content, image, type FROM clips WHERE encrypted = 0`)
-	if err != nil {
-		return
-	}
-
-	var clips []legacyRow
-	for rows.Next() {
-		var r legacyRow
-		if err := rows.Scan(&r.id, &r.content, &r.image, &r.clipType); err == nil {
-			clips = append(clips, r)
-		}
-	}
-	rows.Close()
-
-	for _, c := range clips {
-		switch c.clipType {
-		case "text":
-			if !c.content.Valid || c.content.String == "" {
-				continue
-			}
-			enc, err := encryptText(c.content.String)
-			if err != nil {
-				continue
-			}
-			hash := hashContent([]byte(c.content.String))
-			_, _ = DB.Exec(
-				`UPDATE clips SET content = ?, content_hash = ?, encrypted = 1 WHERE id = ?`,
-				enc, hash, c.id,
-			)
-		case "image":
-			if len(c.image) == 0 {
-				continue
-			}
-			enc, err := encryptData(c.image)
-			if err != nil {
-				continue
-			}
-			hash := hashContent(c.image)
-			_, _ = DB.Exec(
-				`UPDATE clips SET image = ?, content_hash = ?, encrypted = 1 WHERE id = ?`,
-				enc, hash, c.id,
-			)
-		}
-	}
 }
 
 // MigrateSyncSourceColumn adds the source column to the clips table so we can

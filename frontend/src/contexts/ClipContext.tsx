@@ -301,7 +301,7 @@ export function ClipProvider({ children }: { children: ReactNode }) {
 
   const addClip = async (content: string, pinned: boolean) => {
     await AddClip(content, pinned);
-    // getClips() is triggered by the clipboard:changed event emitted from Go.
+    // AddClip emits clip:added / clip:pruned events that update state reactively.
   };
 
   const renameClip = async (id: string, label: string) => {
@@ -417,11 +417,11 @@ export function ClipProvider({ children }: { children: ReactNode }) {
     });
 
     const offUpdated = Events.On("clip:updated", (e) => {
-      const data: { id: string; content: string; length: number } = e.data;
+      const data: { id: string; content: string } = e.data;
       setClips((prev) => {
         const update = (clips: Clip[]) =>
           clips.map((c) =>
-            c.id === data.id ? { ...c, content: data.content, length: data.length } : c
+            c.id === data.id ? { ...c, content: data.content } : c
           );
         return { pinned: update(prev.pinned), recent: update(prev.recent) };
       });
@@ -444,16 +444,6 @@ export function ClipProvider({ children }: { children: ReactNode }) {
           recent: [updated, ...prev.recent.filter((c) => c.id !== data.id)],
         };
       });
-    });
-
-    // Fallback for bulk operations (delete all, etc.)
-    const offChanged = Events.On("clipboard:changed", () => {
-      getClips();
-    });
-
-    // Safety-net: Go emits fresh distinct labels after every RenameClip call.
-    const offLabels = Events.On("labels:updated", () => {
-      // Nothing to do - distinctLabels is derived reactively from clips state.
     });
 
     const offUnhidden = Events.On("clip:unhidden", (e) => {
@@ -484,8 +474,6 @@ export function ClipProvider({ children }: { children: ReactNode }) {
       offPruned();
       offUpdated();
       offPinToggled();
-      offChanged();
-      offLabels();
       offUnhidden();
       offHidden();
       offSensitive();

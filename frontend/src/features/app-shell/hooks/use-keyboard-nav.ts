@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from "react"
-import type { FilteredClips } from "@/features/search/workers/search.worker"
+import type { FilteredClips } from "@/features/search/types"
 import { PasteToWindow } from "../../../../bindings/Clipcat/app"
+import { getFullText } from "@/features/clips/utils/get-full-text"
 
 interface UseKeyboardNavOptions {
     isSmallScreen: boolean
@@ -54,7 +55,8 @@ export function useKeyboardNav({
         if (pasteFn) {
             await pasteFn()
         } else if (clip.type !== "image" && clip.content) {
-            await PasteToWindow(clip.content)
+            const full = (await getFullText(clip.id)) ?? clip.content
+            await PasteToWindow(full)
         }
     }, [selectedIndex, flatClips])
 
@@ -63,7 +65,19 @@ export function useKeyboardNav({
             if (e.ctrlKey && e.key === 'f') {
                 e.preventDefault()
                 if (navCooldown && searchVisible) return
-                if (isSmallScreen || isMiniClip || isQuickPaste) {
+                if (isMiniClip || isQuickPaste) {
+                    // Utility modes: a shown-but-unfocused bar gets focused;
+                    // an already-focused bar gets closed; a hidden bar opens.
+                    if (searchVisible) {
+                        if (document.activeElement === searchInputRef.current) {
+                            toggleSearchVisible()
+                        } else {
+                            searchInputRef.current?.focus()
+                        }
+                    } else {
+                        toggleSearchVisible()
+                    }
+                } else if (isSmallScreen) {
                     toggleSearchVisible()
                 } else {
                     searchInputRef.current?.focus()

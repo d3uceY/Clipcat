@@ -8,10 +8,9 @@ import { insertLinks } from "@/features/clips/utils/insert-links"
 import { TogglePin, Delete, PasteToWindow, GetClipImage } from "../../../../bindings/Clipcat/app"
 import { playSound } from "@/utils/play-sound"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
-import { ScrollArea } from "@/components/ui/scroll-area-white"
-import { ScrollArea as ScrollAreaPencil } from "@/components/ui/scroll-area-pencil"
-import { ScrollArea as ScrollAreaDark } from "@/components/ui/scroll-area"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { copyBase64ImageToClipboard } from "@/features/clips/utils/copy-base64-image"
+import { getFullText } from "@/features/clips/utils/get-full-text"
 import { Browser } from "@wailsio/runtime"
 const EditClipDialog = lazy(() => import("@/components/edit-clip-dialog"))
 const ImageLightbox = lazy(() => import("./image-lightbox"))
@@ -30,6 +29,7 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
     const [dialogOpen, setDialogOpen] = useState(false)
     const [lightboxOpen, setLightboxOpen] = useState(false)
     const [fullImage, setFullImage] = useState<string | null>(null)
+    const [fullContent, setFullContent] = useState<string | null>(null)
     const [isEditingLabel, setIsEditingLabel] = useState(false)
     const [editingLabel, setEditingLabel] = useState(clip.label || "")
 
@@ -42,6 +42,8 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
     const { hideContent, isMiniClip, soundOn, renameClip, distinctLabels, unhideClip, hideClip } = useClips()
     const relativeTime = useRelativeTime(clip.createdAt)
     const linkedContent = useMemo(() => insertLinks(clip.content), [clip.content])
+    // Full text for the detail dialog - falls back to the preview while loading.
+    const fullLinkedContent = useMemo(() => insertLinks(fullContent ?? clip.content), [fullContent, clip.content])
 
     const labelSuggestions = useMemo(() => {
         if (!isEditingLabel || distinctLabels.length === 0) return []
@@ -68,6 +70,12 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
         if (!dialogOpen || clip.type !== "image") { setFullImage(null); return }
         const id = Number(clip.id.replace('clip_', ''))
         GetClipImage(id).then(setFullImage).catch(() => { })
+    }, [dialogOpen, clip.id, clip.type])
+
+    // Fetch full text when the detail dialog opens (the card only holds a preview)
+    useEffect(() => {
+        if (!dialogOpen || clip.type !== "text") { setFullContent(null); return }
+        getFullText(clip.id).then(setFullContent).catch(() => { })
     }, [dialogOpen, clip.id, clip.type])
 
     useEffect(() => {
@@ -117,7 +125,8 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
                 return
             }
             if (clip.content == null) return
-            await navigator.clipboard.writeText(clip.content)
+            const full = (await getFullText(clip.id)) ?? clip.content
+            await navigator.clipboard.writeText(full)
             setCopied(true)
             if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current)
             copiedTimerRef.current = setTimeout(() => setCopied(false), 2000)
@@ -133,11 +142,12 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
     const handlePaste = async () => {
         if (!clip.content) return
         playSound("/sounds/paper-copy.wav", soundOn, 1)
+        const full = (await getFullText(clip.id)) ?? clip.content
         try {
-            await PasteToWindow(clip.content)
+            await PasteToWindow(full)
         } catch (err) {
             console.error("PasteToWindow failed, falling back to copy:", err)
-            await navigator.clipboard.writeText(clip.content)
+            await navigator.clipboard.writeText(full)
         }
     }
 
@@ -296,7 +306,7 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
                     {/* Suggestions - absolutely positioned so they never affect card layout */}
                     {isEditingLabel && labelSuggestions.length > 0 && (
                         <div className="absolute top-full left-0 right-0 z-60 mt-0.5 bg-[#F9F5E6] border border-dashed border-amber-600/50 shadow-lg overflow-hidden">
-                            <ScrollAreaDark className="max-h-40">
+                            <ScrollArea className="max-h-40">
                                 <div className="divide-y divide-amber-200/40">
                                 {labelSuggestions.map(suggestion => (
                                     <button
@@ -322,7 +332,7 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
                                     </button>
                                 ))}
                             </div>
-                            </ScrollAreaDark>
+                            </ScrollArea>
                         </div>
                     )}
                 </div>
@@ -345,7 +355,7 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
                         />
                     ) : (
                         <p
-                            className="line-clamp-4 text-sm text-foreground md:line-clamp-8"
+                            className="text-sm text-foreground"
                             dangerouslySetInnerHTML={{ __html: linkedContent }}
                         />
                     )}
@@ -410,7 +420,7 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
                 }}>
                     {clip.type === "image" && clip.image ? (
                         <DialogContent className="px-3 border-0 rounded-sm max-w-2xl bg-[url(/board-texture.avif)] bg-cover h-screen! sm:h-[90vh]! max-h-125">
-                            <ScrollArea className="overflow-auto">
+                            <ScrollArea variant="white" className="overflow-auto">
                                 <img
                                     src={`data:image/png;base64,${fullImage ?? clip.image}`}
                                     alt="Clip image"
@@ -438,14 +448,14 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
                                 <DialogHeader className="sm:pt-7">
                                     <DialogTitle>Clip Content</DialogTitle>
                                     <DialogDescription>Created {relativeTime}</DialogDescription>
-                                    <img src="/seperator.png" alt="" className="w-full" />
+                                    <img src="/separator.svg" alt="" className="w-full" />
                                 </DialogHeader>
-                                <ScrollAreaPencil
+                                <ScrollArea variant="pencil"
                                     className={`max-h-[60vh] pr-4 overflow-x-hidden pb-90 ${hideContent ? "hard-to-read" : ""}`}
                                     onClick={handleLinkClick}
                                 >
-                                    <p className="whitespace-pre-wrap wrap-break-word text-sm" dangerouslySetInnerHTML={{ __html: linkedContent }} />
-                                </ScrollAreaPencil>
+                                    <p className="whitespace-pre-wrap wrap-break-word text-sm" dangerouslySetInnerHTML={{ __html: fullLinkedContent }} />
+                                </ScrollArea>
                             </div>
                         </DialogContent>
                     )}

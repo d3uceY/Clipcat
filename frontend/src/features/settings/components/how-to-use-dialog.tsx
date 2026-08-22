@@ -187,7 +187,7 @@ export default function HowToUseDialog({ platform, onOpen, hasSeenHowToUse = tru
 
                         {/* Keyboard Shortcuts */}
                         <div>
-                            <img src="/seperator.png" alt="" className="w-full my-3 opacity-70" />
+                            <img src="/separator.svg" alt="" className="w-full my-3 opacity-70" />
                             <p className="text-sm font-bold mb-3">Keyboard Shortcuts</p>
                             <div className="space-y-2.5">
                                 {shortcuts.map(({ keys, label }) => (

@@ -58,10 +58,6 @@ export function GetCursorSnap() {
   return window['go']['main']['App']['GetCursorSnap']();
 }
 
-export function GetDistinctLabels() {
-  return window['go']['main']['App']['GetDistinctLabels']();
-}
-
 export function GetIgnoreList() {
   return window['go']['main']['App']['GetIgnoreList']();
 }
@@ -76,10 +72,6 @@ export function GetQuickPaste() {
 
 export function GetStorageLimit() {
   return window['go']['main']['App']['GetStorageLimit']();
-}
-
-export function GetSyncPeerCount() {
-  return window['go']['main']['App']['GetSyncPeerCount']();
 }
 
 export function GetSyncSettings() {

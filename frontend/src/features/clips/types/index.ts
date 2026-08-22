@@ -1,7 +1,6 @@
 export interface Clip {
   id: string;
   content?: string | null;
-  length: number;
   isPinned: boolean;
   createdAt: string;
   image?: string | null;

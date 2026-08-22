@@ -73,6 +73,9 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
         const tabContentRef = useRef<HTMLDivElement>(null);
         const limitRef = useRef<HTMLSpanElement>(null);
         const ctxSafeRef = useRef<((fn: () => void) => () => void) | null>(null);
+        // Set once the intro choreography has played — it must run only on the
+        // first open, not on every open.
+        const introPlayedRef = useRef(false);
 
         // Local, non-nullable ref for GSAP scoping — stays in sync with the
         // forwarded ref so the parent (WindowControls) can still animate the root.
@@ -173,9 +176,16 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
 
         // Entrance: the giant "Settings" writes itself in, the rubber stamp and
         // tape land, then the flags and first page's rows get stamped down.
-        // Runs once per open (parent drives open via the `open` prop).
+        // Plays exactly once (first open); later opens show the settled page.
+        // revertOnUpdate is off so the played-in state is never reverted to the
+        // hidden start state when `open` flips again.
         useGSAP(() => {
-            if (!open || prefersReducedMotion()) return;
+            if (prefersReducedMotion()) {
+                introPlayedRef.current = true;
+                return;
+            }
+            if (!open || introPlayedRef.current) return;
+            introPlayedRef.current = true;
             const tl = gsap.timeline({ defaults: { ease: "expo.out" } });
             tl.fromTo(
                 ".settings-title-char",
@@ -200,7 +210,7 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
                     { y: 0, rotation: 0, opacity: 1, duration: 0.5, ease: "back.out(1.7)", stagger: 0.06 },
                     "-=0.3"
                 );
-        }, { dependencies: [open], scope: rootRef, revertOnUpdate: true });
+        }, { dependencies: [open], scope: rootRef, revertOnUpdate: false });
 
         // Tab switch: settle the flags and stamp the new page's rows in.
         useGSAP(() => {

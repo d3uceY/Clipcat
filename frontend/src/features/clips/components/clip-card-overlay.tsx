@@ -14,6 +14,7 @@ import { copyBase64ImageToClipboard } from "@/features/clips/utils/copy-base64-i
 const EditClipDialog = lazy(() => import("@/components/edit-clip-dialog"))
 const ImageLightbox = lazy(() => import("./image-lightbox"))
 import { insertLinks } from "@/features/clips/utils/insert-links"
+import { getFullText } from "@/features/clips/utils/get-full-text"
 import { Browser } from "@wailsio/runtime"
 
 interface ClipCardOverlayProps {
@@ -37,6 +38,7 @@ export default function ClipCardOverlay({ clip, type, cardRect, onDelete, onDele
     const [dialogOpen, setDialogOpen] = useState(false)
     const [lightboxOpen, setLightboxOpen] = useState(false)
     const [fullImage, setFullImage] = useState<string | null>(null)
+    const [fullContent, setFullContent] = useState<string | null>(null)
     const [isEditingLabel, setIsEditingLabel] = useState(false)
     const [editingLabel, setEditingLabel] = useState(clip.label || "")
 
@@ -46,6 +48,8 @@ export default function ClipCardOverlay({ clip, type, cardRect, onDelete, onDele
 
     const relativeTime = useRelativeTime(clip.createdAt)
     const linkedContent = useMemo(() => insertLinks(clip.content), [clip.content])
+    // Full text for the detail dialog - falls back to the preview while loading.
+    const fullLinkedContent = useMemo(() => insertLinks(fullContent ?? clip.content), [fullContent, clip.content])
 
     const labelSuggestions = useMemo(() => {
         if (!isEditingLabel || distinctLabels.length === 0) return []
@@ -60,6 +64,12 @@ export default function ClipCardOverlay({ clip, type, cardRect, onDelete, onDele
         if (!dialogOpen || clip.type !== "image") { setFullImage(null); return }
         const id = Number(clip.id.replace('clip_', ''))
         GetClipImage(id).then(setFullImage).catch(() => { })
+    }, [dialogOpen, clip.id, clip.type])
+
+    // Fetch full text when the detail dialog opens (the card only holds a preview)
+    useEffect(() => {
+        if (!dialogOpen || clip.type !== "text") { setFullContent(null); return }
+        getFullText(clip.id).then(setFullContent).catch(() => { })
     }, [dialogOpen, clip.id, clip.type])
 
     useEffect(() => {
@@ -85,7 +95,8 @@ export default function ClipCardOverlay({ clip, type, cardRect, onDelete, onDele
                 return
             }
             if (clip.content == null) return
-            await navigator.clipboard.writeText(clip.content)
+            const full = (await getFullText(clip.id)) ?? clip.content
+            await navigator.clipboard.writeText(full)
             setCopied(true)
             if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current)
             copiedTimerRef.current = setTimeout(() => setCopied(false), 2000)
@@ -101,11 +112,12 @@ export default function ClipCardOverlay({ clip, type, cardRect, onDelete, onDele
     const handlePaste = async () => {
         if (!clip.content) return
         playSound("/sounds/paper-copy.wav", soundOn, 1)
+        const full = (await getFullText(clip.id)) ?? clip.content
         try {
-            await PasteToWindow(clip.content)
+            await PasteToWindow(full)
         } catch (err) {
             console.error("PasteToWindow failed, falling back to copy:", err)
-            await navigator.clipboard.writeText(clip.content)
+            await navigator.clipboard.writeText(full)
         }
     }
 
@@ -299,7 +311,7 @@ export default function ClipCardOverlay({ clip, type, cardRect, onDelete, onDele
                         />
                     ) : (
                         <p
-                            className="line-clamp-4 text-sm text-foreground md:line-clamp-6"
+                            className="text-sm text-foreground"
                             dangerouslySetInnerHTML={{ __html: linkedContent }}
                         />
                     )}
@@ -403,7 +415,7 @@ export default function ClipCardOverlay({ clip, type, cardRect, onDelete, onDele
                                     className={`max-h-[60vh] pr-4 overflow-x-hidden pb-90 ${hideContent ? "hard-to-read" : ""}`}
                                     onClick={handleLinkClick}
                                 >
-                                    <p className="whitespace-pre-wrap wrap-break-word text-sm" dangerouslySetInnerHTML={{ __html: linkedContent }} />
+                                    <p className="whitespace-pre-wrap wrap-break-word text-sm" dangerouslySetInnerHTML={{ __html: fullLinkedContent }} />
                                 </ScrollAreaPencil>
                             </div>
                         </DialogContent>

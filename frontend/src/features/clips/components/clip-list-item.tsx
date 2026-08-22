@@ -2,6 +2,7 @@ import { Pin, Trash2, ShieldCheck } from "lucide-react"
 import { useState, memo, useEffect, useRef, useCallback } from "react"
 import type { Clip } from '@/features/clips/types'
 import { TogglePin, Delete, PasteToWindow, FocusAndPaste, GetClipImage } from "../../../../bindings/Clipcat/app"
+import { getFullText } from "@/features/clips/utils/get-full-text"
 import { useClips } from "@/contexts/ClipContext"
 import { playSound } from "@/utils/play-sound"
 
@@ -35,7 +36,8 @@ function ClipListItem({ clip, revealed = false, isSelected = false, index, onSel
                 await FocusAndPaste()
             } else {
                 if (!clip.content) return
-                await PasteToWindow(clip.content)
+                const full = (await getFullText(clip.id)) ?? clip.content
+                await PasteToWindow(full)
             }
         } catch (err) {
             console.error("Paste failed:", err)
@@ -111,7 +113,7 @@ function ClipListItem({ clip, revealed = false, isSelected = false, index, onSel
                     style={{ maxHeight: 100 }}
                 />
             ) : (
-                <p className={`text-xs line-clamp-2 wrap-break-word leading-relaxed pr-10 ${hideContent ? "hard-to-read" : ""}`}>
+                <p className={`text-xs wrap-break-word leading-relaxed pr-10 ${hideContent ? "hard-to-read" : ""}`}>
                     {clip.content}
                 </p>
             )}

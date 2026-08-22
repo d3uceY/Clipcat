@@ -3,7 +3,6 @@ package store
 import (
 	"crypto/aes"
 	"crypto/cipher"
-	"crypto/hmac"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
@@ -12,19 +11,20 @@ import (
 	"io"
 )
 
-var encKey []byte
-var encBlock cipher.Block // cached AES cipher - created once, reused forever
+// At-rest encryption has been removed. This file only keeps the legacy AES
+// decrypt helpers (used by MigrateDecryptClips to convert rows written by an
+// older version) plus the keyless content hash used for duplicate detection.
 
-// InitEncryption loads (or generates on first run) the per-installation
-// encryption key from the encryption_meta table.
-// Must be called after InitDB, CreateTables, and MigrateEncryptionColumns.
+var encBlock cipher.Block // cached AES cipher from the legacy machine key
+
+// InitEncryption loads the per-installation encryption key left behind by an
+// older version so MigrateDecryptClips can decrypt legacy rows on startup.
 func InitEncryption() error {
 	key, err := getOrCreateEncryptionKey()
 	if err != nil {
 		return fmt.Errorf("encryption init: %w", err)
 	}
-	encKey = key
-	block, err := aes.NewCipher(encKey)
+	block, err := aes.NewCipher(key)
 	if err != nil {
 		return fmt.Errorf("encryption init cipher: %w", err)
 	}
@@ -57,18 +57,6 @@ func getOrCreateEncryptionKey() ([]byte, error) {
 	return key, nil
 }
 
-func encryptData(plaintext []byte) ([]byte, error) {
-	gcm, err := cipher.NewGCM(encBlock)
-	if err != nil {
-		return nil, err
-	}
-	nonce := make([]byte, gcm.NonceSize())
-	if _, err = io.ReadFull(rand.Reader, nonce); err != nil {
-		return nil, err
-	}
-	return gcm.Seal(nonce, nonce, plaintext, nil), nil
-}
-
 func decryptData(data []byte) ([]byte, error) {
 	gcm, err := cipher.NewGCM(encBlock)
 	if err != nil {
@@ -79,14 +67,6 @@ func decryptData(data []byte) ([]byte, error) {
 		return nil, fmt.Errorf("ciphertext too short")
 	}
 	return gcm.Open(nil, data[:nonceSize], data[nonceSize:], nil)
-}
-
-func encryptText(plaintext string) (string, error) {
-	ct, err := encryptData([]byte(plaintext))
-	if err != nil {
-		return "", err
-	}
-	return base64.StdEncoding.EncodeToString(ct), nil
 }
 
 func decryptText(encoded string) (string, error) {
@@ -101,8 +81,8 @@ func decryptText(encoded string) (string, error) {
 	return string(pt), nil
 }
 
+// hashContent returns a plain SHA-256 of data, used for duplicate detection.
 func hashContent(data []byte) string {
-	mac := hmac.New(sha256.New, encKey)
-	mac.Write(data)
-	return hex.EncodeToString(mac.Sum(nil))
+	sum := sha256.Sum256(data)
+	return hex.EncodeToString(sum[:])
 }

@@ -20,14 +20,28 @@ import (
 type Clip struct {
 	ID        string  `json:"id"`
 	Type      string  `json:"type"`
-	Content   *string `json:"content,omitempty"`
-	Image     *string `json:"image,omitempty"` // base64 - thumbnail for list, full-res on demand
-	Length    int     `json:"length"`
+	Content   *string `json:"content,omitempty"` // truncated preview for text; full text via GetClipContent
+	Image     *string `json:"image,omitempty"`   // base64 - thumbnail for list, full-res on demand
 	Pinned    bool    `json:"isPinned"`
 	CreatedAt string  `json:"createdAt"`
 	Label     string  `json:"label"`
 	Hidden    bool    `json:"isHidden"`
 	Source    string  `json:"source,omitempty"` // "local" (default) or "network"
+}
+
+// MaxPreviewChars caps how much of a text clip's content is sent to the
+// frontend in list/search payloads. The full text is fetched on demand
+// through GetClipContent (copy, edit, view).
+const MaxPreviewChars = 200
+
+// TrimContent truncates text to MaxPreviewChars runes (multi-byte safe) and
+// appends "..." when it had to cut.
+func TrimContent(s string) string {
+	r := []rune(s)
+	if len(r) <= MaxPreviewChars {
+		return s
+	}
+	return string(r[:MaxPreviewChars]) + "..."
 }
 
 func GetStorageLimit() (int, error) {
@@ -59,7 +73,7 @@ func UpdateStorageLimit(newLimit int) error {
 
 func GetClips() ([]Clip, error) {
 	query := `
-		SELECT id, content, image, thumbnail, type, pinned, created_at, encrypted, label, hidden, source
+		SELECT id, content, image, thumbnail, type, pinned, created_at, label, hidden, source
 		FROM clips
 		ORDER BY pinned DESC, created_at DESC
 	`
@@ -81,13 +95,12 @@ func GetClips() ([]Clip, error) {
 			clipType  string
 			pinned    bool
 			createdAt string
-			encrypted bool
 			label     string
 			hidden    bool
 			source    string
 		)
 
-		err := rows.Scan(&id, &content, &image, &thumbnail, &clipType, &pinned, &createdAt, &encrypted, &label, &hidden, &source)
+		err := rows.Scan(&id, &content, &image, &thumbnail, &clipType, &pinned, &createdAt, &label, &hidden, &source)
 		if err != nil {
 			return nil, err
 		}
@@ -103,32 +116,16 @@ func GetClips() ([]Clip, error) {
 		}
 
 		if clipType == "text" && content.Valid {
-			if encrypted {
-				plaintext, err := decryptText(content.String)
-				if err == nil {
-					clip.Content = &plaintext
-					clip.Length = len(plaintext)
-				} else {
-					clip.Content = &content.String
-					clip.Length = len(content.String)
-				}
-			} else {
-				clip.Content = &content.String
-				clip.Length = len(content.String)
-			}
+			preview := TrimContent(content.String)
+			clip.Content = &preview
 		}
 
 		if clipType == "image" {
-			// Decrypt thumbnail if needed; fall back to full image for
-			// clips inserted before the thumbnail column was added.
+			// Fall back to the full image for clips inserted before the
+			// thumbnail column was added.
 			thumbBytes := thumbnail
 			if len(thumbBytes) == 0 {
 				thumbBytes = image
-			}
-			if encrypted && len(thumbBytes) > 0 {
-				if dec, err := decryptData(thumbBytes); err == nil {
-					thumbBytes = dec
-				}
 			}
 			if len(thumbBytes) > 0 {
 				if normalized, err := normalizeImageToPNG(thumbBytes); err == nil {
@@ -136,7 +133,6 @@ func GetClips() ([]Clip, error) {
 				}
 				encoded := base64.StdEncoding.EncodeToString(thumbBytes)
 				clip.Image = &encoded
-				clip.Length = len(thumbBytes)
 			}
 		}
 
@@ -156,14 +152,13 @@ func getClipByRowID(id int64) (*Clip, error) {
 		clipType  string
 		pinned    bool
 		createdAt string
-		encrypted bool
 		label     string
 		hidden    bool
 		source    string
 	)
 	err := DB.QueryRow(
-		`SELECT id, content, image, thumbnail, type, pinned, created_at, encrypted, label, hidden, source FROM clips WHERE id = ?`, id,
-	).Scan(&rowID, &content, &img, &thumbnail, &clipType, &pinned, &createdAt, &encrypted, &label, &hidden, &source)
+		`SELECT id, content, image, thumbnail, type, pinned, created_at, label, hidden, source FROM clips WHERE id = ?`, id,
+	).Scan(&rowID, &content, &img, &thumbnail, &clipType, &pinned, &createdAt, &label, &hidden, &source)
 	if err != nil {
 		return nil, err
 	}
@@ -179,19 +174,8 @@ func getClipByRowID(id int64) (*Clip, error) {
 	}
 
 	if clipType == "text" && content.Valid {
-		if encrypted {
-			plaintext, err := decryptText(content.String)
-			if err == nil {
-				clip.Content = &plaintext
-				clip.Length = len(plaintext)
-			} else {
-				clip.Content = &content.String
-				clip.Length = len(content.String)
-			}
-		} else {
-			clip.Content = &content.String
-			clip.Length = len(content.String)
-		}
+		preview := TrimContent(content.String)
+		clip.Content = &preview
 	}
 
 	if clipType == "image" {
@@ -199,18 +183,12 @@ func getClipByRowID(id int64) (*Clip, error) {
 		if len(thumbBytes) == 0 {
 			thumbBytes = img
 		}
-		if encrypted && len(thumbBytes) > 0 {
-			if dec, err := decryptData(thumbBytes); err == nil {
-				thumbBytes = dec
-			}
-		}
 		if len(thumbBytes) > 0 {
 			if normalized, err := normalizeImageToPNG(thumbBytes); err == nil {
 				thumbBytes = normalized
 			}
 			encoded := base64.StdEncoding.EncodeToString(thumbBytes)
 			clip.Image = &encoded
-			clip.Length = len(thumbBytes)
 		}
 	}
 
@@ -264,10 +242,6 @@ func AddClip(content string, clipType string) (*Clip, []int, int, bool, error) {
 		deletedID = int(existingID)
 	}
 
-	enc, err := encryptText(content)
-	if err != nil {
-		return nil, nil, 0, false, fmt.Errorf("failed to encrypt clip: %v", err)
-	}
 	hash := hashContent([]byte(content))
 
 	// Scan for secrets: notify always, auto-hide only when the setting is on.
@@ -290,8 +264,8 @@ func AddClip(content string, clipType string) (*Clip, []int, int, bool, error) {
 		}
 	}
 
-	query := `INSERT INTO clips (content, content_hash, type, pinned, encrypted, hidden, label, created_at) VALUES (?, ?, ?, ?, 1, ?, ?, datetime('now'))`
-	result, err := DB.Exec(query, enc, hash, clipType, oldPinned, hidden, autolabel)
+	query := `INSERT INTO clips (content, content_hash, type, pinned, encrypted, hidden, label, created_at) VALUES (?, ?, ?, ?, 0, ?, ?, datetime('now'))`
+	result, err := DB.Exec(query, content, hash, clipType, oldPinned, hidden, autolabel)
 	if err != nil {
 		return nil, nil, deletedID, false, fmt.Errorf("failed to insert clip: %v", err)
 	}
@@ -300,6 +274,7 @@ func AddClip(content string, clipType string) (*Clip, []int, int, bool, error) {
 	if err != nil {
 		return nil, nil, deletedID, false, fmt.Errorf("failed to get insert ID: %v", err)
 	}
+	indexTextClip(int(insertID), content)
 
 	prunedIDs, err := pruneExcessClips()
 	if err != nil {
@@ -319,15 +294,11 @@ func AddManualClip(content string, pinned bool) (*Clip, []int, bool, error) {
 		return nil, nil, false, nil
 	}
 
-	enc, err := encryptText(content)
-	if err != nil {
-		return nil, nil, false, fmt.Errorf("failed to encrypt clip: %v", err)
-	}
 	hash := hashContent([]byte(content))
 
 	// Manual clips are intentionally added by the user - do not auto-hide them.
-	query := `INSERT INTO clips (content, content_hash, type, pinned, encrypted, created_at) VALUES (?, ?, ?, ?, 1, datetime('now'))`
-	result, err := DB.Exec(query, enc, hash, "text", pinned)
+	query := `INSERT INTO clips (content, content_hash, type, pinned, encrypted, created_at) VALUES (?, ?, ?, ?, 0, datetime('now'))`
+	result, err := DB.Exec(query, content, hash, "text", pinned)
 	if err != nil {
 		return nil, nil, false, fmt.Errorf("failed to insert clip: %v", err)
 	}
@@ -336,6 +307,7 @@ func AddManualClip(content string, pinned bool) (*Clip, []int, bool, error) {
 	if err != nil {
 		return nil, nil, false, fmt.Errorf("failed to get insert ID: %v", err)
 	}
+	indexTextClip(int(insertID), content)
 
 	prunedIDs, err := pruneExcessClips()
 	if err != nil {
@@ -362,10 +334,6 @@ func AddImageClip(img []byte) (*Clip, []int, int, bool, error) {
 		deletedID = int(existingID)
 	}
 
-	enc, err := encryptData(img)
-	if err != nil {
-		return nil, nil, 0, false, fmt.Errorf("failed to encrypt image clip: %v", err)
-	}
 	hash := hashContent(img)
 
 	// Generate a small thumbnail so GetClips never transmits full images.
@@ -373,13 +341,9 @@ func AddImageClip(img []byte) (*Clip, []int, int, bool, error) {
 	if err != nil {
 		thumb = nil
 	}
-	var encThumb []byte
-	if len(thumb) > 0 {
-		encThumb, _ = encryptData(thumb)
-	}
 
-	query := `INSERT INTO clips (image, thumbnail, content_hash, type, pinned, encrypted, hidden, created_at) VALUES (?, ?, ?, ?, ?, 1, ?, datetime('now'))`
-	result, err := DB.Exec(query, enc, encThumb, hash, "image", oldImagePinned, oldImageHidden)
+	query := `INSERT INTO clips (image, thumbnail, content_hash, type, pinned, encrypted, hidden, created_at) VALUES (?, ?, ?, ?, ?, 0, ?, datetime('now'))`
+	result, err := DB.Exec(query, img, thumb, hash, "image", oldImagePinned, oldImageHidden)
 	if err != nil {
 		return nil, nil, deletedID, false, fmt.Errorf("failed to insert image clip: %v", err)
 	}
@@ -491,6 +455,9 @@ func pruneExcessClips() ([]int, error) {
 	if err != nil {
 		return nil, fmt.Errorf("prune: delete: %w", err)
 	}
+	for _, id := range prunedIDs {
+		removeClipFromIndex(id)
+	}
 	return prunedIDs, nil
 }
 
@@ -498,26 +465,17 @@ func pruneExcessClips() ([]int, error) {
 // single clip.  Use this for the detail dialog - never for the list view.
 func GetClipImage(clipID int) (string, error) {
 	var (
-		image     []byte
-		clipType  string
-		encrypted bool
+		image    []byte
+		clipType string
 	)
 	err := DB.QueryRow(
-		`SELECT image, type, encrypted FROM clips WHERE id = ?`, clipID,
-	).Scan(&image, &clipType, &encrypted)
+		`SELECT image, type FROM clips WHERE id = ?`, clipID,
+	).Scan(&image, &clipType)
 	if err != nil {
 		return "", fmt.Errorf("getClipImage: %w", err)
 	}
 	if clipType != "image" {
 		return "", fmt.Errorf("getClipImage: clip %d is not an image", clipID)
-	}
-
-	if encrypted {
-		dec, err := decryptData(image)
-		if err != nil {
-			return "", fmt.Errorf("getClipImage decrypt: %w", err)
-		}
-		image = dec
 	}
 
 	if normalized, err := normalizeImageToPNG(image); err == nil {
@@ -527,14 +485,29 @@ func GetClipImage(clipID int) (string, error) {
 	return base64.StdEncoding.EncodeToString(image), nil
 }
 
-func UpdateClipContent(clipID int, newContent string) error {
-	enc, err := encryptText(newContent)
+// GetClipContent returns the full, untruncated text of a clip. The frontend
+// uses it to copy, edit, or view a clip whose list preview was truncated.
+func GetClipContent(clipID int) (string, error) {
+	var (
+		content  sql.NullString
+		clipType string
+	)
+	err := DB.QueryRow(
+		`SELECT content, type FROM clips WHERE id = ?`, clipID,
+	).Scan(&content, &clipType)
 	if err != nil {
-		return fmt.Errorf("failed to encrypt updated content: %v", err)
+		return "", err
 	}
+	if clipType != "text" || !content.Valid {
+		return "", fmt.Errorf("clip %d has no text content", clipID)
+	}
+	return content.String, nil
+}
+
+func UpdateClipContent(clipID int, newContent string) error {
 	hash := hashContent([]byte(newContent))
-	query := `UPDATE clips SET content = ?, content_hash = ?, encrypted = 1 WHERE id = ?`
-	result, err := DB.Exec(query, enc, hash, clipID)
+	query := `UPDATE clips SET content = ?, content_hash = ?, encrypted = 0 WHERE id = ?`
+	result, err := DB.Exec(query, newContent, hash, clipID)
 	if err != nil {
 		return fmt.Errorf("failed to update clip content: %v", err)
 	}
@@ -548,6 +521,7 @@ func UpdateClipContent(clipID int, newContent string) error {
 		return fmt.Errorf("clip with id %d not found", clipID)
 	}
 
+	indexTextClip(clipID, newContent)
 	return nil
 }
 
@@ -591,6 +565,7 @@ func DeleteClip(clipID int) error {
 		return fmt.Errorf("clip with id %d not found", clipID)
 	}
 
+	removeClipFromIndex(clipID)
 	return nil
 }
 
@@ -599,6 +574,7 @@ func DeleteAllClips() error {
 	if err != nil {
 		return fmt.Errorf("failed to delete all clips: %v", err)
 	}
+	pruneOrphanedIndexRows()
 	DB.Exec(`VACUUM`)
 	return nil
 }
@@ -608,6 +584,7 @@ func DeletePinnedClips() error {
 	if err != nil {
 		return fmt.Errorf("failed to delete pinned clips: %v", err)
 	}
+	pruneOrphanedIndexRows()
 	DB.Exec(`VACUUM`)
 	return nil
 }
@@ -617,6 +594,7 @@ func DeleteUnpinnedClips() error {
 	if err != nil {
 		return fmt.Errorf("failed to delete unpinned clips: %v", err)
 	}
+	pruneOrphanedIndexRows()
 	DB.Exec(`VACUUM`)
 	return nil
 }
@@ -677,13 +655,12 @@ func HideClip(clipID int) error {
 // pruning. Intended for performance testing only.
 func SeedTestImageClips(n int) error {
 	var (
-		imgData   []byte
-		thumb     []byte
-		encrypted bool
+		imgData []byte
+		thumb   []byte
 	)
 	err := DB.QueryRow(
-		`SELECT image, thumbnail, encrypted FROM clips WHERE type = 'image' ORDER BY created_at DESC LIMIT 1`,
-	).Scan(&imgData, &thumb, &encrypted)
+		`SELECT image, thumbnail FROM clips WHERE type = 'image' ORDER BY created_at DESC LIMIT 1`,
+	).Scan(&imgData, &thumb)
 	if err != nil {
 		return fmt.Errorf("seedTestImageClips: no image clip found: %w", err)
 	}
@@ -702,22 +679,11 @@ func SeedTestImageClips(n int) error {
 	defer stmt.Close()
 
 	for i := 0; i < n; i++ {
-		// Re-encrypt a fresh copy so each row gets a unique hash.
-		rawImg := imgData
-		if encrypted {
-			if dec, err := decryptData(imgData); err == nil {
-				rawImg = dec
-			}
-		}
 		// Append a dummy byte sequence to make the content distinct each iteration.
-		unique := append(rawImg, byte(i), byte(i>>8), byte(i>>16))
-		enc, err := encryptData(unique)
-		if err != nil {
-			return fmt.Errorf("seedTestImageClips: encrypt %d: %w", i+1, err)
-		}
+		unique := append(append([]byte{}, imgData...), byte(i), byte(i>>8), byte(i>>16))
 		hash := hashContent(unique)
 		offset := fmt.Sprintf("-%d seconds", i)
-		if _, err := stmt.Exec(enc, thumb, hash, encrypted, offset); err != nil {
+		if _, err := stmt.Exec(unique, thumb, hash, 0, offset); err != nil {
 			return fmt.Errorf("seedTestImageClips: insert %d: %w", i+1, err)
 		}
 	}
@@ -744,7 +710,7 @@ func SeedTestClips(n int) error {
 	defer tx.Rollback()
 
 	stmt, err := tx.Prepare(`INSERT INTO clips (content, content_hash, type, pinned, encrypted, created_at)
-		VALUES (?, ?, 'text', 0, 1, datetime('now', ?))`)
+		VALUES (?, ?, 'text', 0, 0, datetime('now', ?))`)
 	if err != nil {
 		return fmt.Errorf("seedTestClips: prepare: %w", err)
 	}
@@ -752,18 +718,18 @@ func SeedTestClips(n int) error {
 
 	for i := 0; i < n; i++ {
 		content := fmt.Sprintf(samples[i%len(samples)], i+1)
-		enc, err := encryptText(content)
-		if err != nil {
-			return fmt.Errorf("seedTestClips: encrypt clip %d: %w", i+1, err)
-		}
 		hash := hashContent([]byte(content))
 		offset := fmt.Sprintf("-%d seconds", i)
-		if _, err := stmt.Exec(enc, hash, offset); err != nil {
+		if _, err := stmt.Exec(content, hash, offset); err != nil {
 			return fmt.Errorf("seedTestClips: insert clip %d: %w", i+1, err)
 		}
 	}
 
-	return tx.Commit()
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("seedTestClips: commit: %w", err)
+	}
+	// Rebuild the FTS index so search perf tests see the seeded clips.
+	return initSearchIndex()
 }
 
 // AddNetworkClip inserts a clip received from the LAN.  No secret scanning
@@ -772,14 +738,10 @@ func SeedTestClips(n int) error {
 func AddNetworkClip(content string, clipType string, img []byte) (*Clip, error) {
 	switch clipType {
 	case "text":
-		enc, err := encryptText(content)
-		if err != nil {
-			return nil, fmt.Errorf("failed to encrypt network clip: %v", err)
-		}
 		hash := hashContent([]byte(content))
 
-		query := `INSERT INTO clips (content, content_hash, type, pinned, encrypted, source, created_at) VALUES (?, ?, ?, 0, 1, 'network', datetime('now'))`
-		result, err := DB.Exec(query, enc, hash, clipType)
+		query := `INSERT INTO clips (content, content_hash, type, pinned, encrypted, source, created_at) VALUES (?, ?, ?, 0, 0, 'network', datetime('now'))`
+		result, err := DB.Exec(query, content, hash, clipType)
 		if err != nil {
 			return nil, fmt.Errorf("failed to insert network clip: %v", err)
 		}
@@ -788,6 +750,7 @@ func AddNetworkClip(content string, clipType string, img []byte) (*Clip, error) 
 		if err != nil {
 			return nil, fmt.Errorf("failed to get insert ID: %v", err)
 		}
+		indexTextClip(int(insertID), content)
 
 		clip, err := getClipByRowID(insertID)
 		if err != nil {
@@ -796,10 +759,6 @@ func AddNetworkClip(content string, clipType string, img []byte) (*Clip, error) 
 		return clip, nil
 
 	case "image":
-		enc, err := encryptData(img)
-		if err != nil {
-			return nil, fmt.Errorf("failed to encrypt network image: %v", err)
-		}
 		hash := hashContent(img)
 
 		// Generate a thumbnail.
@@ -807,13 +766,9 @@ func AddNetworkClip(content string, clipType string, img []byte) (*Clip, error) 
 		if err != nil {
 			thumb = nil
 		}
-		var encThumb []byte
-		if len(thumb) > 0 {
-			encThumb, _ = encryptData(thumb)
-		}
 
-		query := `INSERT INTO clips (image, thumbnail, content_hash, type, pinned, encrypted, source, created_at) VALUES (?, ?, ?, ?, 0, 1, 'network', datetime('now'))`
-		result, err := DB.Exec(query, enc, encThumb, hash, clipType)
+		query := `INSERT INTO clips (image, thumbnail, content_hash, type, pinned, encrypted, source, created_at) VALUES (?, ?, ?, ?, 0, 0, 'network', datetime('now'))`
+		result, err := DB.Exec(query, img, thumb, hash, clipType)
 		if err != nil {
 			return nil, fmt.Errorf("failed to insert network image clip: %v", err)
 		}

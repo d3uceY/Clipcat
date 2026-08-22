@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from "react"
-import type { FilteredClips } from "@/features/search/workers/search.worker"
+import type { FilteredClips } from "@/features/search/types"
 import { PasteToWindow } from "../../../../bindings/Clipcat/app"
+import { getFullText } from "@/features/clips/utils/get-full-text"
 
 interface UseKeyboardNavOptions {
     isSmallScreen: boolean
@@ -54,7 +55,8 @@ export function useKeyboardNav({
         if (pasteFn) {
             await pasteFn()
         } else if (clip.type !== "image" && clip.content) {
-            await PasteToWindow(clip.content)
+            const full = (await getFullText(clip.id)) ?? clip.content
+            await PasteToWindow(full)
         }
     }, [selectedIndex, flatClips])
 

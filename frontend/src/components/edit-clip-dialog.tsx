@@ -1,7 +1,8 @@
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Check, X } from "lucide-react"
 import { UpdateClipContent } from "../../bindings/Clipcat/app"
+import { getFullText } from "@/features/clips/utils/get-full-text"
 // import TeaseDialog from "./tease-dialog"
 import type { Clip } from '@/features/clips/types'
 
@@ -15,6 +16,18 @@ interface EditClipDialogProps {
 export default function EditClipDialog({ children, clip, triggerClassName, className }: EditClipDialogProps) {
     const [open, setOpen] = useState(false)
     const [content, setContent] = useState(clip.content || "")
+
+    // The card only carries a truncated preview - load the full text when the
+    // dialog opens so editing never operates on a cut version.
+    useEffect(() => {
+        if (open) {
+            getFullText(clip.id).then((full) => {
+                if (full != null) setContent(full)
+            })
+        } else {
+            setContent(clip.content || "")
+        }
+    }, [open, clip.id, clip.content])
 
 
     const handleSave = async () => {

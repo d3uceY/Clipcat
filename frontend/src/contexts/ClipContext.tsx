@@ -417,11 +417,11 @@ export function ClipProvider({ children }: { children: ReactNode }) {
     });
 
     const offUpdated = Events.On("clip:updated", (e) => {
-      const data: { id: string; content: string; length: number } = e.data;
+      const data: { id: string; content: string } = e.data;
       setClips((prev) => {
         const update = (clips: Clip[]) =>
           clips.map((c) =>
-            c.id === data.id ? { ...c, content: data.content, length: data.length } : c
+            c.id === data.id ? { ...c, content: data.content } : c
           );
         return { pinned: update(prev.pinned), recent: update(prev.recent) };
       });

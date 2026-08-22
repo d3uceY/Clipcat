@@ -8,13 +8,16 @@ import { Create as $Create } from "@wailsio/runtime";
 export class Clip {
     "id": string;
     "type": string;
+
+    /**
+     * truncated preview for text; full text via GetClipContent
+     */
     "content"?: string | null;
 
     /**
      * base64 - thumbnail for list, full-res on demand
      */
     "image"?: string | null;
-    "length": number;
     "isPinned": boolean;
     "createdAt": string;
     "label": string;
@@ -32,9 +35,6 @@ export class Clip {
         }
         if (!("type" in $$source)) {
             this["type"] = "";
-        }
-        if (!("length" in $$source)) {
-            this["length"] = 0;
         }
         if (!("isPinned" in $$source)) {
             this["isPinned"] = false;

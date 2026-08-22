@@ -436,14 +436,27 @@ func (a *App) GetClips() ([]store.Clip, error) {
 	return store.GetClips()
 }
 
+// SearchClips returns clips whose stored text matches the query. Search runs
+// on the backend (clips are no longer stored encrypted), returning the same
+// []Clip model as GetClips with truncated previews.
+func (a *App) SearchClips(query string) ([]store.Clip, error) {
+	return store.SearchClips(query)
+}
+
+// GetClipContent returns the full, untruncated text of a clip. List/search
+// payloads only carry a truncated preview, so copy/edit/view fetch the full
+// text through this binding.
+func (a *App) GetClipContent(clipID int) (string, error) {
+	return store.GetClipContent(clipID)
+}
+
 func (a *App) UpdateClipContent(clipID int, newContent string) error {
 	if err := store.UpdateClipContent(clipID, newContent); err != nil {
 		return err
 	}
 	a.app.Event.Emit("clip:updated", map[string]interface{}{
 		"id":      fmt.Sprintf("clip_%03d", clipID),
-		"content": newContent,
-		"length":  len(newContent),
+		"content": store.TrimContent(newContent),
 	})
 	return nil
 }

@@ -2,9 +2,10 @@ import { useState, useEffect, useRef, useCallback, forwardRef, useOptimistic } f
 import { Browser } from "@wailsio/runtime";
 import { useClips } from "@/contexts/ClipContext";
 import { playSound } from "@/utils/play-sound";
+import { useDebounce } from "@/utils/use-debounce";
 import { UpdateStorageLimit, GetStorageLimit, GetClips, DeleteAllClips, DeletePinnedClips, DeleteUnpinnedClips, GetSyncSettings, SaveSyncSettings, ConfirmDelete } from "../../../../bindings/Clipcat/app";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { RefreshCw, Download, Trash2, Save, Eye, EyeOff, AppWindow, ClipboardList, Cpu, ShieldCheck, Network, type LucideIcon } from "lucide-react";
+import { RefreshCw, Download, Trash2, Eye, EyeOff, AppWindow, ClipboardList, Cpu, ShieldCheck, Network, type LucideIcon } from "lucide-react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import type { UpdateInfo } from "./about-dialog";
@@ -56,6 +57,11 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
         const [syncPeerCount, setSyncPeerCount] = useState(0);
         const [isSyncSaving, setIsSyncSaving] = useState(false);
         const [showPassphrase, setShowPassphrase] = useState(false);
+        const [syncHint, setSyncHint] = useState("");
+        const passphraseRef = useRef<HTMLInputElement>(null);
+        // Last passphrase known to be persisted in the backend - used to skip
+        // no-op saves when the panel simply loads the stored value.
+        const initialPassphrase = useRef<string | null>(null);
 
 
         const [optimisticMiniClip, setOptimisticMiniClip] = useOptimistic(
@@ -95,8 +101,10 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
 
         useEffect(() => {
             GetSyncSettings().then((s) => {
-                setSyncEnabled(s.enabled);
-                setSyncPassphrase(s.passphrase);
+                const passphrase = (s.passphrase ?? "").trim();
+                initialPassphrase.current = passphrase;
+                setSyncEnabled(s.enabled && passphrase !== "");
+                setSyncPassphrase(s.passphrase ?? "");
                 setSyncPeerCount(s.peerCount);
             }).catch(() => { });
         }, []);
@@ -145,17 +153,59 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
             setNewIgnoreEntry("");
         };
 
-        const handleSaveSyncSettings = async () => {
+        const refreshSyncPeerCount = async () => {
+            try {
+                const s = await GetSyncSettings();
+                setSyncPeerCount(s.peerCount);
+            } catch (e) {
+                console.error("Failed to refresh sync peers:", e);
+            }
+        };
+
+        const handleToggleSync = async () => {
+            const next = !syncEnabled;
+            const passphrase = syncPassphrase.trim();
+            if (next && passphrase === "") {
+                setSyncHint("Enter a passphrase to enable LAN sync.");
+                passphraseRef.current?.focus();
+                return;
+            }
+            setSyncHint("");
             setIsSyncSaving(true);
             try {
-                await SaveSyncSettings(syncEnabled, syncPassphrase);
+                await SaveSyncSettings(next, passphrase);
+                setSyncEnabled(next);
                 playSound('/sounds/switch-on.mp3', soundOn, 1);
+                if (next) refreshSyncPeerCount();
             } catch (e) {
                 console.error("Failed to save sync settings:", e);
             } finally {
                 setIsSyncSaving(false);
             }
         };
+
+        // Auto-save the passphrase once the user stops typing. If sync is on
+        // and the passphrase is cleared, turn sync off rather than leaving a
+        // half-enabled state that can't actually run.
+        const debouncedPassphrase = useDebounce(syncPassphrase, 500);
+        useEffect(() => {
+            if (debouncedPassphrase !== syncPassphrase) return; // still typing
+            const passphrase = debouncedPassphrase.trim();
+            if (initialPassphrase.current === null) return; // settings not loaded yet
+            if (initialPassphrase.current === passphrase) return; // no real change
+            if (syncEnabled && passphrase === "") {
+                setSyncEnabled(false);
+                setSyncHint("LAN Sync turned off - a passphrase is required.");
+                SaveSyncSettings(false, "").catch((e) =>
+                    console.error("Failed to disable sync:", e)
+                );
+                return;
+            }
+            setSyncHint("");
+            SaveSyncSettings(syncEnabled, passphrase)
+                .then(() => { initialPassphrase.current = passphrase; })
+                .catch((e) => console.error("Failed to save sync passphrase:", e));
+        }, [debouncedPassphrase, syncPassphrase, syncEnabled]);
 
         // ------------------------------------------------------------------
         //  Motion choreography — ink on paper
@@ -522,7 +572,7 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
                 <ScrollArea className="relative z-1 flex-1 min-h-0 px-12 max-sm:px-8 pb-6">
                     <div key={activeTab} ref={tabContentRef}>
 
-                    {/* â•â•â•â•â•â• WINDOW â•â•â•â•â•â• */}
+                    {/*  WINDOW  */}
                     {activeTab === "window" && (
                         <div className="pt-3">
                             <Row label="Mini Clip" desc={<>Compact window that stays out of your way. <kbd className="text-[10px] px-1 py-0.5 bg-foreground/10 rounded">Alt+M</kbd> to toggle.</>}>
@@ -537,7 +587,7 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
                         </div>
                     )}
 
-                    {/* â•â•â•â•â•â• CLIPBOARD â•â•â•â•â•â• */}
+                    {/*  CLIPBOARD  */}
                     {activeTab === "clipboard" && (
                         <div className="pt-3">
                             <Row label="Pause Capture" desc="Temporarily stop recording clipboard changes.">
@@ -555,7 +605,7 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
                         </div>
                     )}
 
-                    {/* â•â•â•â•â•â• SYSTEM â•â•â•â•â•â• */}
+                    {/*  SYSTEM  */}
                     {activeTab === "system" && (
                         <div className="pt-3">
                             <Row label="Sound" desc={<>Audio feedback on every action. <kbd className="text-[10px] px-1 py-0.5 bg-foreground/10 rounded">Alt+S</kbd> to toggle.</>}>
@@ -607,7 +657,7 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
                         </div>
                     )}
 
-                    {/* â•â•â•â•â•â• PRIVACY â•â•â•â•â•â• */}
+                    {/*  PRIVACY  */}
                     {activeTab === "privacy" && (
                         <div className="pt-3">
                             <SectionLabel>Clear History</SectionLabel>
@@ -653,11 +703,11 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
                         </div>
                     )}
 
-                    {/* â•â•â•â•â•â• NETWORK â•â•â•â•â•â• */}
+                    {/*  NETWORK  */}
                     {activeTab === "network" && (
                         <div className="pt-3">
                             <Row label="LAN Sync" desc="Sync clips with other devices on the same local network. End-to-end encrypted.">
-                                <Toggle on={syncEnabled} toggle={() => setSyncEnabled(v => !v)} />
+                                <Toggle on={syncEnabled} toggle={handleToggleSync} disabled={isSyncSaving} />
                             </Row>
 
                             <div className="mt-3 mb-1">
@@ -666,36 +716,35 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
                                 <div className="flex items-center gap-1">
                                     <div className="relative flex-1">
                                         <input
+                                            ref={passphraseRef}
                                             type={showPassphrase ? "text" : "password"}
                                             value={syncPassphrase}
                                             onChange={e => setSyncPassphrase(e.target.value)}
                                             placeholder="Enter a shared passphrase"
-                                            disabled={!syncEnabled}
-                                            className="w-full text-xs! px-2 py-1 pr-7 border-b border-current bg-transparent focus:outline-none placeholder-gray-400 disabled:opacity-40 [&::-ms-reveal]:hidden [&::-webkit-credentials-auto-fill-button]:hidden"
+                                            className="w-full text-xs! px-2 py-1 pr-7 border-b border-current bg-transparent focus:outline-none placeholder-gray-400 [&::-ms-reveal]:hidden [&::-webkit-credentials-auto-fill-button]:hidden"
                                         />
                                         <button
                                             type="button"
                                             onClick={() => setShowPassphrase(v => !v)}
-                                            disabled={!syncEnabled}
-                                            className="absolute right-1 top-1/2 -translate-y-1/2 opacity-40 hover:opacity-70 disabled:opacity-20 transition-opacity"
+                                            className="absolute right-1 top-1/2 -translate-y-1/2 opacity-40 hover:opacity-70 transition-opacity"
                                             title={showPassphrase ? "Hide passphrase" : "Show passphrase"}
                                         >
                                             {showPassphrase ? <EyeOff size={12} /> : <Eye size={12} />}
                                         </button>
                                     </div>
                                 </div>
+                                {syncHint && (
+                                    <p className="mt-2 text-xs! text-amber-700/80">{syncHint}</p>
+                                )}
                             </div>
 
-                            <div className="mt-4 flex items-center justify-between">
-                                <ActionBtn onClick={handleSaveSyncSettings} disabled={isSyncSaving || (syncEnabled && syncPassphrase.trim() === "")}>
-                                    <Save size={11} /> {isSyncSaving ? "Saving" : "Save"}
-                                </ActionBtn>
-                                {syncEnabled && (
+                            {syncEnabled && (
+                                <div className="mt-4 flex items-center justify-between">
                                     <p className="text-xs! opacity-50">
                                         {syncPeerCount === 0 ? "No peers found" : `${syncPeerCount} peer${syncPeerCount === 1 ? "" : "s"} connected`}
                                     </p>
-                                )}
-                            </div>
+                                </div>
+                            )}
                         </div>
                     )}
                     </div>

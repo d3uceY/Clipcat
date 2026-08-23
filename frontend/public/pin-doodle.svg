@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 48" fill="none" aria-hidden="true">
+  <!--
+    Hand-drawn red pushpin for the "Pinned" section header.
+    Matches Clipcat's notebook aesthetic: #41403e ink outline, glossy
+    dome with a light-to-dark red gradient (depth), a silver needle,
+    and a faint double-stroke so it reads as sketched by hand.
+  -->
+  <defs>
+    <!-- Red dome: soft highlight top-left, deep red toward the rim -->
+    <radialGradient id="pinHead" cx="0.34" cy="0.26" r="0.9">
+      <stop offset="0%" stop-color="#fca5a5"/>
+      <stop offset="38%" stop-color="#ef4444"/>
+      <stop offset="100%" stop-color="#991b1b"/>
+    </radialGradient>
+    <!-- Silver needle -->
+    <linearGradient id="pinNeedle" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#d6d3d1"/>
+      <stop offset="50%" stop-color="#fafaf9"/>
+      <stop offset="100%" stop-color="#a8a29e"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Faint second pencil pass of the dome (hand-drawn double stroke) -->
+  <path
+    d="M 8 22 C 6.6 14.8 10.4 7.6 17.8 6.5 C 25.2 5.4 30.6 9.8 28.4 21.8"
+    stroke="#41403e" stroke-width="1" stroke-linecap="round"
+    opacity="0.18" transform="translate(1.5,-0.8)"/>
+
+  <!-- Silver needle -->
+  <path
+    d="M 16.9 23.6 L 19.1 23.6 L 18.2 42.8 C 18.05 43.7 17.35 43.8 17.3 42.9 Z"
+    fill="url(#pinNeedle)" stroke="#41403e" stroke-width="1.4" stroke-linejoin="round"/>
+  <!-- Needle highlight -->
+  <path
+    d="M 17.8 24.8 L 18.05 41.4"
+    stroke="#ffffff" stroke-width="1" stroke-linecap="round" opacity="0.6"/>
+
+  <!-- Red dome head -->
+  <path
+    d="M 8 22 C 6.6 14.8 10.4 7.6 17.8 6.5 C 25.2 5.4 30.6 9.8 28.4 21.8 C 27.6 23.4 8.8 23.4 8 22 Z"
+    fill="url(#pinHead)" stroke="#41403e" stroke-width="2.2" stroke-linejoin="round"/>
+
+  <!-- Gloss on the dome -->
+  <path
+    d="M 11 13.6 C 11.4 9.6 14.2 8 17.6 7.6"
+    stroke="#ffffff" stroke-width="2.8" stroke-linecap="round" opacity="0.6"/>
+  <path
+    d="M 12.6 17.2 C 13.2 15.8 14.6 15 15.8 15.2"
+    stroke="#ffffff" stroke-width="1.4" stroke-linecap="round" opacity="0.35"/>
+
+  <!-- Rim shadow where the dome meets the needle -->
+  <path
+    d="M 8.6 21.6 C 13.2 23.3 22.8 23.3 28.2 21.4"
+    stroke="#7f1d1d" stroke-width="1.6" stroke-linecap="round" opacity="0.35"/>
+  <ellipse cx="18" cy="23.1" rx="1.6" ry="0.7" fill="#7f1d1d" opacity="0.35"/>
+</svg>

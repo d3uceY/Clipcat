@@ -408,7 +408,12 @@ function PageContent() {
                     <section className={isMiniClip ? "mb-4" : "mb-12"}>
                         <div className="flex items-center gap-8 mb-4">
                             <h2 className="sm:flex hidden items-center gap-2 text-2xl font-bold text-foreground">
-                                <span className="text-2xl">📌</span>
+                                <img
+                                    src="/pin-doodle.svg"
+                                    alt=""
+                                    draggable={false}
+                                    className="h-7 w-auto -mt-0.5 shrink-0 transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:rotate-6 motion-reduce:transition-none motion-reduce:transform-none"
+                                />
                                 <span className="italic">Pinned <span className="text-xl"> ({filteredClips.pinned.length + (showSensitive ? filteredClips.hiddenPinned.length : 0)}) </span></span>
                             </h2>
                         </div>
@@ -440,7 +445,12 @@ function PageContent() {
                     <section id="recent-section" className="scroll-mt-[140px]">
                         <div className="flex items-center gap-8 mb-4">
                             <h2 className=" sm:flex hidden items-center gap-2 text-2xl font-bold text-foreground">
-                                <span className="text-2xl">📝</span>
+                                <img
+                                    src="/recent-doodle.svg"
+                                    alt=""
+                                    draggable={false}
+                                    className="h-7 w-auto -mt-0.5 shrink-0 transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:rotate-6 motion-reduce:transition-none motion-reduce:transform-none"
+                                />
                                 <span className="italic">Recent <span className="text-xl"> ({filteredClips.recent.length + (showSensitive ? filteredClips.hiddenRecent.length : 0)}) </span></span>
                             </h2>
                         </div>

@@ -57,26 +57,44 @@ func initSearchIndex() error {
 	return nil
 }
 
+// onClipIndexed fires after a text clip is inserted/updated in the FTS index
+// so the semantic embed queue can pick it up. It is set by the app layer,
+// which keeps the store package free of a dependency on the semantic package
+// (store -> semantic would be a cycle).
+var onClipIndexed func(id int, content string)
+
+// SetOnClipIndexed registers the callback fired after a text clip is indexed.
+func SetOnClipIndexed(cb func(id int, content string)) {
+	onClipIndexed = cb
+}
+
 // indexTextClip keeps the FTS index in sync after a text clip insert/update.
 func indexTextClip(id int, content string) {
 	if content == "" {
 		return
 	}
 	_, _ = DB.Exec(`INSERT OR REPLACE INTO clips_fts (rowid, content) VALUES (?, ?)`, id, content)
+	// Vector index sync: hand the text to the embed queue (if wired up).
+	if onClipIndexed != nil {
+		onClipIndexed(id, content)
+	}
 }
 
-// removeClipFromIndex drops a clip id from the FTS index (e.g. on delete).
+// removeClipFromIndex drops a clip id from the FTS index (e.g. on delete)
+// and removes its stored embeddings.
 func removeClipFromIndex(id int) {
 	_, _ = DB.Exec(`DELETE FROM clips_fts WHERE rowid = ?`, id)
+	DeleteClipEmbeddings(id)
 }
 
 // pruneOrphanedIndexRows removes FTS rows whose clip id no longer exists in
-// clips (after bulk deletes / pruning).
+// clips (after bulk deletes / pruning), and prunes orphaned embeddings.
 func pruneOrphanedIndexRows() {
 	_, _ = DB.Exec(`
 		DELETE FROM clips_fts
 		WHERE rowid NOT IN (SELECT id FROM clips)
 	`)
+	PruneOrphanedEmbeddings()
 }
 
 // buildMatchExpression turns a raw query into an FTS5 MATCH expression.

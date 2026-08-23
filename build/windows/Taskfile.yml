@@ -24,11 +24,16 @@ tasks:
         platforms: [linux, darwin]
     vars:
       BUILD_FLAGS: '{{if eq .PRODUCTION "true"}}-tags production -trimpath -buildvcs=false -ldflags="-w -s -H windowsgui"{{else}}-buildvcs=false -gcflags=all="-l"{{end}}'
+      # llama-go is CGO (llama.cpp), so cgo must be enabled and a working gcc
+      # must be on PATH. Defaults to the MinGW-w64 (WinLibs) bin dir; override
+      # with MINGW=<path> (or just put MinGW on PATH and the prepend is a no-op).
+      MINGW: '{{.MINGW | default "C:\\Users\\deuce\\AppData\\Local\\Microsoft\\WinGet\\Packages\\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe\\mingw64\\bin"}}'
     env:
       GOOS: windows
-      CGO_ENABLED: 0
+      CGO_ENABLED: 1
       GOARCH: '{{.ARCH | default ARCH}}'
       PRODUCTION: '{{.PRODUCTION | default "false"}}'
+      PATH: '{{.MINGW}};{{env "PATH"}}'
 
   package:
     summary: Packages a production build of the application into a `.exe` bundle

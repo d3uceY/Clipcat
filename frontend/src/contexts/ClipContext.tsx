@@ -25,6 +25,8 @@ import {
   SetAlwaysOnTop,
   GetCursorSnap,
   SetCursorSnap,
+  GetSemanticSearchEnabled,
+  SetSemanticSearchEnabled,
 } from "../../bindings/Clipcat/app";
 import { Events } from "@wailsio/runtime";
 import { playSound } from "../utils/play-sound"
@@ -75,6 +77,9 @@ interface ClipContextType {
   // Smart Position (cursor-aware placement on Quick Paste summon)
   isCursorSnap: boolean;
   toggleCursorSnap: () => Promise<void>;
+  // Semantic (meaning) search
+  semanticSearchEnabled: boolean;
+  toggleSemanticSearch: () => Promise<void>;
 }
 
 const ClipContext = createContext<ClipContextType | undefined>(undefined);
@@ -100,6 +105,7 @@ export function ClipProvider({ children }: { children: ReactNode }) {
   const [autoHideSensitive, setAutoHideSensitive] = useState(true);
   const [isAlwaysOnTop, setIsAlwaysOnTop] = useState(false);
   const [isCursorSnap, setIsCursorSnap] = useState(true);
+  const [semanticSearchEnabled, setSemanticSearchEnabled] = useState(true);
 
   // Distinct labels derived from loaded clips - reactive, zero extra DB calls.
   const distinctLabels = useMemo(() => {
@@ -192,6 +198,16 @@ export function ClipProvider({ children }: { children: ReactNode }) {
     const next = !isCursorSnap;
     await SetCursorSnap(next);
     setIsCursorSnap(next);
+  };
+
+  /* ===============================
+        SEMANTIC SEARCH FUNCTIONS
+       ===============================
+    */
+  const toggleSemanticSearch = async () => {
+    const next = !semanticSearchEnabled;
+    await SetSemanticSearchEnabled(next);
+    setSemanticSearchEnabled(next);
   };
 
   /* ===============================
@@ -385,6 +401,8 @@ export function ClipProvider({ children }: { children: ReactNode }) {
       .catch(() => {});
     GetCursorSnap()
       .then((v) => setIsCursorSnap(v ?? true))
+    GetSemanticSearchEnabled()
+      .then((v) => setSemanticSearchEnabled(v ?? true))
       .catch(() => {});
     IsMiniClip()
       .then((v) => setIsMiniClip(v ?? false))
@@ -558,6 +576,9 @@ export function ClipProvider({ children }: { children: ReactNode }) {
         // SMART POSITION
         isCursorSnap,
         toggleCursorSnap,
+        // SEMANTIC SEARCH
+        semanticSearchEnabled,
+        toggleSemanticSearch,
       }}
     >
       {children}

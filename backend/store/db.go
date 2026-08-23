@@ -7,6 +7,7 @@ import (
 	"github.com/wailsapp/wails/v3/pkg/application"
 	"github.com/wailsapp/wails/v3/pkg/services/notifications"
 	_ "modernc.org/sqlite"
+	_ "modernc.org/sqlite/vec" // just registered the vec0 module on some calm shit
 )
 
 var DB *sql.DB
@@ -99,6 +100,8 @@ func RunMigrations() {
 	MigrateAlwaysOnTopSetting()
 	MigrateMiniClipSetting()
 	MigrateCursorSnapSetting()
+	MigrateVecTable()
+	MigrateSemanticSearchSetting()
 	MigrateSyncSourceColumn()
 	MigrateSyncSettings()
 	MigrateIgnoreDefaultsColumn()
@@ -271,6 +274,28 @@ func MigrateMiniClipSetting() {
 // Smart Position is enabled by default (value 1).
 func MigrateCursorSnapSetting() {
 	_, _ = DB.Exec(`ALTER TABLE settings ADD COLUMN cursor_snap INTEGER NOT NULL DEFAULT 1`)
+}
+
+// MigrateVecTable creates the sqlite-vec virtual table that stores clip
+// embeddings for semantic (meaning-based) search. One clip can own many rows
+// (one per text chunk); clip_id links back to the clips table. The vec0
+// module is registered process-wide by importing modernc.org/sqlite/vec.
+func MigrateVecTable() {
+	_, err := DB.Exec(`
+		CREATE VIRTUAL TABLE IF NOT EXISTS clips_vec USING vec0(
+			embedding float[384] distance_metric=cosine,
+			clip_id integer
+		)
+	`)
+	if err != nil {
+		fmt.Printf("vec table warning: %v\n", err)
+	}
+}
+
+// MigrateSemanticSearchSetting adds the semantic_search_enabled column to
+// settings. The feature is enabled by default (value 1) on first migration.
+func MigrateSemanticSearchSetting() {
+	_, _ = DB.Exec(`ALTER TABLE settings ADD COLUMN semantic_search_enabled INTEGER NOT NULL DEFAULT 1`)
 }
 
 // MigrateSyncSourceColumn adds the source column to the clips table so we can

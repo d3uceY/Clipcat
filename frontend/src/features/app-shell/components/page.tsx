@@ -14,6 +14,7 @@ import CommandPalette from "./command-palette";
 import { Browser, Events } from "@wailsio/runtime";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useSearchClips } from "@/features/search/hooks/use-search-clips"
+import { useSemanticSearch } from "@/features/search/hooks/use-semantic-search"
 import { useDebounce } from "@/utils/use-debounce"
 import { useUpdateCheck } from "../hooks/use-update-check"
 import { useNavHide } from "../hooks/use-nav-hide"
@@ -43,6 +44,9 @@ function PageContent() {
     // user pauses typing (~200ms), not on every keystroke.
     const debouncedSearchQuery = useDebounce(searchQuery, 200)
     const filteredClips = useSearchClips({ clips, searchQuery: debouncedSearchQuery, activeLabels })
+    // Meaning search fallback: fires only when a normal search finds nothing
+    // and the user accepts the native "search by meaning" prompt.
+    const { offer: semanticOffer, semanticClips, semanticPending, runSemanticSearch, dismissSemanticSearch } = useSemanticSearch(searchQuery)
 
     const toggleSearchVisible = () => {
         setSearchVisible(v => {
@@ -505,14 +509,76 @@ function PageContent() {
                     </div>
                 )}
 
-                {/* Empty State */}
-                {filteredClips.pinned.length === 0 && filteredClips.recent.length === 0
-                    && (!showSensitive || (filteredClips.hiddenPinned.length === 0 && filteredClips.hiddenRecent.length === 0)) && (
-                        <div className="flex-col h-64 text-black flex items-center justify-center gap-2">
-                            <p className="text-lg text-black text-center">
-                                {searchQuery ? "No clips found matching your search" : "No clips yet. Start copying!"}
-                            </p>
+                {/* Meaning search results - shown when a normal search found
+                    nothing and the user chose to search by meaning */}
+                {semanticClips && semanticClips.length > 0 && (
+                    <section className={isMiniClip ? "mb-4" : "mb-12"}>
+                        <div className="flex items-center gap-8 mb-4">
+                            <h2 className="sm:flex hidden items-center gap-2 text-2xl font-bold text-foreground">
+                                <img
+                                    src="/recent-doodle.svg"
+                                    alt=""
+                                    draggable={false}
+                                    className="h-7 w-auto -mt-0.5 shrink-0 transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:rotate-6 motion-reduce:transition-none motion-reduce:transform-none"
+                                />
+                                <span className="italic">Matched by meaning <span className="text-xl"> ({semanticClips.length}) </span></span>
+                            </h2>
                         </div>
+                        {isMiniClip ? (
+                            <div className="flex flex-col gap-3">
+                                {semanticClips.map((clip, i) => (
+                                    <ClipListItem key={clip.id} clip={clip} index={i} isSelected={i === selectedIndex} onSelect={handleSelect} onPasteReady={registerPaste} />
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="free-form-grid-container">
+                                {semanticClips.map((clip, i) => (
+                                    <ClipCard key={clip.id} clip={clip} type="recent" initialVisible={i < 25} />
+                                ))}
+                            </div>
+                        )}
+                    </section>
+                )}
+
+                {/* Meaning search offer / in progress / empty state - these are
+                    mutually exclusive. The offer only appears after a normal
+                    search came up empty, and "Searching by meaning..." only
+                    shows after the user accepts the offer. */}
+                {filteredClips.pinned.length === 0 && filteredClips.recent.length === 0
+                    && (!showSensitive || (filteredClips.hiddenPinned.length === 0 && filteredClips.hiddenRecent.length === 0))
+                    && !(semanticClips && semanticClips.length > 0)
+                    && (
+                        semanticOffer ? (
+                            <div className="flex-col h-64 text-black flex items-center justify-center gap-4 px-6">
+                                <p className="text-lg text-black text-center">
+                                    No exact matches found. Want me to search by meaning instead?
+                                </p>
+                                <div className="flex flex-wrap items-center justify-center gap-3">
+                                    <button
+                                        onClick={runSemanticSearch}
+                                        className="rounded px-4 py-1.5 text-sm bg-foreground text-white hover:opacity-80 transition-opacity"
+                                    >
+                                        Search by meaning
+                                    </button>
+                                    <button
+                                        onClick={dismissSemanticSearch}
+                                        className="rounded px-4 py-1.5 text-sm bg-foreground/5 hover:bg-foreground/10 transition-colors"
+                                    >
+                                        Dismiss
+                                    </button>
+                                </div>
+                            </div>
+                        ) : semanticPending ? (
+                            <div className="flex-col h-64 text-black flex items-center justify-center gap-2">
+                                <p className="text-lg text-black text-center">Searching by meaning...</p>
+                            </div>
+                        ) : (
+                            <div className="flex-col h-64 text-black flex items-center justify-center gap-2">
+                                <p className="text-lg text-black text-center">
+                                    {searchQuery ? "No clips found matching your search" : "No clips yet. Start copying!"}
+                                </p>
+                            </div>
+                        )
                     )}
             </div>
         </main>

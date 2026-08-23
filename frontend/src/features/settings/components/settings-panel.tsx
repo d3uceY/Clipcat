@@ -43,6 +43,7 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
             isQuickPaste,
             autoHideSensitive, toggleAutoHideSensitive,
             isCursorSnap, toggleCursorSnap,
+            semanticSearchEnabled, toggleSemanticSearch,
             getClips,
         } = useClips();
 
@@ -583,6 +584,9 @@ const SettingsPanel = forwardRef<HTMLDivElement, SettingsPanelProps>(
                                 desc={isQuickPaste ? "Summon next to your cursor when Quick Paste activates." : "Requires Quick Paste to be enabled."}
                             >
                                 <Toggle on={isCursorSnap} toggle={toggleCursorSnap} disabled={!isQuickPaste} />
+                            </Row>
+                            <Row label="Search by Meaning" desc="When a normal search comes up empty, offer to search by meaning using a local AI model.">
+                                <Toggle on={semanticSearchEnabled} toggle={toggleSemanticSearch} />
                             </Row>
                         </div>
                     )}

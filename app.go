@@ -5,6 +5,7 @@ import (
 	"Clipcat/backend/lib/clipboard"
 	"Clipcat/backend/lib/startup"
 	"Clipcat/backend/lib/winpos"
+	"Clipcat/backend/semantic"
 	"Clipcat/backend/store"
 	lansync "Clipcat/backend/sync"
 	"bytes"
@@ -37,6 +38,9 @@ type App struct {
 
 	// LAN sync
 	syncManager *lansync.Manager
+
+	// Semantic search: background embed queue for meaning-based search.
+	semanticQueue *semantic.Queue
 
 	// Tray menu items for post-DB-init state sync.
 	trayMenu           *application.Menu
@@ -109,6 +113,12 @@ func (a *App) ServiceStartup(ctx context.Context, options application.ServiceOpt
 		}
 	}
 
+	// Semantic (meaning-based) search: copied text is embedded in a background
+	// queue, and a meaning search is offered when normal search finds nothing.
+	if enabled, _ := store.GetSemanticSearchEnabled(); enabled {
+		a.startSemanticQueue()
+	}
+
 	// Restore window state before the event loop shows it.
 	if alwaysOnTop, err := store.GetAlwaysOnTop(); err == nil && alwaysOnTop {
 		a.window.SetAlwaysOnTop(true)
@@ -126,6 +136,127 @@ func getAppDataDir() (string, error) {
 		return "", err
 	}
 	return filepath.Join(dir, "clipussy/db"), os.MkdirAll(filepath.Join(dir, "clipussy/db"), 0755)
+}
+
+// ── Semantic Search (meaning-based) Helpers ──────────────────────────────
+
+// defaultEmbeddingModel is the local GGUF embedding model used for testing.
+// Override with CLIPCAT_EMBED_MODEL for other machines / OSes.
+// TODO: make this a user setting and/or ship the model with the app.
+const defaultEmbeddingModel = `C:\Users\lorry\Desktop\side-projects\not-as-serious\all-MiniLM-L6-v2-Q4_K_M.gguf`
+
+func embeddingModelPath() string {
+	if p := os.Getenv("CLIPCAT_EMBED_MODEL"); p != "" {
+		return p
+	}
+	return defaultEmbeddingModel
+}
+
+// startSemanticQueue wires the embed queue to text-clip indexing, starts it,
+// and backfills existing clips in the background so meaning-search works for
+// history too. Safe to call once; the toggle re-enables with a fresh queue.
+func (a *App) startSemanticQueue() {
+	if a.semanticQueue != nil {
+		return
+	}
+	q := semantic.NewQueue(embeddingModelPath())
+	store.SetOnClipIndexed(func(id int, content string) {
+		q.Enqueue(id, content)
+	})
+	q.Start()
+	a.semanticQueue = q
+
+	go func() {
+		rows, err := store.TextClipsMissingEmbeddings()
+		if err != nil {
+			return
+		}
+		for _, row := range rows {
+			q.Enqueue(row.ID, row.Content)
+		}
+	}()
+}
+
+// stopSemanticQueue stops the embed queue, unregisters the clip-index hook,
+// and releases the model. Safe to call when not running.
+func (a *App) stopSemanticQueue() {
+	if a.semanticQueue == nil {
+		return
+	}
+	store.SetOnClipIndexed(nil)
+	a.semanticQueue.Stop()
+	a.semanticQueue = nil
+}
+
+// ServiceShutdown is called during app teardown. It stops the embed queue so
+// any pending model work finishes and the model is released.
+func (a *App) ServiceShutdown() error {
+	a.stopSemanticQueue()
+	return nil
+}
+
+// GetSemanticSearchEnabled returns whether meaning search is on.
+func (a *App) GetSemanticSearchEnabled() (bool, error) {
+	return store.GetSemanticSearchEnabled()
+}
+
+// SetSemanticSearchEnabled persists the toggle and starts/stops the embed
+// queue accordingly. Turning it off also releases the model from memory.
+func (a *App) SetSemanticSearchEnabled(enabled bool) error {
+	if err := store.SetSemanticSearchEnabled(enabled); err != nil {
+		return err
+	}
+	if enabled {
+		a.startSemanticQueue()
+	} else {
+		a.stopSemanticQueue()
+	}
+	return nil
+}
+
+// semanticTopK is how many clips a meaning search returns at most.
+const semanticTopK = 10
+
+// semanticMaxDistance is the cosine-distance cutoff for meaning matches
+// (0 = identical, 1 = orthogonal). Roughly "better than 65%% similar" -
+// anything past it is noise.
+const semanticMaxDistance = 0.65
+
+// SemanticSearch is the meaning-based search fallback. It is only reached
+// after a normal text search found nothing AND the user accepted the in-app
+// "search by meaning?" prompt. The accept/decline decision lives in the
+// frontend: a Wails native dialog can't reliably surface custom button
+// callbacks on Windows (MessageBox renders Yes/No, so the "Search by
+// meaning"/"Cancel" labels never matched and the call hung forever, leaving
+// "Searching by meaning..." stuck on screen). Returns an empty slice when
+// the feature is off or the model is unavailable.
+func (a *App) SemanticSearch(query string) ([]store.Clip, error) {
+	if a.semanticQueue == nil {
+		return nil, nil
+	}
+	if enabled, _ := store.GetSemanticSearchEnabled(); !enabled {
+		return nil, nil
+	}
+
+	queryVec, err := a.semanticQueue.Embed(query)
+	if err != nil {
+		return nil, nil
+	}
+	clips, err := store.SemanticSearch(queryVec, semanticTopK, semanticMaxDistance)
+
+	// DEBUG (temporary): log the query, its converted vector, and the
+	// semantic search results. Remove once semantic search is behaving.
+	fmt.Printf("[semantic] query=%q\n", query)
+	fmt.Printf("[semantic] queryVec (dim=%d)=%v\n", len(queryVec), queryVec)
+	fmt.Printf("[semantic] results (%d):\n", len(clips))
+	for _, c := range clips {
+		content := ""
+		if c.Content != nil {
+			content = *c.Content
+		}
+		fmt.Printf("[semantic]   %s source=%s label=%q preview=%q\n", c.ID, c.Source, c.Label, content)
+	}
+	return clips, err
 }
 
 // clipChangeMu ensures only one clipboard read is in flight at a time.
@@ -427,9 +558,20 @@ func (a *App) GetClips() ([]store.Clip, error) {
 
 // SearchClips returns clips whose stored text matches the query. Search runs
 // on the backend (clips are no longer stored encrypted), returning the same
-// []Clip model as GetClips with truncated previews.
+// []Clip model as GetClips with truncated previews. When a real query finds
+// nothing and meaning-search is available, an event tells the frontend it
+// can offer the "search by meaning" fallback.
 func (a *App) SearchClips(query string) ([]store.Clip, error) {
-	return store.SearchClips(query)
+	clips, err := store.SearchClips(query)
+	if err != nil {
+		return clips, err
+	}
+	if len(clips) == 0 && query != "" && a.semanticQueue != nil {
+		if enabled, _ := store.GetSemanticSearchEnabled(); enabled {
+			a.app.Event.Emit("search:no-results", query)
+		}
+	}
+	return clips, nil
 }
 
 // GetClipContent returns the full, untruncated text of a clip. List/search

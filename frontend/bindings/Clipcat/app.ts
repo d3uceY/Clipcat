@@ -121,6 +121,13 @@ export function GetQuickPaste(): $CancellablePromise<boolean> {
 }
 
 /**
+ * GetSemanticSearchEnabled returns whether meaning search is on.
+ */
+export function GetSemanticSearchEnabled(): $CancellablePromise<boolean> {
+    return $Call.ByID(3131482148);
+}
+
+/**
  * --------------------------------------------------------------------------------
  * Storage Limit Functions
  * --------------------------------------------------------------------------------
@@ -204,10 +211,28 @@ export function SaveSyncSettings(enabled: boolean, passphrase: string): $Cancell
 /**
  * SearchClips returns clips whose stored text matches the query. Search runs
  * on the backend (clips are no longer stored encrypted), returning the same
- * []Clip model as GetClips with truncated previews.
+ * []Clip model as GetClips with truncated previews. When a real query finds
+ * nothing and meaning-search is available, an event tells the frontend it
+ * can offer the "search by meaning" fallback.
  */
 export function SearchClips(query: string): $CancellablePromise<store$0.Clip[]> {
     return $Call.ByID(3919633220, query).then(($result: any) => {
+        return $$createType1($result);
+    });
+}
+
+/**
+ * SemanticSearch is the meaning-based search fallback. It is only reached
+ * after a normal text search found nothing AND the user accepted the in-app
+ * "search by meaning?" prompt. The accept/decline decision lives in the
+ * frontend: a Wails native dialog can't reliably surface custom button
+ * callbacks on Windows (MessageBox renders Yes/No, so the "Search by
+ * meaning"/"Cancel" labels never matched and the call hung forever, leaving
+ * "Searching by meaning..." stuck on screen). Returns an empty slice when
+ * the feature is off or the model is unavailable.
+ */
+export function SemanticSearch(query: string): $CancellablePromise<store$0.Clip[]> {
+    return $Call.ByID(2165963237, query).then(($result: any) => {
         return $$createType1($result);
     });
 }
@@ -226,6 +251,14 @@ export function SetCursorSnap(enabled: boolean): $CancellablePromise<void> {
 
 export function SetQuickPaste(enabled: boolean): $CancellablePromise<void> {
     return $Call.ByID(2986224601, enabled);
+}
+
+/**
+ * SetSemanticSearchEnabled persists the toggle and starts/stops the embed
+ * queue accordingly. Turning it off also releases the model from memory.
+ */
+export function SetSemanticSearchEnabled(enabled: boolean): $CancellablePromise<void> {
+    return $Call.ByID(3427207672, enabled);
 }
 
 export function TogglePin(clipID: number): $CancellablePromise<void> {

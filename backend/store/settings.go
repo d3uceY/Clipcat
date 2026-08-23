@@ -76,6 +76,17 @@ func SetCursorSnap(enabled bool) error {
 	return setBool("cursor_snap", enabled)
 }
 
+// GetSemanticSearchEnabled returns whether semantic (meaning-based) search
+// is enabled. Defaults to on.
+func GetSemanticSearchEnabled() (bool, error) {
+	return getBool("semantic_search_enabled", true)
+}
+
+// SetSemanticSearchEnabled persists the semantic search enabled state.
+func SetSemanticSearchEnabled(enabled bool) error {
+	return setBool("semantic_search_enabled", enabled)
+}
+
 // GetSyncEnabled returns whether LAN sync is enabled.
 func GetSyncEnabled() (bool, error) {
 	return getBool("sync_enabled", false)

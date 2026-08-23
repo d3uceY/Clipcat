@@ -113,7 +113,7 @@ function ClipListItem({ clip, revealed = false, isSelected = false, index, onSel
                     style={{ maxHeight: 100 }}
                 />
             ) : (
-                <p className={`text-xs wrap-break-word leading-relaxed pr-10 ${hideContent ? "hard-to-read" : ""}`}>
+                <p className={`text-xs wrap-break-word leading-relaxed pr-10 line-clamp-2 ${hideContent ? "hard-to-read" : ""}`}>
                     {clip.content}
                 </p>
             )}

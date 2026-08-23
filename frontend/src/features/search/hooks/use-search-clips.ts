@@ -3,8 +3,6 @@ import type { Clip } from "@/features/clips/types"
 import type { FilteredClips } from "@/features/search/types"
 import { SearchClips } from "../../../../bindings/Clipcat/app"
 
-const EMPTY: FilteredClips = { pinned: [], recent: [], hiddenPinned: [], hiddenRecent: [] }
-
 // Split a flat clip list into the section buckets the UI renders, applying
 // the active label filter. Label filtering stays client-side (labels are in
 // the payload); only text search needs the backend.
@@ -30,6 +28,11 @@ interface UseSearchClipsOptions {
 // (keyboard-nav resets selection on filteredClips identity).
 export function useSearchClips({ clips, searchQuery, activeLabels }: UseSearchClipsOptions): FilteredClips {
     const query = searchQuery.trim()
+    // Last search results. We deliberately do NOT clear this while a new search
+    // is in flight: blanking the list on every query change made the page flash
+    // to the empty state between the request and the backend response. Keeping
+    // the previous results on screen (swapped in place when the fresh ones
+    // arrive) is what removes the flicker.
     const [remote, setRemote] = useState<Clip[] | null>(null)
 
     useEffect(() => {
@@ -37,9 +40,6 @@ export function useSearchClips({ clips, searchQuery, activeLabels }: UseSearchCl
             setRemote(null)
             return
         }
-        // Drop results from the previous query so the list never shows stale
-        // matches while the new search is in flight.
-        setRemote(null)
         let cancelled = false
         SearchClips(query)
             .then((res) => { if (!cancelled) setRemote(res ?? []) })
@@ -47,13 +47,16 @@ export function useSearchClips({ clips, searchQuery, activeLabels }: UseSearchCl
         return () => { cancelled = true }
     }, [query])
 
-    const local = useMemo(
-        () => splitClips([...clips.pinned, ...clips.recent], activeLabels),
-        [clips.pinned, clips.recent, activeLabels]
-    )
+    const allClips = useMemo(() => [...clips.pinned, ...clips.recent], [clips.pinned, clips.recent])
+    const local = useMemo(() => splitClips(allClips, activeLabels), [allClips, activeLabels])
+    // While a search is in flight, keep whatever results were last on screen
+    // instead of flashing the list empty. On the very first query `remote` is
+    // still null, so fall back to the full locally-loaded list. When the
+    // backend response lands this re-runs and the rows swap in place (items
+    // are memoized by stable id, so unchanged rows don't re-render).
     const remoteResult = useMemo(
-        () => (remote === null ? EMPTY : splitClips(remote, activeLabels)),
-        [remote, activeLabels]
+        () => splitClips(remote ?? allClips, activeLabels),
+        [remote, allClips, activeLabels]
     )
 
     return query ? remoteResult : local

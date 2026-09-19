@@ -155,9 +155,7 @@ func resolveInstance(instance string) (*zeroconf.ServiceEntry, error) {
 		// library's internal goroutines may still send after Lookup returns.
 		if err := resolver.Lookup(ctx, instance, serviceType, domain, entries); err != nil {
 			if ctx.Err() == nil {
-				if ctx.Err() == nil {
-					log.Printf("[sync] mDNS lookup %s: %v", instance, err)
-				}
+				log.Printf("[sync] mDNS lookup %s: %v", instance, err)
 			}
 		}
 	}()

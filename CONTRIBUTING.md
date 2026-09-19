@@ -86,14 +86,14 @@ Clipcat/
 │
 └── frontend/
     ├── src/
-    │   ├── App.tsx
-    │   ├── components/   UI components (ClipCard, page, dialogs, etc.)
-    │   ├── context/      ClipContext - global React state
-    │   ├── helpers/      Utility functions (formatTime, playSound, insertLinks…)
-    │   ├── hooks/        Custom hooks (use-card-row-span, use-relative-time)
-    │   └── types/        TypeScript interfaces (Clip)
-    ├── wailsjs/          Auto-generated Wails Go->TS bindings (do not edit)
-    └── public/           Static assets (sounds, cursors, textures)
+    │   ├── App.tsx               App entry + providers
+    │   ├── components/           Shared UI (dialogs, error boundary, ui/)
+    │   ├── contexts/             ClipContext - global React state
+    │   ├── features/             app-shell, clips, search, settings
+    │   ├── utils/                playSound, onboarding, kill-animations, cn…
+    │   └── index.css             Tailwind entry + hand-drawn theme
+    ├── bindings/                 Auto-generated Wails v3 Go->TS bindings (do not edit)
+    └── public/                   Static assets (sounds, cursors, textures)
 ```
 
 ---

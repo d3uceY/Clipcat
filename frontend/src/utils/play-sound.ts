@@ -1,31 +1,29 @@
-import { Howl } from "howler";
+// One short UI sound at a time. A plain HTMLAudioElement covers every sound in
+// the app (no sprites, no looping, no Web Audio graph), so there is no need for
+// a sound library here.
+let currentSound: HTMLAudioElement | null = null
 
-let currentSound: Howl | null = null;
-
-// Preloaded sound cache - sounds are loaded lazily on first play.
-const soundCache = new Map<string, Howl>();
+// Element cache - each source is constructed once and replayed after that.
+const soundCache = new Map<string, HTMLAudioElement>()
 
 export function playSound(soundSrc: string, soundOn = true, volume = 0.1) {
-  if (!soundOn) return;
+  if (!soundOn) return
 
-  // Stop previous sound
+  // Stop the previous sound so blips never overlap.
   if (currentSound) {
-    currentSound.stop();
+    currentSound.pause()
+    currentSound.currentTime = 0
   }
 
-  // Use cached sound or create new one
-  let sound = soundCache.get(soundSrc);
-
+  let sound = soundCache.get(soundSrc)
   if (!sound) {
-    sound = new Howl({
-      src: [soundSrc],
-      volume: volume,
-    });
-    soundCache.set(soundSrc, sound);
-  } else {
-    sound.volume(volume);
+    sound = new Audio(soundSrc)
+    sound.preload = "auto"
+    soundCache.set(soundSrc, sound)
   }
 
-  currentSound = sound;
-  sound.play();
+  sound.volume = volume
+  currentSound = sound
+  // Autoplay can be refused; a missing blip is not worth a console error.
+  void sound.play().catch(() => { })
 }

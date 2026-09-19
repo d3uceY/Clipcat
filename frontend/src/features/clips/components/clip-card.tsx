@@ -4,15 +4,15 @@ import type { Clip } from '@/features/clips/types'
 import { useClips } from "@/contexts/ClipContext"
 import { useRelativeTime } from "@/features/clips/hooks/use-relative-time"
 import { useCardRowSpan } from "@/features/clips/hooks/use-card-row-span"
+import { useClipActions } from "@/features/clips/hooks/use-clip-actions"
 import { insertLinks } from "@/features/clips/utils/insert-links"
-import { TogglePin, Delete, PasteToWindow, GetClipImage } from "../../../../bindings/Clipcat/app"
-import { playSound } from "@/utils/play-sound"
+import { clipId } from "@/features/clips/utils/clip-id"
+import { GetClipImage } from "../../../../bindings/Clipcat/app"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { copyBase64ImageToClipboard } from "@/features/clips/utils/copy-base64-image"
 import { getFullText } from "@/features/clips/utils/get-full-text"
 import { Browser } from "@wailsio/runtime"
-const EditClipDialog = lazy(() => import("@/components/edit-clip-dialog"))
+const ClipContentDialog = lazy(() => import("@/components/clip-content-dialog"))
 const ImageLightbox = lazy(() => import("./image-lightbox"))
 
 interface ClipCardProps {
@@ -23,9 +23,7 @@ interface ClipCardProps {
 }
 
 function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) {
-    const [isDeleted, setIsDeleted] = useState(false)
     const [isVisible, setIsVisible] = useState(initialVisible)
-    const [copied, setCopied] = useState(false)
     const [dialogOpen, setDialogOpen] = useState(false)
     const [lightboxOpen, setLightboxOpen] = useState(false)
     const [fullImage, setFullImage] = useState<string | null>(null)
@@ -35,11 +33,12 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
 
     const isSavingLabelRef = useRef(false)
     const labelInputRef = useRef<HTMLInputElement>(null)
-    const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
     const cachedRowSpanRef = useRef(10)
     const cardRef = useRef<HTMLDivElement>(null)
 
-    const { hideContent, isMiniClip, soundOn, renameClip, distinctLabels, unhideClip, hideClip } = useClips()
+    const { isDeleted, copied, copy, paste, togglePin, remove } = useClipActions(clip)
+
+    const { hideContent, isMiniClip, renameClip, distinctLabels, unhideClip, hideClip } = useClips()
     const relativeTime = useRelativeTime(clip.createdAt)
     const linkedContent = useMemo(() => insertLinks(clip.content), [clip.content])
     // Full text for the detail dialog - falls back to the preview while loading.
@@ -56,10 +55,6 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
     useCardRowSpan(cardRef, isMiniClip, isVisible)
 
     useEffect(() => {
-        return () => { if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current) }
-    }, [])
-
-    useEffect(() => {
         if (isEditingLabel && labelInputRef.current) {
             labelInputRef.current.focus()
             labelInputRef.current.select()
@@ -68,7 +63,7 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
 
     useEffect(() => {
         if (!dialogOpen || clip.type !== "image") { setFullImage(null); return }
-        const id = Number(clip.id.replace('clip_', ''))
+        const id = clipId(clip.id)
         GetClipImage(id).then(setFullImage).catch(() => { })
     }, [dialogOpen, clip.id, clip.type])
 
@@ -114,54 +109,6 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
         }
     }, [])
 
-
-    const handleCopy = async () => {
-        playSound("/sounds/paper-copy.wav", soundOn, 1)
-        try {
-            if (clip.type === "image") {
-                const clipId = Number(clip.id.replace('clip_', ''))
-                const imageData = await GetClipImage(clipId)
-                copyBase64ImageToClipboard(`data:image/png;base64,${imageData}`)
-                return
-            }
-            if (clip.content == null) return
-            const full = (await getFullText(clip.id)) ?? clip.content
-            await navigator.clipboard.writeText(full)
-            setCopied(true)
-            if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current)
-            copiedTimerRef.current = setTimeout(() => setCopied(false), 2000)
-        } catch (err) { console.error("Failed to copy:", err) }
-    }
-
-    const handlePin = async () => {
-        const clipId = Number(clip.id.replace('clip_', ''))
-        playSound("/sounds/clipboard-slap.mp3", soundOn, 1)
-        await TogglePin(clipId).catch(err => console.error("Failed to toggle pin:", err))
-    }
-
-    const handlePaste = async () => {
-        if (!clip.content) return
-        playSound("/sounds/paper-copy.wav", soundOn, 1)
-        const full = (await getFullText(clip.id)) ?? clip.content
-        try {
-            await PasteToWindow(full)
-        } catch (err) {
-            console.error("PasteToWindow failed, falling back to copy:", err)
-            await navigator.clipboard.writeText(full)
-        }
-    }
-
-    const handleDelete = async () => {
-        const clipId = Number(clip.id.replace('clip_', ''))
-        playSound("/sounds/paper-rip.mp3", soundOn, 0.5)
-        setIsDeleted(true)
-        try {
-            await Delete(clipId)
-        } catch (err) {
-            console.error("Failed to delete clip:", err)
-            setIsDeleted(false)
-        }
-    }
 
     const startEditingLabel = () => {
         setEditingLabel(clip.label || "")
@@ -237,7 +184,7 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
 
                 {/* Pin floating button - left side */}
                 <button
-                    onClick={handlePin}
+                    onClick={togglePin}
                     className={`absolute -top-2 -left-2 z-20 p-1.5 rounded-full border shadow-sm transition-all opacity-0 group-hover/card:opacity-100 ${
                         clip.isPinned
                             ? "text-amber-800 bg-amber-200 border-amber-400 hover:bg-red-200 hover:text-red-700 hover:border-red-400"
@@ -374,7 +321,7 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
                     {/* Buttons invisible until hover - still take up space */}
                     <div className="flex gap-2 opacity-0 group-hover/card:opacity-100 transition-opacity">
                         <button
-                            onClick={handleCopy}
+                            onClick={copy}
                             className={`rounded p-1.5 transition-colors ${copied ? "bg-green-100 text-green-700" : "bg-foreground/5 text-foreground hover:bg-foreground/10"}`}
                             title="Copy to clipboard"
                         >
@@ -382,7 +329,7 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
                         </button>
                         {clip.type !== "image" && (
                             <button
-                                onClick={handlePaste}
+                                onClick={paste}
                                 className="rounded p-1.5 bg-foreground/5 text-foreground transition-colors hover:bg-purple-100 hover:text-purple-700"
                                 title="Paste into previous window"
                             >
@@ -391,18 +338,18 @@ function ClipCard({ clip, type, tourId, initialVisible = true }: ClipCardProps) 
                         )}
                         {clip.type !== "image" && (
                             <Suspense fallback={null}>
-                                <EditClipDialog clip={clip}>
+                                <ClipContentDialog clip={clip}>
                                     <button
                                         className="rounded p-1.5 bg-foreground/5 text-foreground transition-colors hover:bg-blue-100 hover:text-blue-700"
                                         title="Edit clip"
                                     >
                                         <Pencil className="h-4 w-4" />
                                     </button>
-                                </EditClipDialog>
+                                </ClipContentDialog>
                             </Suspense>
                         )}
                         <button
-                            onClick={handleDelete}
+                            onClick={remove}
                             className="rounded p-1.5 bg-foreground/5 text-foreground transition-colors hover:bg-red-100 hover:text-red-700"
                             title="Delete clip"
                         >

@@ -20,17 +20,6 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  build: {
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          "vendor-react": ["react", "react-dom"],
-          "vendor-gsap": ["gsap", "@gsap/react"],
-          "vendor-radix": ["@radix-ui/react-dialog", "@radix-ui/react-scroll-area"],
-        },
-      },
-    },
-  },
   server: {
     host: "127.0.0.1",
   },

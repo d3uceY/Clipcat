@@ -45,5 +45,5 @@ export function useNavHide(searchVisible: boolean) {
 
     const barShown = searchVisible && !navHideActive
 
-    return { navHideActive, navCooldown, suppressSearchForNav, barShown }
+    return { navCooldown, suppressSearchForNav, barShown }
 }

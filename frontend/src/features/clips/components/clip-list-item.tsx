@@ -1,10 +1,8 @@
 import { Pin, Trash2, ShieldCheck } from "lucide-react"
-import { useState, memo, useEffect, useRef, useCallback } from "react"
+import { memo, useEffect, useRef } from "react"
 import type { Clip } from '@/features/clips/types'
-import { TogglePin, Delete, PasteToWindow, FocusAndPaste, GetClipImage } from "../../../../bindings/Clipcat/app"
-import { getFullText } from "@/features/clips/utils/get-full-text"
+import { useClipActions } from "@/features/clips/hooks/use-clip-actions"
 import { useClips } from "@/contexts/ClipContext"
-import { playSound } from "@/utils/play-sound"
 
 interface ClipListItemProps {
     clip: Clip
@@ -18,63 +16,19 @@ interface ClipListItemProps {
 }
 
 function ClipListItem({ clip, revealed = false, isSelected = false, index, onSelect, onPasteReady }: ClipListItemProps) {
-    const [isDeleted, setIsDeleted] = useState(false)
-    const { soundOn, hideContent, unhideClip } = useClips()
+    const { hideContent, unhideClip } = useClips()
+    const { isDeleted, paste, togglePin, remove } = useClipActions(clip)
     const itemRef = useRef<HTMLDivElement>(null)
-
-    const handlePaste = useCallback(async () => {
-        playSound("/sounds/paper-copy.wav", soundOn, 1)
-        try {
-            if (clip.type === "image") {
-                const clipId = Number(clip.id.replace('clip_', ''))
-                const b64 = await GetClipImage(clipId)
-                const binary = atob(b64)
-                const bytes = new Uint8Array(binary.length)
-                for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
-                const blob = new Blob([bytes], { type: 'image/png' })
-                await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
-                await FocusAndPaste()
-            } else {
-                if (!clip.content) return
-                const full = (await getFullText(clip.id)) ?? clip.content
-                await PasteToWindow(full)
-            }
-        } catch (err) {
-            console.error("Paste failed:", err)
-        }
-    }, [clip, soundOn])
 
     // Register paste callback with parent so Enter key can trigger it
     useEffect(() => {
-        onPasteReady?.(clip.id, handlePaste)
-    }, [clip.id, handlePaste, onPasteReady])
+        onPasteReady?.(clip.id, paste)
+    }, [clip.id, paste, onPasteReady])
 
     // Keep the selected item in view while navigating with arrow keys
     useEffect(() => {
         if (isSelected) itemRef.current?.scrollIntoView({ block: 'nearest' })
     }, [isSelected])
-
-    const handlePin = async (e: React.MouseEvent) => {
-        e.stopPropagation()
-        const clipId = Number(clip.id.replace('clip_', ''))
-        playSound("/sounds/clipboard-slap.mp3", soundOn, 1)
-        await TogglePin(clipId).catch((err) => {
-            console.error("Failed to toggle pin:", err)
-        })
-    }
-
-    const handleDelete = async (e: React.MouseEvent) => {
-        e.stopPropagation()
-        const clipId = Number(clip.id.replace('clip_', ''))
-        playSound("/sounds/paper-rip.mp3", soundOn, 0.5)
-        setIsDeleted(true)
-        try {
-            await Delete(clipId)
-        } catch (err) {
-            console.error("Failed to delete clip:", err)
-            setIsDeleted(false)
-        }
-    }
 
     if (isDeleted) return null
 
@@ -101,7 +55,7 @@ function ClipListItem({ clip, revealed = false, isSelected = false, index, onSel
                     ? "bg-amber-200 border-2 border-dashed border-amber-500"
                     : "bg-[#F9F5E6] hover:bg-amber-50 active:bg-amber-100"
             }`}
-            onClick={() => { if (index !== undefined) onSelect?.(index); handlePaste() }}
+            onClick={() => { if (index !== undefined) onSelect?.(index); paste() }}
             onMouseEnter={() => { if (index !== undefined) onSelect?.(index) }}
         >
             {/* Content */}
@@ -128,14 +82,14 @@ function ClipListItem({ clip, revealed = false, isSelected = false, index, onSel
                 onClick={(e) => e.stopPropagation()}
             >
                 <button
-                    onClick={handleDelete}
+                    onClick={(e) => { e.stopPropagation(); remove() }}
                     className="p-1 rounded text-foreground/30 opacity-0 group-hover:opacity-100 transition-opacity hover:text-red-500"
                     title="Delete"
                 >
                     <Trash2 className="h-3.5 w-3.5" />
                 </button>
                 <button
-                    onClick={handlePin}
+                    onClick={(e) => { e.stopPropagation(); togglePin() }}
                     className={`p-1 rounded transition ${
                         clip.isPinned
                             ? "text-red-600 hover:text-red-700"

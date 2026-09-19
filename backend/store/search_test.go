@@ -62,20 +62,8 @@ func TestSearchClipsIntegration(t *testing.T) {
 	}
 	defer DB.Close()
 
-	CreateTables()
-	MigrateClipsTable()
-	MigrateSettingsTable()
-	MigrateStartupDefaultColumn()
-	MigrateEncryptionColumns()
-	MigrateIndexes()
-	MigrateThumbnailColumn()
-	MigrateLabelColumn()
-	MigrateHiddenColumn()
-	MigrateSyncSourceColumn()
-
-	if err := initSearchIndex(); err != nil {
-		t.Fatalf("initSearchIndex: %v", err)
-	}
+	// Full startup migration path - the same schema and FTS rebuild the app runs.
+	RunMigrations()
 
 	insert := func(content string) {
 		t.Helper()

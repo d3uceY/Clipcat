@@ -20,7 +20,7 @@ import { useNavHide } from "../hooks/use-nav-hide"
 import { useKeyboardNav } from "../hooks/use-keyboard-nav"
 
 const AboutDialog = lazy(() => import("@/features/settings/components/about-dialog"))
-const AddClipDialog = lazy(() => import("@/components/add-clip-dialog"))
+const ClipContentDialog = lazy(() => import("@/components/clip-content-dialog"))
 const DeleteClipsDialog = lazy(() => import("@/components/delete-clips-dialog"))
 
 function PageContent() {
@@ -482,7 +482,7 @@ function PageContent() {
                 {!isMiniClip && (
                     <div className="fixed bottom-6 right-6 z-30 flex flex-col gap-3">
                         <Suspense fallback={null}>
-                            <AddClipDialog>
+                            <ClipContentDialog>
                                 <button
                                     id="tour-add-clip"
                                     className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-dashed border-amber-600 bg-amber-200 shadow-lg transition-all hover:scale-110 hover:bg-amber-300"
@@ -490,7 +490,7 @@ function PageContent() {
                                 >
                                     <Plus className="h-5 w-5 text-amber-800" />
                                 </button>
-                            </AddClipDialog>
+                            </ClipContentDialog>
                         </Suspense>
                         <Suspense fallback={null}>
                             <DeleteClipsDialog>

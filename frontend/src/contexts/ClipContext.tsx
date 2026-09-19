@@ -28,6 +28,7 @@ import {
 } from "../../bindings/Clipcat/app";
 import { Events } from "@wailsio/runtime";
 import { playSound } from "../utils/play-sound"
+import { clipId } from "@/features/clips/utils/clip-id"
 import type { Clip } from "../features/clips/types"
 
 interface ClipContextType {
@@ -305,8 +306,7 @@ export function ClipProvider({ children }: { children: ReactNode }) {
   };
 
   const renameClip = async (id: string, label: string) => {
-    const clipId = Number(id.replace('clip_', ''));
-    await RenameClip(clipId, label);
+    await RenameClip(clipId(id), label);
     setClips((prev) => {
       const update = (clips: Clip[]) =>
         clips.map((c) =>
@@ -323,8 +323,7 @@ export function ClipProvider({ children }: { children: ReactNode }) {
   };
 
   const unhideClip = async (id: string) => {
-    const clipId = Number(id.replace('clip_', ''));
-    await UnhideClip(clipId);
+    await UnhideClip(clipId(id));
     // Optimistic update - the event also covers us.
     setClips((prev) => {
       const update = (clips: Clip[]) =>
@@ -334,8 +333,7 @@ export function ClipProvider({ children }: { children: ReactNode }) {
   };
 
   const hideClip = async (id: string) => {
-    const clipId = Number(id.replace('clip_', ''));
-    await HideClip(clipId);
+    await HideClip(clipId(id));
     setClips((prev) => {
       const update = (clips: Clip[]) =>
         clips.map((c) => c.id === id ? { ...c, isHidden: true } : c);

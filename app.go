@@ -9,7 +9,6 @@ import (
 	lansync "Clipcat/backend/sync"
 	"bytes"
 	"context"
-	"encoding/base64"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -157,6 +156,12 @@ func (a *App) onClipboardChange() {
 	}
 }
 
+// clipEventID formats a DB row id as the id the frontend uses for DOM nodes
+// ("clip_007").
+func clipEventID(id int) string {
+	return fmt.Sprintf("clip_%03d", id)
+}
+
 func (a *App) handleImageClip(img []byte) {
 	a.lastMu.Lock()
 	isDup := bytes.Equal(a.lastImage, img)
@@ -164,32 +169,25 @@ func (a *App) handleImageClip(img []byte) {
 	a.lastText = ""
 	a.lastMu.Unlock()
 
-	if isDup {
-		// Still add - AddImageClip handles re-insert at top.
-		// Skip broadcast since peers already have it.
-		clip, prunedIDs, deletedID, _, _ := store.AddImageClip(img)
-		if deletedID > 0 {
-			a.app.Event.Emit("clip:deleted", fmt.Sprintf("clip_%03d", deletedID))
-		}
-		if clip != nil {
-			a.emitClipAdded(clip, prunedIDs)
-		}
-		return
-	}
+	a.saveImageClip(img, isDup)
+}
 
+// saveImageClip stores img and notifies the frontend.  skipBroadcast is set
+// for a back-to-back copy of the last clip - it is still re-inserted at the
+// top, but peers already have it.
+func (a *App) saveImageClip(img []byte, skipBroadcast bool) {
 	clip, prunedIDs, deletedID, inserted, err := store.AddImageClip(img)
 	if err != nil {
 		fmt.Println("failed to save image:", err)
 	}
 	if deletedID > 0 {
-		a.app.Event.Emit("clip:deleted", fmt.Sprintf("clip_%03d", deletedID))
+		a.app.Event.Emit("clip:deleted", clipEventID(deletedID))
 	}
 	if inserted {
 		a.emitClipAdded(clip, prunedIDs)
-	}
-
-	if inserted && clip != nil {
-		a.broadcastImageClip(img)
+		if clip != nil && !skipBroadcast {
+			a.broadcastImageClip(img)
+		}
 	}
 }
 
@@ -200,31 +198,25 @@ func (a *App) handleTextClip(text string) {
 	a.lastImage = nil
 	a.lastMu.Unlock()
 
-	if isDup {
-		clip, prunedIDs, deletedID, _, _ := store.AddClip(text, "text")
-		if deletedID > 0 {
-			a.app.Event.Emit("clip:deleted", fmt.Sprintf("clip_%03d", deletedID))
-		}
-		if clip != nil {
-			a.emitClipAdded(clip, prunedIDs)
-		}
-		return
-	}
+	a.saveTextClip(text, isDup)
+}
 
+// saveTextClip stores text and notifies the frontend.  skipBroadcast is set
+// for a back-to-back copy of the last clip (peers already have it).
+func (a *App) saveTextClip(text string, skipBroadcast bool) {
 	clip, prunedIDs, deletedID, inserted, err := store.AddClip(text, "text")
 	if err != nil {
 		fmt.Println("failed to save text:", err)
 		return
 	}
 	if deletedID > 0 {
-		a.app.Event.Emit("clip:deleted", fmt.Sprintf("clip_%03d", deletedID))
+		a.app.Event.Emit("clip:deleted", clipEventID(deletedID))
 	}
 	if inserted {
 		a.emitClipAdded(clip, prunedIDs)
-	}
-
-	if inserted && clip != nil {
-		a.broadcastTextClip(text)
+		if clip != nil && !skipBroadcast {
+			a.broadcastTextClip(text)
+		}
 	}
 }
 
@@ -235,7 +227,7 @@ func (a *App) emitClipAdded(clip *store.Clip, prunedIDs []int) {
 	if len(prunedIDs) > 0 {
 		prunedStrs := make([]string, len(prunedIDs))
 		for i, pid := range prunedIDs {
-			prunedStrs[i] = fmt.Sprintf("clip_%03d", pid)
+			prunedStrs[i] = clipEventID(pid)
 		}
 		a.app.Event.Emit("clip:pruned", prunedStrs)
 	}
@@ -444,7 +436,7 @@ func (a *App) UpdateClipContent(clipID int, newContent string) error {
 		return err
 	}
 	a.app.Event.Emit("clip:updated", map[string]interface{}{
-		"id":      fmt.Sprintf("clip_%03d", clipID),
+		"id":      clipEventID(clipID),
 		"content": store.TrimContent(newContent),
 	})
 	return nil
@@ -456,7 +448,7 @@ func (a *App) TogglePin(clipID int) error {
 		return err
 	}
 	a.app.Event.Emit("clip:pinToggled", map[string]interface{}{
-		"id":       fmt.Sprintf("clip_%03d", clipID),
+		"id":       clipEventID(clipID),
 		"isPinned": isPinned,
 	})
 	return nil
@@ -466,7 +458,7 @@ func (a *App) Delete(clipID int) error {
 	if err := store.DeleteClip(clipID); err != nil {
 		return err
 	}
-	a.app.Event.Emit("clip:deleted", fmt.Sprintf("clip_%03d", clipID))
+	a.app.Event.Emit("clip:deleted", clipEventID(clipID))
 	return nil
 }
 
@@ -490,7 +482,7 @@ func (a *App) UnhideClip(clipID int) error {
 	if err := store.UnhideClip(clipID); err != nil {
 		return err
 	}
-	a.app.Event.Emit("clip:unhidden", fmt.Sprintf("clip_%03d", clipID))
+	a.app.Event.Emit("clip:unhidden", clipEventID(clipID))
 	return nil
 }
 
@@ -498,7 +490,7 @@ func (a *App) HideClip(clipID int) error {
 	if err := store.HideClip(clipID); err != nil {
 		return err
 	}
-	a.app.Event.Emit("clip:hidden", fmt.Sprintf("clip_%03d", clipID))
+	a.app.Event.Emit("clip:hidden", clipEventID(clipID))
 	return nil
 }
 
@@ -604,17 +596,29 @@ func (a *App) RemoveIgnoreEntry(name string) error {
 func (a *App) PasteToWindow(content string) error {
 	// Write content to the system clipboard.
 	gclip.Write(gclip.FmtText, []byte(content))
+	return a.pasteIntoPreviousWindow()
+}
 
-	// If there is no previous window to paste into, just leave the content in
-	// the clipboard and keep the window visible so the user isn't left stranded.
+// FocusAndPaste focuses the previously active window and simulates Ctrl+V.
+// Call this after writing image data to the clipboard from the frontend via
+// the Web Clipboard API, which produces a format apps can reliably paste.
+func (a *App) FocusAndPaste() error {
+	return a.pasteIntoPreviousWindow()
+}
+
+// pasteIntoPreviousWindow re-focuses the window that was active when the
+// hotkey was pressed and fires the paste keystroke (Ctrl+V on Windows/Linux,
+// Cmd+V on macOS).  The content is expected to be on the clipboard already.
+// Without a previous window it leaves the content on the clipboard and keeps
+// the window visible so the user isn't left stranded.
+func (a *App) pasteIntoPreviousWindow() error {
 	if !clipboard.HasPreviousWindow() {
 		return nil
 	}
 
 	// Only hide the window when Quick Paste mode is active. In normal mode the
 	// app stays visible after the paste so the user can keep picking clips.
-	quickPaste, _ := store.GetQuickPaste()
-	if quickPaste {
+	if quickPaste, _ := store.GetQuickPaste(); quickPaste {
 		a.window.Hide()
 	}
 
@@ -631,71 +635,13 @@ func (a *App) PasteToWindow(content string) error {
 	return nil
 }
 
-// PasteImageToWindow writes the image for the given clip ID to the system
-// clipboard as raw image data, then pastes it into the previously focused window.
-func (a *App) PasteImageToWindow(clipID int) error {
-	b64, err := store.GetClipImage(clipID)
-	if err != nil {
-		return err
-	}
-	imgBytes, err := base64.StdEncoding.DecodeString(b64)
-	if err != nil {
-		return err
-	}
-	gclip.Write(gclip.FmtImage, imgBytes)
-
-	if !clipboard.HasPreviousWindow() {
-		return nil
-	}
-
-	quickPaste, _ := store.GetQuickPaste()
-	if quickPaste {
-		a.window.Hide()
-	}
-
-	time.Sleep(80 * time.Millisecond)
-	clipboard.FocusPreviousWindow()
-	time.Sleep(100 * time.Millisecond)
-	clipboard.SimulatePaste()
-	return nil
-}
-
-// FocusAndPaste focuses the previously active window and simulates Ctrl+V.
-// Call this after writing image data to the clipboard from the frontend via
-// the Web Clipboard API, which produces a format apps can reliably paste.
-func (a *App) FocusAndPaste() error {
-	if !clipboard.HasPreviousWindow() {
-		return nil
-	}
-
-	quickPaste, _ := store.GetQuickPaste()
-	if quickPaste {
-		a.window.Hide()
-	}
-
-	time.Sleep(80 * time.Millisecond)
-	clipboard.FocusPreviousWindow()
-	time.Sleep(100 * time.Millisecond)
-	clipboard.SimulatePaste()
-	return nil
-}
-
 func (a *App) AddClip(content string, pinned bool) error {
 	clip, prunedIDs, inserted, err := store.AddManualClip(content, pinned)
 	if err != nil {
 		return err
 	}
 	if inserted {
-		if clip != nil {
-			a.app.Event.Emit("clip:added", clip)
-		}
-		if len(prunedIDs) > 0 {
-			prunedStrs := make([]string, len(prunedIDs))
-			for i, pid := range prunedIDs {
-				prunedStrs[i] = fmt.Sprintf("clip_%03d", pid)
-			}
-			a.app.Event.Emit("clip:pruned", prunedStrs)
-		}
+		a.emitClipAdded(clip, prunedIDs)
 	}
 	return nil
 }

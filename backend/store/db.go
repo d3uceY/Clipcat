@@ -77,62 +77,65 @@ func CreateTables() {
 	}
 }
 
-// RunMigrations runs all schema migrations and data migrations in order.
-// Safe to call on every startup - each migration is idempotent.
+// RunMigrations brings the schema up to date. Safe to call on every startup -
+// every step is idempotent.
 func RunMigrations() {
 	CreateTables()
-	MigrateClipsTable()
-	MigrateSettingsTable()
-	MigrateStartupDefaultColumn()
-	MigrateEncryptionColumns()
+
+	_, _ = DB.Exec(`INSERT OR IGNORE INTO settings (id, ghost_mode) VALUES (0, 0)`)
+
+	// encryption_meta outlives at-rest encryption's removal: MigrateDecryptClips
+	// still needs the legacy key to read rows an older version wrote.
+	_, _ = DB.Exec(`CREATE TABLE IF NOT EXISTS encryption_meta (
+		id          INTEGER PRIMARY KEY CHECK (id = 0),
+		machine_key TEXT NOT NULL
+	)`)
+
+	// Additive column migrations. SQLite has no "ADD COLUMN IF NOT EXISTS", so a
+	// column that already exists just errors and is skipped - which is what makes
+	// running this whole list on every startup safe.
+	_, _ = DB.Exec(`ALTER TABLE clips ADD COLUMN image BLOB`)
+	_, _ = DB.Exec(`ALTER TABLE clips ADD COLUMN encrypted INTEGER DEFAULT 0`)
+	_, _ = DB.Exec(`ALTER TABLE clips ADD COLUMN content_hash TEXT`)
+	_, _ = DB.Exec(`ALTER TABLE clips ADD COLUMN thumbnail BLOB`)
+	_, _ = DB.Exec(`ALTER TABLE clips ADD COLUMN label TEXT NOT NULL DEFAULT ''`)
+	_, _ = DB.Exec(`ALTER TABLE clips ADD COLUMN hidden INTEGER NOT NULL DEFAULT 0`)
+	_, _ = DB.Exec(`ALTER TABLE clips ADD COLUMN source TEXT NOT NULL DEFAULT 'local'`)
+	_, _ = DB.Exec(`ALTER TABLE settings ADD COLUMN startup_default_set INTEGER DEFAULT 0`)
+	_, _ = DB.Exec(`ALTER TABLE settings ADD COLUMN auto_hide_sensitive INTEGER NOT NULL DEFAULT 1`)
+	_, _ = DB.Exec(`ALTER TABLE settings ADD COLUMN always_on_top INTEGER NOT NULL DEFAULT 0`)
+	_, _ = DB.Exec(`ALTER TABLE settings ADD COLUMN mini_clip INTEGER NOT NULL DEFAULT 0`)
+	_, _ = DB.Exec(`ALTER TABLE settings ADD COLUMN cursor_snap INTEGER NOT NULL DEFAULT 1`)
+	_, _ = DB.Exec(`ALTER TABLE settings ADD COLUMN sync_enabled INTEGER NOT NULL DEFAULT 0`)
+	_, _ = DB.Exec(`ALTER TABLE settings ADD COLUMN sync_passphrase TEXT NOT NULL DEFAULT ''`)
+	_, _ = DB.Exec(`ALTER TABLE settings ADD COLUMN ignore_defaults_seeded INTEGER NOT NULL DEFAULT 0`)
+
 	MigrateIndexes()
-	MigrateThumbnailColumn()
+
 	// The legacy key is still needed to decrypt rows an older version stored
 	// with encryption enabled.
 	if err := InitEncryption(); err != nil {
 		panic(err)
 	}
 	MigrateDecryptClips()
-	MigrateLabelColumn()
-	MigrateHiddenColumn()
-	MigrateAutoHideSetting()
-	MigrateAlwaysOnTopSetting()
-	MigrateMiniClipSetting()
-	MigrateCursorSnapSetting()
-	MigrateSyncSourceColumn()
-	MigrateSyncSettings()
-	MigrateIgnoreDefaultsColumn()
 	SeedDefaultIgnoreList()
 	if err := initSearchIndex(); err != nil {
 		fmt.Printf("search index init warning: %v\n", err)
 	}
 }
 
-// MigrateIgnoreDefaultsColumn adds the flag that prevents the built-in
-// block list from being re-seeded after the user removes an entry.
-func MigrateIgnoreDefaultsColumn() {
-	_, _ = DB.Exec(`ALTER TABLE settings ADD COLUMN ignore_defaults_seeded INTEGER NOT NULL DEFAULT 0`)
-}
-
 // MigrateIndexes creates performance indexes on the clips table.
 // Uses IF NOT EXISTS so it is safe to call on every startup.
 func MigrateIndexes() {
 	indexes := []string{
-		// Main listing query: ORDER BY pinned DESC, created_at DESC
+		// Main listing query: ORDER BY pinned DESC, created_at DESC. Also
+		// serves the delete-by-pin queries off its pinned prefix.
 		`CREATE INDEX IF NOT EXISTS idx_clips_pinned_created
 		 ON clips(pinned DESC, created_at DESC)`,
 
 		// Duplicate detection: WHERE content_hash = ?
 		`CREATE INDEX IF NOT EXISTS idx_clips_content_hash
 		 ON clips(content_hash)`,
-
-		// Delete-by-type queries (DeletePinnedClips, DeleteUnpinnedClips)
-		`CREATE INDEX IF NOT EXISTS idx_clips_pinned
-		 ON clips(pinned)`,
-
-		// Encrypted column is used in migration queries
-		`CREATE INDEX IF NOT EXISTS idx_clips_encrypted
-		 ON clips(encrypted)`,
 	}
 
 	for _, idx := range indexes {
@@ -140,37 +143,6 @@ func MigrateIndexes() {
 			fmt.Printf("index warning: %v\n", err)
 		}
 	}
-}
-
-func MigrateClipsTable() {
-	_, _ = DB.Exec(`ALTER TABLE clips ADD COLUMN image BLOB`)
-}
-
-func MigrateSettingsTable() {
-	_, _ = DB.Exec(`INSERT OR IGNORE INTO settings (id, ghost_mode) VALUES (0, 0)`)
-}
-
-// MigrateStartupDefaultColumn adds the startup_default_set flag used to
-// enable launch-on-startup exactly once on first run.
-func MigrateStartupDefaultColumn() {
-	_, _ = DB.Exec(`ALTER TABLE settings ADD COLUMN startup_default_set INTEGER DEFAULT 0`)
-}
-
-func MigrateEncryptionColumns() {
-	_, _ = DB.Exec(`ALTER TABLE clips ADD COLUMN encrypted INTEGER DEFAULT 0`)
-	_, _ = DB.Exec(`ALTER TABLE clips ADD COLUMN content_hash TEXT`)
-	_, _ = DB.Exec(`
-		CREATE TABLE IF NOT EXISTS encryption_meta (
-			id          INTEGER PRIMARY KEY CHECK (id = 0),
-			machine_key TEXT NOT NULL
-		)
-	`)
-}
-
-// MigrateThumbnailColumn adds a thumbnail BLOB column for image clips
-// so GetClips never needs to transmit full-resolution images.
-func MigrateThumbnailColumn() {
-	_, _ = DB.Exec(`ALTER TABLE clips ADD COLUMN thumbnail BLOB`)
 }
 
 // MigrateDecryptClips converts every row an older version stored with
@@ -238,50 +210,3 @@ func MigrateDecryptClips() {
 	}
 }
 
-// MigrateLabelColumn adds a label column for optional clip nicknames.
-func MigrateLabelColumn() {
-	_, _ = DB.Exec(`ALTER TABLE clips ADD COLUMN label TEXT NOT NULL DEFAULT ''`)
-}
-
-// MigrateHiddenColumn adds the hidden flag used by the sensitive-content
-// auto-hide feature.  Defaults to 0 (visible) for all existing clips.
-func MigrateHiddenColumn() {
-	_, _ = DB.Exec(`ALTER TABLE clips ADD COLUMN hidden INTEGER NOT NULL DEFAULT 0`)
-}
-
-// MigrateAutoHideSetting adds the auto_hide_sensitive column to settings.
-// The feature is enabled by default (value 1) on first migration.
-func MigrateAutoHideSetting() {
-	_, _ = DB.Exec(`ALTER TABLE settings ADD COLUMN auto_hide_sensitive INTEGER NOT NULL DEFAULT 1`)
-}
-
-// MigrateAlwaysOnTopSetting adds the always_on_top column to settings.
-// Defaults to 0 (off).
-func MigrateAlwaysOnTopSetting() {
-	_, _ = DB.Exec(`ALTER TABLE settings ADD COLUMN always_on_top INTEGER NOT NULL DEFAULT 0`)
-}
-
-// MigrateMiniClipSetting adds the mini_clip column to settings.
-// Defaults to 0 (off).
-func MigrateMiniClipSetting() {
-	_, _ = DB.Exec(`ALTER TABLE settings ADD COLUMN mini_clip INTEGER NOT NULL DEFAULT 0`)
-}
-
-// MigrateCursorSnapSetting adds the cursor_snap column to settings.
-// Smart Position is enabled by default (value 1).
-func MigrateCursorSnapSetting() {
-	_, _ = DB.Exec(`ALTER TABLE settings ADD COLUMN cursor_snap INTEGER NOT NULL DEFAULT 1`)
-}
-
-// MigrateSyncSourceColumn adds the source column to the clips table so we can
-// distinguish locally-captured clips from network-synced ones.
-func MigrateSyncSourceColumn() {
-	_, _ = DB.Exec(`ALTER TABLE clips ADD COLUMN source TEXT NOT NULL DEFAULT 'local'`)
-}
-
-// MigrateSyncSettings adds the sync_enabled and sync_passphrase columns to the
-// settings table.  Both default to disabled/empty.
-func MigrateSyncSettings() {
-	_, _ = DB.Exec(`ALTER TABLE settings ADD COLUMN sync_enabled INTEGER NOT NULL DEFAULT 0`)
-	_, _ = DB.Exec(`ALTER TABLE settings ADD COLUMN sync_passphrase TEXT NOT NULL DEFAULT ''`)
-}

@@ -132,10 +132,13 @@ Writes / removes `~/.config/autostart/clipcat.desktop`. The `.desktop` file uses
 
 | Dependency | Purpose |
 |---|---|
-| `libgtk-3-dev` | Wails WebView |
-| `libwebkit2gtk-4.1-dev` | Wails WebView |
+| `libgtk-4-dev` | Wails WebView (build) |
+| `libwebkitgtk-6.0-dev` | Wails WebView (build) |
+| `libayatana-appindicator3-dev` | System tray icon (build) |
 | `libX11-dev` (transitive) | X11 hotkey via CGo |
+| `libgtk-4-1` (runtime) | Wails WebView |
+| `libwebkitgtk-6.0-4` (runtime) | Wails WebView |
 | `xdotool` (runtime) | Window focus tracking and paste simulation |
 | `wmctrl` (runtime) | Single-instance window activation |
 
-Build tag used in CI: `-tags webkit2gtk_4_1`
+Build tag used in CI: `-tags production`

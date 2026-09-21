@@ -6,13 +6,21 @@ description: A full overview of everything Clipcat can do.
 
 # Features
 
-A rundown of every Clipcat feature, from automatic capture to privacy controls.
+Every Clipcat feature, explained in plain language. Jump to whichever one you need.
+
+---
+
+## Your First Run
+
+The first time you open Clipcat, a short tour points out the search box, the Add Clip button, a clip card, the settings gear, and the About button. Click **Next** to move through it and **Got it!** to finish. It only shows once.
+
+You can reopen the help at any time. Click the **ⓘ** button in the top-left corner and choose **How to Use**, or open the command palette and pick **How to Use Clipcat**.
 
 ---
 
 ## Automatic Capture
 
-The moment you press <kbd>Ctrl</kbd>+<kbd>C</kbd> (or <kbd>⌘</kbd>+<kbd>C</kbd> on Mac), Clipcat saves it. Text, rich text, and images are all captured with zero configuration.
+The moment you press <kbd>Ctrl</kbd>+<kbd>C</kbd> (or <kbd>⌘</kbd>+<kbd>C</kbd> on Mac), Clipcat saves it. Text, rich text, and images are all captured. You do not have to set anything up first.
 
 ![Auto-capture - clip list with text and image entries](/img/feature-capture.png)
 
@@ -23,12 +31,12 @@ The moment you press <kbd>Ctrl</kbd>+<kbd>C</kbd> (or <kbd>⌘</kbd>+<kbd>C</kbd
 Enable **Quick Paste** in Settings, then:
 
 1. Work in any app
-2. Copy something or need something old
+2. Copy something, or remember something you copied earlier
 3. Press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>V</kbd> (or <kbd>⌘</kbd>+<kbd>Shift</kbd>+<kbd>V</kbd>)
-4. Clipcat summons, pick a clip
-5. It pastes directly into your previous window and disappears
+4. Clipcat appears. Pick a clip with the mouse, or use the arrow keys and press <kbd>Enter</kbd>
+5. The clip pastes into the window you were using, and Clipcat goes away
 
-Enabling Quick Paste automatically turns on **Mini Clip mode** too. You can also toggle Quick Paste from the ⚡ button in the toolbar next to Search.
+Turning on Quick Paste also turns on **Mini Clip mode**, because the two work together. You can also reach Quick Paste from the ⚡ button in the toolbar next to Search.
 
 ![Quick Paste - Clipcat summoned as an overlay over another app](/img/feature-quick-paste.png)
 
@@ -42,9 +50,7 @@ Click the pin icon on any clip to lock it to the top of your list. Pinned clips 
 
 ## Labels
 
-Tag any clip with a custom label to categorize your history. A **label filter bar** appears above your clips - click any label to filter instantly.
-
-
+Tag any clip with a custom label to sort your history. A **label filter bar** appears above your clips. Click any label to show only the clips with that label.
 
 ---
 
@@ -68,7 +74,7 @@ Press <kbd>Alt</kbd>+<kbd>H</kbd> to instantly blur all clip content. Useful whe
 - Working in a public place
 - Presenting to others
 
-The blur persists until you toggle it off. State is not saved between sessions.
+The blur stays on until you switch it off. Clipcat remembers it, so clips are still blurred the next time you open the app.
 
 ![Privacy Mode - all clip content blurred](/img/feature-privacy.png)
 
@@ -76,29 +82,31 @@ The blur persists until you toggle it off. State is not saved between sessions.
 
 ## Auto-hide Sensitive Clips
 
-Clipcat automatically detects clips that look like:
+Clipcat reads every clip you copy and hides the ones that look like:
 
 - Passwords
 - API keys and tokens
 - JWTs
 - Private keys
-- High-entropy secret strings
+- Long random-looking strings
 
-These clips are **collapsed into a separate section** and hidden by default. You can reveal or mark them safe individually. Toggle this feature in **Settings -> Clipboard**.
+Hidden clips are kept out of view by default. A **Sensitive** button appears in the toolbar when any clip is hidden. Click it to show them, and click the shield button on a card to mark that clip as safe. Turn the whole feature on or off in **Settings -> Clipboard**.
 
 ---
 
 ## Blocked Apps
 
-Add a process name (e.g. `1password.exe`, `Bitwarden.exe`) in **Settings -> Blocked Apps** and Clipcat will never capture clipboard content from that application.
+Add a process name (for example `1password.exe` or `Bitwarden.exe`) in **Settings -> Privacy -> Blocked Apps**, and Clipcat will never save clipboard content from that app.
 
-This works by checking the foreground window's process name at the moment the clipboard changes.
+It works by checking which window is in front when the clipboard changes. If that app is on your list, the clip is thrown away before it is saved.
+
+Clipcat already blocks the usual password managers for you: 1Password, Bitwarden, Dashlane, Enpass, KeePass, LastPass, NordPass, and RoboForm. If you want Clipcat to capture from one of them, remove it from the list.
 
 ---
 
 ## Mini Clip Mode
 
-A compact window that stays out of your way. Toggle with <kbd>Alt</kbd>+<kbd>M</kbd>. The mode state persists between sessions. Mini Clip mode **automatically keeps the window always on top** so it floats above other apps - no separate setting needed.
+A smaller window that stays out of the way. Toggle it with <kbd>Alt</kbd>+<kbd>M</kbd>. Clipcat remembers whether you left it on. Mini Clip mode also keeps the window on top of other windows, so there is no separate setting for that.
 
 ![Mini Clip - compact always-accessible window](/img/screenshot-mini.png)
 
@@ -123,13 +131,9 @@ Temporarily stop recording clipboard changes without quitting the app. Useful wh
 
 ## Bulk Delete
 
-Clear your history in one click with options to delete:
+Clear your history in one click. You can delete all clips, only pinned clips, or only unpinned clips. Find these buttons under **Settings -> Privacy**.
 
-- All clips
-- Only pinned clips
-- Only unpinned clips
-
-Always shown with a confirmation prompt to prevent accidents.
+Clipcat always asks for confirmation first, so you cannot wipe your history by accident.
 
 ---
 
@@ -153,21 +157,21 @@ Every clip shows a live-updating relative time: `"2 minutes ago"`, `"yesterday"`
 
 ## Sound Effects
 
-Satisfying audio feedback on every action. Toggle with <kbd>Alt</kbd>+<kbd>S</kbd> or in **Settings -> System**.
+A short sound plays for each action. Toggle it with <kbd>Alt</kbd>+<kbd>S</kbd> or in **Settings -> System**.
 
 ---
 
 ## Configurable Storage Limit
 
-Choose how many clips to keep (100-500). Older unpinned clips are automatically removed when the limit is reached. Pinned clips are always preserved. Adjust in **Settings -> Clipboard**.
+Choose how many clips to keep, from 100 to 500 in steps of 50. When you reach the limit, Clipcat removes the oldest clips that are not pinned. Pinned clips are never removed. Adjust this in **Settings -> Clipboard**.
 
 ---
 
 ## Command Palette
 
-Press <kbd>Ctrl</kbd>+<kbd>K</kbd> (or <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>) to open the command palette, a fuzzy-searchable list of every quick action in Clipcat. Toggle Quick Paste, Mini Clip mode, privacy mode, sound, and more without navigating menus. 
+Press <kbd>Ctrl</kbd>+<kbd>K</kbd> (or <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>) to open the command palette. It lists every quick action in Clipcat, so you can switch things on and off without opening Settings. 
 
-The palette appears as an overlay centered on screen, with results grouped by category and filtered as you type. Press <kbd>Escape</kbd> to dismiss.
+The palette shows up in the middle of the screen, grouped by category. Type to filter the list, and press <kbd>Escape</kbd> to close it. It holds Focus Search, Enable or Disable Quick Paste, Enter or Exit Mini Mode, Show or Hide Content, Mute or Unmute Sounds, and How to Use Clipcat.
 
 ---
 
@@ -175,7 +179,7 @@ The palette appears as an overlay centered on screen, with results grouped by ca
 
 Sync your clipboard across devices on the same local network, end-to-end encrypted. Every clip you copy is broadcast to connected peers in real time.
 
-- **End-to-end encrypted** using AES-GCM with a key derived from a shared passphrase
+- **End-to-end encrypted** using AES-256-GCM with a key derived from a shared passphrase
 - **Peer discovery** via mDNS - no configuration, no server, no account
 - **Real-time sync** - clips arrive on connected devices as you copy them
 - **Works for text and images**
@@ -193,4 +197,4 @@ Optionally launch Clipcat automatically when your system starts. Toggle in **Set
 
 ## System Tray
 
-Clipcat lives quietly in your system tray. Right-click for options or double-click to show/hide the window.
+Clipcat lives in your system tray. Click the tray icon once to show or hide the window. Right-click it for a menu with Show Clipcat, a Quick Paste checkbox, a Pause Capture checkbox, and Quit.

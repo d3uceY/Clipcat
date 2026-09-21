@@ -6,71 +6,85 @@ description: A complete guide to every Clipcat setting.
 
 # Settings
 
-Open Settings from the gear icon in the top-right corner of Clipcat. All settings are saved locally and apply instantly.
+Click the gear icon in the top-right corner to open Settings. The panel fills the window and has five tabs along the top: **Window**, **Clipboard**, **System**, **Privacy**, and **Network**. It opens on **Window**.
 
-![Clipcat settings panel](/img/settings-overview.png)
-
----
-
-## Clipboard
-
-| Setting | Description |
-|---|---|
-| **Clipboard Limit** | How many clips to keep in history. Range: 100-500. Oldest unpinned clips are removed when the limit is reached. Pinned clips are always preserved. |
-| **Pause Capture** | Temporarily stop recording clipboard changes. Useful when working with sensitive content you don't want saved. |
-| **Hide Content** | Blur all clip content instantly. Useful for screen sharing or working in public. Toggle with <kbd>Alt</kbd>+<kbd>H</kbd>. |
-| **Auto-hide Sensitive** | Automatically detect and collapse clips that look like passwords, API keys, tokens, JWTs, or private keys. Hidden clips can be revealed individually. |
-
----
-
-## Blocked Apps
-
-Add a process name to the blocklist and Clipcat will never capture clipboard content from that application.
-
-**Examples:**
-- `1password.exe` - 1Password (Windows)
-- `Bitwarden.exe` - Bitwarden (Windows)
-- `1Password` - 1Password (macOS)
-
-Clipcat checks the **foreground window's process name** at the moment your clipboard changes. If it matches a blocked entry, the clip is silently discarded.
-
-:::tip[Finding a process name]
-Use your OS task manager to find the exact process name for an app you want to block.
-:::
+Click a tab to switch to it. Click the gear again, or click the **X**, to close the panel. Every setting saves the moment you change it, so there is no Save button.
 
 ---
 
 ## Window
 
-| Setting | Description |
+| Setting | What it does |
 |---|---|
-| **Mini Clip** | Compact window that stays out of your way. Automatically enables Always on Top so it floats above other windows. Toggle with <kbd>Alt</kbd>+<kbd>M</kbd>. State persists between sessions. |
-| **Smart Position** | When Quick Paste summons the window, it appears right next to your cursor instead of wherever it last was. Always clamped to stay fully on-screen, including on multi-monitor setups. Only active while Quick Paste is enabled. On by default. |
+| **Mini Clip** | Shrinks the window into a short list that stays out of the way. Turning it on also keeps the window on top of other apps. Shortcut: <kbd>Alt</kbd>+<kbd>M</kbd>. Clipcat remembers your choice next time you open it. |
+| **Smart Position** | When Quick Paste opens the window, it appears next to your cursor instead of wherever it was last. The window always stays fully on screen, even with more than one monitor. This row is greyed out unless Quick Paste is on. On by default. |
 
 ---
 
-## Network
+## Clipboard
 
-| Setting | Description |
+| Setting | What it does |
 |---|---|
-| **LAN Sync** | Toggle LAN clipboard sync on or off. When enabled, clips are broadcast to other Clipcat instances on the same local network in real time. |
-| **Passphrase** | A shared passphrase used to encrypt all sync traffic. Every device must use the same passphrase. Cannot be blank when sync is enabled. |
-| **Peers** | Shows the number of currently connected devices on the network. Updates in real time as peers join or leave. |
-
-Sync uses **mDNS** for automatic peer discovery. No IP addresses, no server, no account. Traffic is encrypted with **AES-GCM** using a key derived from the passphrase.
+| **Pause Capture** | Stops Clipcat saving new clips until you switch it back on. Handy when you are handling something private. |
+| **Hide Content** | Blurs every clip in the window. Handy for screen sharing or working in public. Shortcut: <kbd>Alt</kbd>+<kbd>H</kbd>. This row is greyed out until you have at least one clip, and Clipcat remembers the setting for next time. |
+| **Auto-hide Sensitive** | Hides clips that look like passwords, API keys, tokens, JWTs, or private keys. On by default. See [Privacy & Security](./privacy-security) for how to show them again. |
+| **Clipboard Limit** | How many clips to keep, from 100 to 500 in steps of 50. When you reach the limit, the oldest clips that are not pinned are removed. Pinned clips are never removed. |
 
 ---
 
 ## System
 
-| Setting | Description |
+| Setting | What it does |
 |---|---|
-| **Load on Startup** | Automatically launch Clipcat when your system starts. |
-| **Sound Effects** | Enable or disable audio feedback on every action. Can also be toggled with <kbd>Alt</kbd>+<kbd>S</kbd>. |
-| **Quick Paste** | Hides Clipcat to the tray. Press the global shortcut from any app to summon it, pick a clip, and it pastes directly into your previous window then disappears. Enabling this also turns on Mini Clip mode. Also accessible from the ⚡ toolbar button next to Search. |
+| **Sound** | Turns the short sound that plays on each action on or off. Shortcut: <kbd>Alt</kbd>+<kbd>S</kbd>. |
+| **Load on Startup** | Starts Clipcat automatically when your computer starts. |
+| **Quick Paste** | Hides Clipcat to the tray. Press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>V</kbd> (<kbd>⌘</kbd>+<kbd>Shift</kbd>+<kbd>V</kbd> on Mac) from any app to bring it back, pick a clip, and it pastes into the window you were using. Turning this on also turns on Mini Clip mode. You can also reach it from the ⚡ button in the toolbar next to Search. |
+
+### Updates
+
+Below those rows, Clipcat shows an update check. Click **Check** to look for a newer version. If one is waiting, the row becomes an **Update Available** notice with a **Download Update** button.
+
+This is the only connection Clipcat makes to the internet. It sends no clipboard data and nothing about you.
 
 ---
 
-## About
+## Privacy
 
-Shows the current Clipcat version and a link to the GitHub releases page for updates.
+| Setting | What it does |
+|---|---|
+| **Clear History** | Three buttons. **Delete Recents** removes every clip that is not pinned, **Delete Pinned** removes only the pinned ones, and **Delete All** removes everything. Clipcat asks you to confirm first. |
+| **Blocked Apps** | A list of apps Clipcat ignores. Common password managers are already on it: 1Password, Bitwarden, Dashlane, Enpass, KeePass, LastPass, NordPass, and RoboForm. |
+
+### Adding a blocked app
+
+Type the app's process name in the box and add it to the list. Clipcat checks which window is in front when your clipboard changes, and throws the clip away if that app is on the list.
+
+Examples:
+
+- `1password.exe` for 1Password on Windows
+- `Bitwarden.exe` for Bitwarden on Windows
+- `1Password` for 1Password on macOS
+
+If you want Clipcat to save clips from one of the built-in entries, remove that entry.
+
+:::tip[Finding a process name]
+Use your OS task manager to find the exact process name for the app you want to block.
+:::
+
+---
+
+## Network
+
+| Setting | What it does |
+|---|---|
+| **LAN Sync** | Turns clipboard sync with other devices on your local network on or off. |
+| **Passphrase** | The shared password used to encrypt sync traffic. Every device needs the same one. If you clear the box while sync is on, Clipcat turns sync off and tells you why. |
+| **Peers** | Shows how many devices are connected right now. |
+
+Sync uses **mDNS** to find the other devices, so you never type in an IP address. There is no server and no account. Traffic is encrypted with **AES-256-GCM** using a key made from your passphrase.
+
+---
+
+## About and version
+
+The **ⓘ** button in the top-left corner of the main window opens the About box. It shows the version of Clipcat you are running, a link to these docs, and the **How to Use** guide. Update checks live on the System tab, described above.

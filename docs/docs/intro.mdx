@@ -8,6 +8,8 @@ description: Install and set up Clipcat on Windows, macOS, or Linux.
 
 Clipcat is a **clipboard manager** that automatically saves everything you copy, text and images, so you can find it, reuse it, and manage it.
 
+Copy something today, then copy fifty other things. That first clip is still in the list, and you never had to name it or file it anywhere.
+
 It runs on **Windows**, **macOS**, and **Linux** as a lightweight tray app with no cloud, no account, and no tracking.
 
 ---
@@ -18,14 +20,23 @@ Pick your platform and download the latest release:
 
 | Platform | Download |
 |---|---|
-| **Windows** | [Clipcat-windows-amd64-installer.exe](https://github.com/d3uceY/Clipcat/releases/latest/download/Clipcat-windows-amd64-installer.exe) |
+| **Windows (installer)** | [Clipcat-windows-amd64-installer.exe](https://github.com/d3uceY/Clipcat/releases/latest/download/Clipcat-windows-amd64-installer.exe) |
+| **Windows (portable)** | [Clipcat-windows-amd64.exe](https://github.com/d3uceY/Clipcat/releases/latest/download/Clipcat-windows-amd64.exe) |
 | **macOS (Apple Silicon)** | [Clipcat-macos-arm64.dmg](https://github.com/d3uceY/Clipcat/releases/latest/download/Clipcat-macos-arm64.dmg) |
 | **macOS (Intel)** | [Clipcat-macos-amd64.dmg](https://github.com/d3uceY/Clipcat/releases/latest/download/Clipcat-macos-amd64.dmg) |
 | **Linux x86-64 (binary)** | [Clipcat-linux-amd64](https://github.com/d3uceY/Clipcat/releases/latest/download/Clipcat-linux-amd64) |
 | **Linux (.deb)** | [Clipcat-linux-amd64.deb](https://github.com/d3uceY/Clipcat/releases/latest/download/Clipcat-linux-amd64.deb) |
 
+Not sure which one to pick?
+
+- The Windows **installer** sets Clipcat up for you. The **portable** one is a single file you can run from anywhere, with nothing to install.
+- On macOS, Apple Silicon covers M1 and newer Macs. Intel covers anything older.
+- On Linux, use the `.deb` on Debian, Ubuntu, or Mint. Use the plain binary everywhere else, after running `chmod +x` on it.
+
+You can check any download against `SHA256SUMS.txt`, which sits next to it on the release page.
+
 :::note[App is not code-signed]
-Clipcat is fully open source and safe, but has no code-signing certificate yet. See the first-run notes below for how to bypass the OS warning.
+Clipcat is fully open source and safe, but has no code-signing certificate yet. The first-run notes below show how to get past the warning your OS shows.
 :::
 
 ---
@@ -60,6 +71,16 @@ chmod +x Clipcat-linux-amd64
 ./Clipcat-linux-amd64
 ```
 
+This option needs two libraries already on your system: `libgtk-4-1` and `libwebkitgtk-6.0-4`. If Clipcat won't open, install them first:
+
+```bash
+sudo apt install libgtk-4-1 libwebkitgtk-6.0-4
+```
+
+:::tip[Not on Debian/Ubuntu?]
+Package names differ a bit between distros. Look for `gtk4` and `webkitgtk-6.0` in your package manager.
+:::
+
 **Option 2 - .deb package (Debian / Ubuntu / Mint)**
 
 ```bash
@@ -68,7 +89,7 @@ sudo dpkg -i Clipcat-linux-amd64.deb
 sudo apt install -f
 ```
 
-The `.deb` packages Clipcat as `/usr/local/bin/clipcat` and declares runtime dependencies on `libgtk-4-1` and `libwebkitgtk-6.0-4` for automatic resolution.
+The `.deb` installs Clipcat as `/usr/local/bin/clipcat`. It also tells your package manager that Clipcat needs `libgtk-4-1` and `libwebkitgtk-6.0-4`, so those get installed for you.
 
 Install `xdotool` for window focus and paste simulation:
 
@@ -76,7 +97,7 @@ Install `xdotool` for window focus and paste simulation:
 sudo apt install xdotool
 ```
 
-Clipcat bundles its own clipboard monitoring - XFixes extension on X11 (event-driven) and wl-clipboard on Wayland (polling).
+On X11, Clipcat watches the clipboard by itself, so you need nothing extra. On Wayland it reads the clipboard with `wl-paste`, which is why the `wl-clipboard` package is needed there.
 
 If you're on **Wayland** (e.g. COSMIC, GNOME on Wayland), also install:
 

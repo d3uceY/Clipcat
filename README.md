@@ -27,6 +27,8 @@ Full documentation, feature guides, and keyboard shortcuts are available at:
 [![Linux x86-64](https://img.shields.io/github/v/release/d3uceY/Clipcat?style=for-the-badge&logo=linux&label=Linux%20x86__64&color=FCC624&logoColor=black)](https://github.com/d3uceY/Clipcat/releases/latest/download/Clipcat-linux-amd64)
 
 > Windows 10/11 · macOS 12+ · Linux x86-64 (X11) - all badges link directly to the latest release · **app is not code-signed, [see first-run notes below](#first-run-notes)**
+>
+> On Windows you can also grab the portable `Clipcat-windows-amd64.exe` from the [latest release](https://github.com/d3uceY/Clipcat/releases/latest) if you would rather not install anything.
 
 ![clipcat (1)](https://github.com/user-attachments/assets/ca28ae42-2a9d-42c3-9a47-183808d59cf6)
 
@@ -56,6 +58,14 @@ chmod +x Clipcat-linux-amd64
 ./Clipcat-linux-amd64
 ```
 
+If you're running the standalone binary, install these two libraries first - without them Clipcat won't open:
+
+```bash
+sudo apt install libgtk-4-1 libwebkitgtk-6.0-4
+```
+
+(Package names may look slightly different outside Debian/Ubuntu - search your distro's package manager for `gtk4` and `webkitgtk-6.0`.) The `.deb` package below installs these for you automatically.
+
 Requires `xdotool` at runtime for window focus and paste simulation:
 
 ```bash
@@ -75,7 +85,7 @@ sudo apt install wl-clipboard
 
 - **Pin Important Clips** - Keep your most-used clips at the top, protected from being pushed out when the storage limit is reached
 - **Fast Search** - Filter everything instantly with `Ctrl+F`
-- **Command Palette** - Press `Ctrl+K` or `Ctrl+Shift+P` to open a fuzzy-searchable command palette for toggling features without the mouse
+- **Command Palette** - Press `Ctrl+K` or `Ctrl+Shift+P` to open a searchable list of quick actions, so you can toggle features without reaching for the mouse
 - <img width="1911" height="1016" alt="image" src="https://github.com/user-attachments/assets/41338104-c3a3-4c1d-9db6-42dd7901f35f" />
 
 - **Paste Into Any Window** - Click the paste button on any clip and it fires directly into whatever window you were using before opening Clipcat. No manual Ctrl+V needed
@@ -93,20 +103,20 @@ sudo apt install wl-clipboard
 - **Mini Clip Mode** - Compact window that stays out of your way and stays always on top; toggle with `Alt+M`. State persists between sessions. Enables Always on Top automatically.
 - **Quick Paste Toolbar Button** - A Quick Paste button lives in the toolbar next to Search and Sensitive, so you can toggle it in one click from any mode.
 - **Smart Position** - When Quick Paste summons the window, it pops up right next to your cursor so you never have to hunt for it. Always stays fully on-screen, even on multi-monitor setups. Toggle in Settings -> Window (on by default)
-- **System Tray** - Lives quietly in your tray; summon or quit it any time
+- **System Tray** - Lives in your tray. Click the icon once to show or hide Clipcat, or right-click it for Quick Paste, Pause Capture, and Quit
 - **LAN Sync** - Sync your clipboard to other devices on the same local network with end-to-end encryption; configure in Settings -> Network
 - **Startup Support** - Optionally launch Clipcat on system startup
 - **Clickable Links** - URLs in clips are automatically detected and open in your browser with a click
 - <img width="1912" height="1011" alt="image" src="https://github.com/user-attachments/assets/531f4334-b857-437c-99e5-5907c495fb48" />
 
 - **Relative Timestamps** - Clips show live-updating times like "2 minutes ago" or "yesterday"
-- **Sound Effects** - Satisfying audio feedback on every action; toggle with `Alt+S`
+- **Sound Effects** - Plays a short sound for each action; toggle with `Alt+S`
 - **Configurable Storage Limit** - Choose how many clips to keep (100-500); pinned clips are always preserved
 - **Labels** - Tag any clip with a custom label to categorize and organize your history
 - **Label Filters** - Filter your clipboard history by label with one click using the filter bar above your clips
 - <img width="1918" height="1012" alt="image" src="https://github.com/user-attachments/assets/5cacae71-6e17-4062-9a2a-725ee3307ab7" />
 
-- **Auto-hide Sensitive Clips** - Automatically detects and hides clips that look like passwords, API keys, tokens, JWTs, private keys, and other credentials using pattern matching and entropy analysis. Hidden clips are collapsed into a separate section and can be revealed or marked safe individually. Toggle this on or off in Settings
+- **Auto-hide Sensitive Clips** - Automatically detects and hides clips that look like passwords, API keys, tokens, JWTs, private keys, and other credentials, using pattern matching and entropy analysis. A **Sensitive** button appears in the toolbar while anything is hidden, and the shield button on a card marks that clip safe. Toggle this on or off in Settings
 
 - **Unique Paper Aesthetic** - Hand-drawn notebook-style UI with GSAP animations and a paper curtain reveal on launch
 
@@ -115,11 +125,17 @@ sudo apt install wl-clipboard
 | Shortcut              | Action                                            |
 | --------------------- | ------------------------------------------------- |
 | `Ctrl + Shift + V`    | Summon Clipcat from any application (system-wide) |
-| `Ctrl + F`            | Focus the search bar                              |
+| `⌘ + Shift + V`       | Summon Clipcat on macOS                           |
+| `Ctrl + F`            | Focus the search bar (opens the bar in Mini Clip mode) |
 | `Ctrl + K`            | Open the command palette                          |
+| `↓` / `↑`             | Move through clips (Mini Clip / Quick Paste)      |
+| `Enter`               | Paste the selected clip (Mini Clip / Quick Paste) |
+| `Esc`                 | Close the search bar, or clear the selection      |
 | `Alt + M`             | Toggle Mini Clip mode                             |
 | `Alt + H`             | Toggle Privacy Mode                               |
 | `Alt + S`             | Toggle sound effects                              |
+
+On macOS the search shortcut is `Ctrl + F` rather than `⌘ + F`. The command palette accepts either, so `⌘ + K` works too.
 
 ## Your Clips Are Stored Here
 
@@ -133,9 +149,9 @@ It's a local SQLite file - no cloud, no account, no tracking.
 
 ## Built With
 
-**Backend:** Go · Wails v2 · SQLite · Win32 API (Windows) · Carbon/CGEvents (macOS) · X11 (Linux)
+**Backend:** Go · Wails v3 · SQLite · Win32 API (Windows) · Carbon/CGEvents (macOS) · X11 (Linux)
 
-**Frontend:** React 18 · TypeScript · Tailwind CSS · shadcn/ui · GSAP
+**Frontend:** React 19 · TypeScript · Tailwind CSS · shadcn/ui · GSAP
 
 ## Contributing
 

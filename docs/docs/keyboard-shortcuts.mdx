@@ -6,7 +6,7 @@ description: All keyboard shortcuts available in Clipcat.
 
 # Keyboard Shortcuts
 
-Clipcat is designed to be fast. The most common actions are a key combo away, without reaching for the mouse.
+Clipcat is built to be fast. The actions you use most are one key combo away, so you rarely need the mouse.
 
 ---
 
@@ -23,15 +23,31 @@ These work from **any application** on your system, even when Clipcat is hidden 
 
 ## In-app Shortcuts
 
-These work when the Clipcat window is focused.
+These work when the Clipcat window is in front.
 
 | Shortcut | Action |
 |---|---|
-| <kbd>Ctrl</kbd>+<kbd>F</kbd> / <kbd>⌘</kbd>+<kbd>F</kbd> | Focus the search bar (toggles the collapsible bar in Mini Clip / Quick Paste mode or on small screens) |
-| <kbd>Ctrl</kbd>+<kbd>K</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> | Open the command palette |
-| <kbd>Alt</kbd>+<kbd>M</kbd> | Toggle Mini Clip mode |
-| <kbd>Alt</kbd>+<kbd>H</kbd> | Toggle Privacy Mode (blur all clips) |
-| <kbd>Alt</kbd>+<kbd>S</kbd> | Toggle sound effects |
+| <kbd>Ctrl</kbd>+<kbd>F</kbd> | Focus the search bar. In Mini Clip mode, or on a small screen, it opens or closes the search bar instead. |
+| <kbd>Ctrl</kbd>+<kbd>K</kbd> | Open the command palette |
+| <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> | Open the command palette (the same thing) |
+| <kbd>Alt</kbd>+<kbd>M</kbd> | Turn Mini Clip mode on or off |
+| <kbd>Alt</kbd>+<kbd>H</kbd> | Turn Privacy Mode on or off (blurs every clip) |
+| <kbd>Alt</kbd>+<kbd>S</kbd> | Turn sound effects on or off |
+
+On macOS the search shortcut is still <kbd>Ctrl</kbd>+<kbd>F</kbd>, not <kbd>⌘</kbd>+<kbd>F</kbd>. The command palette accepts either key, so <kbd>⌘</kbd>+<kbd>K</kbd> and <kbd>⌘</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> both open it.
+
+---
+
+## Moving Around Without the Mouse
+
+Mini Clip mode and Quick Paste mode work well from the keyboard. The clip you are on is highlighted, and moving past the last clip wraps around to the first.
+
+| Key | Action |
+|---|---|
+| <kbd>↓</kbd> / <kbd>↑</kbd> | Move to the next or previous clip |
+| <kbd>Enter</kbd> | Paste the selected clip into the window you were using |
+| <kbd>Esc</kbd> | Close the search bar if it is open, otherwise clear the selection |
+| <kbd>Ctrl</kbd>+<kbd>F</kbd> | Open or close the search bar |
 
 ![Keyboard shortcuts overview](/img/shortcuts-overview.png)
 
@@ -39,7 +55,7 @@ These work when the Clipcat window is focused.
 
 ## Tips
 
-- **Quick Paste workflow:** Press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>V</kbd> to summon Clipcat while in any app, click a clip, and it pastes into the window you were just using.
-- **Command palette:** Press <kbd>Ctrl</kbd>+<kbd>K</kbd> to toggle every major feature without reaching for the mouse.
-- **Search from anywhere:** Once Clipcat is open, <kbd>Ctrl</kbd>+<kbd>F</kbd> moves focus to the search box immediately. On small screens or in Mini Clip mode it toggles a collapsible search bar.
-- **Mini Clip toggle:** <kbd>Alt</kbd>+<kbd>M</kbd> is persistent. Mini Clip state saves between sessions. It also auto-enables Always on Top so the compact window floats above other apps.
+- **Quick Paste workflow:** press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>V</kbd> (<kbd>⌘</kbd>+<kbd>Shift</kbd>+<kbd>V</kbd> on Mac) while you are working in another app. Use the arrow keys to pick a clip, press <kbd>Enter</kbd>, and the clip lands in the window you were using.
+- **Command palette:** press <kbd>Ctrl</kbd>+<kbd>K</kbd> to reach most features without opening Settings.
+- **Search from anywhere:** once Clipcat is open, <kbd>Ctrl</kbd>+<kbd>F</kbd> jumps to the search box. On a small screen, or in Mini Clip mode, it shows or hides the search bar instead.
+- **Mini Clip sticks:** <kbd>Alt</kbd>+<kbd>M</kbd> is remembered between sessions, and Mini Clip keeps the window on top of other apps while it is on.

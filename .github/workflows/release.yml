@@ -341,7 +341,7 @@ jobs:
             echo '- **macOS:** Right-click the `.dmg` -> **Open** -> **Open** again (or System Settings -> Privacy & Security -> Open Anyway). Also grant **Accessibility** for paste simulation.'
             echo '- **Linux:** `chmod +x Clipcat-linux-amd64 && ./Clipcat-linux-amd64`. Requires `xdotool`; Wayland also needs `wl-clipboard`.'
             echo ''
-          } > commit_log.md
+          } > commit_log_dl.md
 
           # ── Changelog ──────────────────────────────────────────────────
           COMMITS_FILE=$(mktemp)
@@ -408,7 +408,10 @@ jobs:
             echo "" >> commit_log.md
           fi
 
-          rm -f "$COMMITS_FILE" "$USERS_FILE" "$PR_FILE"
+          # ── Download + first-run notes go last ─────────────────────────
+          cat commit_log_dl.md >> commit_log.md
+
+          rm -f "$COMMITS_FILE" "$USERS_FILE" "$PR_FILE" commit_log_dl.md
 
       - uses: actions/download-artifact@v4
         with:

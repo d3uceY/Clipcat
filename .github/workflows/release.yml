@@ -250,6 +250,13 @@ jobs:
           go build -tags production -trimpath -buildvcs=false -ldflags="-w -s -H windowsgui" -o build/bin/Clipcat-windows-amd64.exe
           rm -f wails_windows_amd64.syso
 
+      # project.nsi embeds the WebView2 bootstrapper via File "tmp\...", which
+      # is resolved next to the script. That tmp dir is gitignored, so the
+      # release runner has to fetch the bootstrapper before makensis runs.
+      - name: Fetch WebView2 bootstrapper
+        shell: pwsh
+        run: wails3 generate webview2bootstrapper -dir build/windows/installer/tmp
+
       - name: Build NSIS installer
         shell: cmd
         run: makensis -DARG_WAILS_AMD64_BINARY=..\..\bin\Clipcat-windows-amd64.exe build\windows\installer\project.nsi

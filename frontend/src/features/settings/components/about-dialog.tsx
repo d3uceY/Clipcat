@@ -30,6 +30,9 @@ export default function AboutDialog({ version, updateAvailable }: AboutDialogPro
     const [hasSeenHowToUse, setHasSeenHowToUse] = useState<boolean>(
         () => localStorage.getItem("clipcat-how-to-use-seen") === "true"
     );
+    const [hasSeenReportIssue, setHasSeenReportIssue] = useState<boolean>(
+        () => localStorage.getItem("clipcat-report-issue-seen") === "true"
+    );
 
     useEffect(() => {
         const today = new Date();
@@ -41,11 +44,17 @@ export default function AboutDialog({ version, updateAvailable }: AboutDialogPro
 
     }, []);
 
+    const openIssueTracker = () => {
+        Browser.OpenURL("https://github.com/d3uceY/Clipcat/issues");
+        localStorage.setItem("clipcat-report-issue-seen", "true");
+        setHasSeenReportIssue(true);
+    };
+
     return (
         <Dialog>
             <DialogTrigger asChild>
                 <button
-                    className={`info min-[400px]:block hidden sm:text-2xl hover:opacity-70 transition-opacity cursor-pointer font-bold about-btn ${isBirthday || !hasSeenHowToUse || updateAvailable ? "indicator heartbeat" : ""}`}
+                    className={`info min-[400px]:block hidden sm:text-2xl hover:opacity-70 transition-opacity cursor-pointer font-bold about-btn ${isBirthday || !hasSeenHowToUse || !hasSeenReportIssue || updateAvailable ? "indicator heartbeat" : ""}`}
                     title="About"
                 >
                     ⓘ
@@ -112,6 +121,30 @@ export default function AboutDialog({ version, updateAvailable }: AboutDialogPro
                                     setHasSeenHowToUse(true);
                                 }}
                             />
+                        </div>
+
+                        {/* Report an issue / improvement */}
+                        <div>
+                            <button
+                                onClick={openIssueTracker}
+                                className="relative inline-flex items-center gap-1.5 hover:opacity-70 transition-opacity cursor-pointer"
+                            >
+                                <span className="text-sm font-bold">Report an Issue</span>
+                                <span className="inline-flex items-center justify-center w-4 h-4 rounded-full border border-current text-[10px] font-bold leading-none shrink-0">!</span>
+                                {!hasSeenReportIssue && (
+                                    <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-red-500 border border-white pointer-events-none" />
+                                )}
+                            </button>
+                            <p className="text-xs text-muted-foreground pt-1">
+                                Found a bug or have an idea for an improvement? Report it on the{" "}
+                                <button
+                                    onClick={openIssueTracker}
+                                    className="text-blue-600 hover:underline cursor-pointer"
+                                >
+                                    GitHub issues page
+                                </button>
+                                .
+                            </p>
                         </div>
                     </DialogDescription>
                 </DialogHeader>

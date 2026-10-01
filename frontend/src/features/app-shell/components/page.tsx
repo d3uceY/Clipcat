@@ -42,7 +42,7 @@ function PageContent() {
     // Debounce the query fed to the backend search so it only runs once the
     // user pauses typing (~200ms), not on every keystroke.
     const debouncedSearchQuery = useDebounce(searchQuery, 200)
-    const filteredClips = useSearchClips({ clips, searchQuery: debouncedSearchQuery, activeLabels })
+    const filteredClips = useSearchClips({ clips, searchQuery: debouncedSearchQuery, activeLabels, showSensitive })
 
     const toggleSearchVisible = () => {
         setSearchVisible(v => {
@@ -53,9 +53,9 @@ function PageContent() {
     }
 
     const { suppressSearchForNav, navCooldown, barShown } = useNavHide(searchVisible)
-    const { selectedIndex, hiddenCount, handleSelect, registerPaste } = useKeyboardNav({
+    const { selectedIndex, handleSelect, registerPaste } = useKeyboardNav({
         isSmallScreen, isMiniClip, isQuickPaste,
-        filteredClips, showSensitive,
+        filteredClips,
         searchVisible, toggleSearchVisible, suppressSearchForNav,
         navCooldown,
         searchInputRef,
@@ -86,9 +86,7 @@ function PageContent() {
     // without re-subscribing to the event whenever the clips list changes.
     const recentFocusIndexRef = useRef(-1)
     recentFocusIndexRef.current =
-        filteredClips.recent.length > 0
-            ? filteredClips.pinned.length + (showSensitive ? filteredClips.hiddenPinned.length : 0)
-            : -1
+        filteredClips.recent.length > 0 ? filteredClips.pinned.length : -1
 
     useEffect(() => {
         const off = Events.On("window:quickpaste-shown", () => {
@@ -345,7 +343,7 @@ function PageContent() {
                             <Zap className={`h-3.5 w-3.5 shrink-0 ${isQuickPaste ? "text-green-700" : "text-amber-700"}`} />
                             <span className="hidden sm:inline font-medium">Quick Paste</span>
                         </button>
-                        {autoHideSensitive && hiddenCount > 0 && (
+                        {autoHideSensitive && (filteredClips.hiddenCount > 0 || showSensitive) && (
                             <button
                                 onClick={() => setShowSensitive(v => !v)}
                                 className={`hand-drawn-btn lined thin flex items-center gap-2 px-3 py-1.5 text-xs transition-all relative top-2 ${showSensitive
@@ -357,7 +355,7 @@ function PageContent() {
                                 <ShieldAlert className="h-3.5 w-3.5 shrink-0 text-amber-700" />
                                 <span className="hidden lg:inline font-medium text-sm">Sensitive</span>
                                 <span className="flex items-center justify-center h-4 w-4 rounded-full bg-amber-300 text-amber-900 text-[10px] font-bold leading-none">
-                                    {hiddenCount}
+                                    {filteredClips.hiddenCount}
                                 </span>
                             </button>
                         )}
@@ -404,7 +402,7 @@ function PageContent() {
                 )}
 
                 {/* Pinned Section */}
-                {(filteredClips.pinned.length > 0 || (showSensitive && filteredClips.hiddenPinned.length > 0)) && (
+                {filteredClips.pinned.length > 0 && (
                     <section className={isMiniClip ? "mb-4" : "mb-12"}>
                         <div className="flex items-center gap-8 mb-4">
                             <h2 className="sm:flex hidden items-center gap-2 text-2xl font-bold text-foreground">
@@ -414,7 +412,7 @@ function PageContent() {
                                     draggable={false}
                                     className="h-7 w-auto -mt-0.5 shrink-0 transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:rotate-6 motion-reduce:transition-none motion-reduce:transform-none"
                                 />
-                                <span className="italic">Pinned <span className="text-xl"> ({filteredClips.pinned.length + (showSensitive ? filteredClips.hiddenPinned.length : 0)}) </span></span>
+                                <span className="italic">Pinned <span className="text-xl"> ({filteredClips.pinned.length}) </span></span>
                             </h2>
                         </div>
                         {isMiniClip ? (
@@ -422,18 +420,11 @@ function PageContent() {
                                 {filteredClips.pinned.map((clip, i) => (
                                     <ClipListItem key={clip.id} clip={clip} index={i} isSelected={i === selectedIndex} onSelect={handleSelect} onPasteReady={registerPaste} />
                                 ))}
-                                {showSensitive && filteredClips.hiddenPinned.map((clip, i) => {
-                                    const idx = filteredClips.pinned.length + i
-                                    return <ClipListItem key={clip.id} clip={clip} revealed index={idx} isSelected={idx === selectedIndex} onSelect={handleSelect} onPasteReady={registerPaste} />
-                                })}
                             </div>
                         ) : (
                             <div className="free-form-grid-container">
                                 {filteredClips.pinned.map((clip, i) => (
                                     <ClipCard key={clip.id} clip={clip} type="pinned" initialVisible={i < 25} tourId={i === 0 ? "tour-clip-card" : undefined} />
-                                ))}
-                                {showSensitive && filteredClips.hiddenPinned.map((clip, i) => (
-                                    <ClipCard key={clip.id} clip={clip} type="pinned" initialVisible={i < 25} />
                                 ))}
                             </div>
                         )}
@@ -441,7 +432,7 @@ function PageContent() {
                 )}
 
                 {/* Recent Section */}
-                {(filteredClips.recent.length > 0 || (showSensitive && filteredClips.hiddenRecent.length > 0)) && (
+                {filteredClips.recent.length > 0 && (
                     <section id="recent-section" className="scroll-mt-[140px]">
                         <div className="flex items-center gap-8 mb-4">
                             <h2 className=" sm:flex hidden items-center gap-2 text-2xl font-bold text-foreground">
@@ -451,27 +442,20 @@ function PageContent() {
                                     draggable={false}
                                     className="h-7 w-auto -mt-0.5 shrink-0 transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:rotate-6 motion-reduce:transition-none motion-reduce:transform-none"
                                 />
-                                <span className="italic">Recent <span className="text-xl"> ({filteredClips.recent.length + (showSensitive ? filteredClips.hiddenRecent.length : 0)}) </span></span>
+                                <span className="italic">Recent <span className="text-xl"> ({filteredClips.recent.length}) </span></span>
                             </h2>
                         </div>
                         {isMiniClip ? (
                             <div className="flex flex-col gap-3">
                                 {filteredClips.recent.map((clip, i) => {
-                                    const idx = filteredClips.pinned.length + (showSensitive ? filteredClips.hiddenPinned.length : 0) + i
+                                    const idx = filteredClips.pinned.length + i
                                     return <ClipListItem key={clip.id} clip={clip} index={idx} isSelected={idx === selectedIndex} onSelect={handleSelect} onPasteReady={registerPaste} />
-                                })}
-                                {showSensitive && filteredClips.hiddenRecent.map((clip, i) => {
-                                    const idx = filteredClips.pinned.length + filteredClips.hiddenPinned.length + filteredClips.recent.length + i
-                                    return <ClipListItem key={clip.id} clip={clip} revealed index={idx} isSelected={idx === selectedIndex} onSelect={handleSelect} onPasteReady={registerPaste} />
                                 })}
                             </div>
                         ) : (
                             <div className="free-form-grid-container">
                                 {filteredClips.recent.map((clip, i) => (
                                     <ClipCard key={clip.id} clip={clip} type="recent" initialVisible={i < 25} tourId={i === 0 && filteredClips.pinned.length === 0 ? "tour-clip-card" : undefined} />
-                                ))}
-                                {showSensitive && filteredClips.hiddenRecent.map((clip, i) => (
-                                    <ClipCard key={clip.id} clip={clip} type="recent" initialVisible={i < 25} />
                                 ))}
                             </div>
                         )}
@@ -506,14 +490,13 @@ function PageContent() {
                 )}
 
                 {/* Empty State */}
-                {filteredClips.pinned.length === 0 && filteredClips.recent.length === 0
-                    && (!showSensitive || (filteredClips.hiddenPinned.length === 0 && filteredClips.hiddenRecent.length === 0)) && (
-                        <div className="flex-col h-64 text-black flex items-center justify-center gap-2">
-                            <p className="text-lg text-black text-center">
-                                {searchQuery ? "No clips found matching your search" : "No clips yet. Start copying!"}
-                            </p>
-                        </div>
-                    )}
+                {filteredClips.pinned.length === 0 && filteredClips.recent.length === 0 && (
+                    <div className="flex-col h-64 text-black flex items-center justify-center gap-2">
+                        <p className="text-lg text-black text-center">
+                            {searchQuery ? "No clips found matching your search" : showSensitive ? "No sensitive clips." : "No clips yet. Start copying!"}
+                        </p>
+                    </div>
+                )}
             </div>
         </main>
     )

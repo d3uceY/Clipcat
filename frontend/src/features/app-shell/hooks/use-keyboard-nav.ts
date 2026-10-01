@@ -8,7 +8,6 @@ interface UseKeyboardNavOptions {
     isMiniClip: boolean
     isQuickPaste: boolean
     filteredClips: FilteredClips
-    showSensitive: boolean
     searchVisible: boolean
     toggleSearchVisible: () => void
     suppressSearchForNav: () => void
@@ -18,7 +17,7 @@ interface UseKeyboardNavOptions {
 
 export function useKeyboardNav({
     isSmallScreen, isMiniClip, isQuickPaste,
-    filteredClips, showSensitive,
+    filteredClips,
     searchVisible, toggleSearchVisible, suppressSearchForNav,
     navCooldown,
     searchInputRef,
@@ -33,14 +32,9 @@ export function useKeyboardNav({
     const handleSelect = useCallback((index: number) => setSelectedIndex(index), [])
 
     // Build flat clip array matching render order
-    const flatClips = [
-        ...filteredClips.pinned,
-        ...filteredClips.recent,
-        ...(showSensitive ? filteredClips.hiddenPinned.concat(filteredClips.hiddenRecent) : []),
-    ]
+    const flatClips = [...filteredClips.pinned, ...filteredClips.recent]
 
     const flatClipCount = flatClips.length
-    const hiddenCount = filteredClips.hiddenPinned.length + filteredClips.hiddenRecent.length
 
     // Reset selection when clips or search change
     useEffect(() => {
@@ -116,5 +110,5 @@ export function useKeyboardNav({
         return () => window.removeEventListener('keydown', handleKeyDown)
     }, [isSmallScreen, isMiniClip, isQuickPaste, flatClipCount, selectedIndex, searchVisible, navCooldown, handlePasteSelected, suppressSearchForNav, toggleSearchVisible, searchInputRef])
 
-    return { selectedIndex, hiddenCount, handleSelect, registerPaste }
+    return { selectedIndex, handleSelect, registerPaste }
 }

@@ -14,7 +14,9 @@ import (
 //go:embed all:frontend/dist
 var assets embed.FS
 
-const AppVersion = "v0.11.8"
+// AppVersion is stamped by the release workflow via -ldflags "-X main.AppVersion".
+// Keep this a var, not a const, or the linker flag is silently ignored.
+var AppVersion = "v0.11.8"
 
 func main() {
 	if !prepareDarwinBundleLaunch() {

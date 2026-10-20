@@ -61,15 +61,14 @@ jobs:
         run: npm run build
         working-directory: frontend
 
-      - name: Inject version into nfpm config
-        run: |
-          VERSION="${{ needs.validate-tag.outputs.version }}"
-          sed -i "s/^version: .*/version: \"${VERSION}\"/" build/linux/nfpm/nfpm.yaml
+      - name: Stamp release version
+        run: bash build/scripts/set-version.sh "${{ needs.validate-tag.outputs.version }}"
 
       - name: Build binary and .deb package
         env:
           GOARCH: amd64
-        run: wails3 task linux:create:deb
+          VERSION: ${{ needs.validate-tag.outputs.version }}
+        run: wails3 task linux:create:deb VERSION=$VERSION
 
       - name: Collect Linux artifacts
         run: |
@@ -116,54 +115,24 @@ jobs:
         run: npm run build
         working-directory: frontend
 
-      - name: Inject version into Info.plist
-        run: |
-          VERSION="${{ needs.validate-tag.outputs.version }}"
-          sed -i '' \
-            -e "s/{{.Info.ProductVersion}}/${VERSION}/g" \
-            -e "s/{{.Info.ProductName}}/Clipcat/g" \
-            -e "s/{{.OutputFilename}}/Clipcat/g" \
-            -e "s/{{.Name}}/Clipcat/g" \
-            -e "s/{{.Info.Comments}}/Built using Wails (https:\/\/wails.io)/g" \
-            -e "s/{{.Info.Copyright}}/Copyright © 2026 d3uceY/g" \
-            build/darwin/Info.plist
+      - name: Stamp release version
+        run: bash build/scripts/set-version.sh "${{ needs.validate-tag.outputs.version }}"
 
-      - name: Build macOS ARM64 binary + DMG
+      - name: Build macOS app bundles + DMGs
         env:
-          CGO_ENABLED: "1"
-          GOOS: darwin
-          GOARCH: arm64
-          CGO_CFLAGS: "-mmacosx-version-min=12.0"
-          CGO_LDFLAGS: "-mmacosx-version-min=12.0"
-          MACOSX_DEPLOYMENT_TARGET: "12.0"
+          VERSION: ${{ needs.validate-tag.outputs.version }}
         run: |
           mkdir -p artifacts
-          go build -tags production -trimpath -buildvcs=false -ldflags="-w -s" -o build/bin/Clipcat
-          APP=build/bin/Clipcat-arm64.app/Contents
-          mkdir -p "$APP/MacOS" "$APP/Resources"
-          cp build/darwin/icons.icns "$APP/Resources/iconfile.icns"
-          cp build/bin/Clipcat       "$APP/MacOS/Clipcat"
-          cp build/darwin/Info.plist "$APP/Info.plist"
-          hdiutil create -volname "Clipcat" -srcfolder build/bin/Clipcat-arm64.app \
-            -ov -format UDZO artifacts/Clipcat-macos-arm64.dmg
-
-      - name: Build macOS AMD64 binary + DMG
-        env:
-          CGO_ENABLED: "1"
-          GOOS: darwin
-          GOARCH: amd64
-          CGO_CFLAGS: "-mmacosx-version-min=12.0"
-          CGO_LDFLAGS: "-mmacosx-version-min=12.0"
-          MACOSX_DEPLOYMENT_TARGET: "12.0"
-        run: |
-          go build -tags production -trimpath -buildvcs=false -ldflags="-w -s" -o build/bin/Clipcat
-          APP=build/bin/Clipcat-amd64.app/Contents
-          mkdir -p "$APP/MacOS" "$APP/Resources"
-          cp build/darwin/icons.icns "$APP/Resources/iconfile.icns"
-          cp build/bin/Clipcat       "$APP/MacOS/Clipcat"
-          cp build/darwin/Info.plist "$APP/Info.plist"
-          hdiutil create -volname "Clipcat" -srcfolder build/bin/Clipcat-amd64.app \
-            -ov -format UDZO artifacts/Clipcat-macos-amd64.dmg
+          for ARCH in arm64 amd64; do
+            rm -rf bin/Clipcat.app "artifacts/stage-$ARCH"
+            # Builds, bundles, stamps CFBundleVersion and ad-hoc signs the .app
+            wails3 task darwin:package ARCH=$ARCH VERSION=$VERSION
+            mkdir -p "artifacts/stage-$ARCH"
+            ditto bin/Clipcat.app "artifacts/stage-$ARCH/Clipcat.app"
+            ln -s /Applications "artifacts/stage-$ARCH/Applications"
+            hdiutil create -volname "Clipcat" -srcfolder "artifacts/stage-$ARCH" \
+              -ov -format UDZO "artifacts/Clipcat-macos-$ARCH.dmg"
+          done
 
       - uses: actions/upload-artifact@v4
         with:
@@ -226,13 +195,9 @@ jobs:
         run: npm run build
         working-directory: frontend
 
-      - name: Inject version into Windows metadata
+      - name: Stamp release version
         shell: bash
-        run: |
-          VERSION="${{ needs.validate-tag.outputs.version }}"
-          sed -i "s/\"ProductVersion\": \"[^\"]*\"/\"ProductVersion\": \"${VERSION}\"/" build/windows/info.json
-          sed -i "s/\"file_version\": \"[^\"]*\"/\"file_version\": \"${VERSION}\"/" build/windows/info.json
-          sed -i "/assemblyIdentity/s/version=\"[^\"]*\"/version=\"${VERSION}\"/" build/windows/wails.exe.manifest
+        run: bash build/scripts/set-version.sh "${{ needs.validate-tag.outputs.version }}"
 
       - name: Generate .syso resource
         working-directory: build
@@ -244,10 +209,13 @@ jobs:
           CGO_ENABLED: "0"
           GOOS: windows
           GOARCH: amd64
+          VERSION: ${{ needs.validate-tag.outputs.version }}
         shell: bash
         run: |
           mkdir -p build/bin
-          go build -tags production -trimpath -buildvcs=false -ldflags="-w -s -H windowsgui" -o build/bin/Clipcat-windows-amd64.exe
+          go build -tags production -trimpath -buildvcs=false \
+            -ldflags="-w -s -H windowsgui -X main.AppVersion=v${VERSION}" \
+            -o build/bin/Clipcat-windows-amd64.exe
           rm -f wails_windows_amd64.syso
 
       # project.nsi embeds the WebView2 bootstrapper via File "tmp\...", which
@@ -345,8 +313,8 @@ jobs:
             echo 'Clipcat is unsigned, so first launch may warn you - it'"'"'s safe and open source.'
             echo ''
             echo '- **Windows:** SmartScreen -> **More info** -> **Run anyway** (or unblock the `.exe` in Properties).'
-            echo '- **macOS:** Right-click the `.dmg` -> **Open** -> **Open** again (or System Settings -> Privacy & Security -> Open Anyway). Also grant **Accessibility** for paste simulation.'
-            echo '- **Linux:** `chmod +x Clipcat-linux-amd64 && ./Clipcat-linux-amd64`. Requires `xdotool`; Wayland also needs `wl-clipboard`.'
+            echo '- **macOS:** Drag **Clipcat** to Applications before launching. If Gatekeeper blocks it: **System Settings -> Privacy & Security -> Open Anyway**. Also grant **Accessibility** for paste simulation.'
+            echo '- **Linux:** `.deb` installs add **Clipcat** to your app menu - `sudo dpkg -i Clipcat-linux-amd64.deb`, then launch it like any other app. Standalone binary: `chmod +x Clipcat-linux-amd64 && ./Clipcat-linux-amd64`. Requires `xdotool`; Wayland also needs `wl-clipboard`.'
             echo ''
           } > commit_log_dl.md
 

@@ -18,7 +18,7 @@ tasks:
     cmds:
       - go build {{.BUILD_FLAGS}} -o {{.OUTPUT}}
     vars:
-      BUILD_FLAGS: '{{if eq .PRODUCTION "true"}}-tags production -trimpath -buildvcs=false -ldflags="-w -s"{{else}}-buildvcs=false -gcflags=all="-l"{{end}}'
+      BUILD_FLAGS: '{{if eq .PRODUCTION "true"}}-tags production -trimpath -buildvcs=false -ldflags="-w -s{{if .VERSION}} -X main.AppVersion=v{{.VERSION}}{{end}}"{{else}}-buildvcs=false -gcflags=all="-l"{{end}}'
       DEFAULT_OUTPUT: '{{.BIN_DIR}}/{{.APP_NAME}}'
       OUTPUT: '{{ .OUTPUT | default .DEFAULT_OUTPUT }}'
     env:
@@ -40,12 +40,26 @@ tasks:
       - task: create:app:bundle
 
   create:app:bundle:
-    summary: Creates an `.app` bundle
+    summary: Creates an ad-hoc signed `.app` bundle
     cmds:
       - mkdir -p {{.BIN_DIR}}/{{.APP_NAME}}.app/Contents/{MacOS,Resources}
-      - cp build/darwin/icons.icns {{.BIN_DIR}}/{{.APP_NAME}}.app/Contents/Resources
+      - cp build/darwin/icons.icns {{.BIN_DIR}}/{{.APP_NAME}}.app/Contents/Resources/icons.icns
       - cp {{.BIN_DIR}}/{{.APP_NAME}} {{.BIN_DIR}}/{{.APP_NAME}}.app/Contents/MacOS
       - cp build/darwin/Info.plist {{.BIN_DIR}}/{{.APP_NAME}}.app/Contents
+      # Stamp the release version into the bundle. Optional: without VERSION the
+      # version baked into Info.plist is used.
+      - cmd: /usr/libexec/PlistBuddy -c "Set :CFBundleVersion {{.PLIST_VERSION}}" {{.BIN_DIR}}/{{.APP_NAME}}.app/Contents/Info.plist
+        platforms: [darwin]
+      - cmd: /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString {{.PLIST_VERSION}}" {{.BIN_DIR}}/{{.APP_NAME}}.app/Contents/Info.plist
+        platforms: [darwin]
+      # Ad-hoc signing keeps the bundle internally consistent; without it
+      # `codesign --verify` fails and Gatekeeper/TCC treat it as broken.
+      - cmd: codesign --force --deep --sign - {{.BIN_DIR}}/{{.APP_NAME}}.app
+        platforms: [darwin]
+      - cmd: echo "Skipping codesign - not running on macOS"
+        platforms: [windows, linux]
+    vars:
+      PLIST_VERSION: '{{if .VERSION}}{{.VERSION}}{{else}}0.11.8{{end}}'
 
   run:
     cmds:

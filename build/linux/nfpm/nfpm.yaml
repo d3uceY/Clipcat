@@ -14,7 +14,24 @@ release: "1"
 contents:
   - src: "./bin/Clipcat"
     dst: "/usr/local/bin/clipcat"
+  - src: "./build/appicon.png"
+    dst: "/usr/share/icons/hicolor/128x128/apps/clipcat.png"
+  - src: "./build/linux/clipcat.desktop"
+    dst: "/usr/share/applications/clipcat.desktop"
 
 depends:
   - libgtk-4-1
   - libwebkitgtk-6.0-4
+
+# Runtime helpers Clipcat shells out to. Recommended rather than required,
+# because each one only matters for a specific session type:
+#   xdotool       - focus tracking + paste simulation on X11
+#   wmctrl        - focuses the already-running instance on second launch
+#   wl-clipboard  - clipboard reads on Wayland
+recommends:
+  - xdotool
+  - wmctrl
+  - wl-clipboard
+
+scripts:
+  postinstall: "./build/linux/nfpm/scripts/postinstall.sh"

@@ -1,0 +1,4 @@
+# Shell scripts and .desktop entries are shipped inside Linux packages; CRLF
+# breaks the shebang and the desktop-entry parser.
+*.sh      text eol=lf
+*.desktop text eol=lf

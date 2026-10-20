@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Clipcat
+GenericName=Clipboard Manager
+Comment=Clipboard history, search and quick paste
+Exec=/usr/local/bin/clipcat
+Icon=clipcat
+Terminal=false
+Categories=Utility;
+Keywords=clipboard;paste;history;tray;
+StartupNotify=false

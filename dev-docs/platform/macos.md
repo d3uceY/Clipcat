@@ -189,7 +189,7 @@ IsStartupEnabled: os.Stat(plistPath) != nil
 
 ## Build Notes
 
-- `wails build -platform darwin/arm64` and `-platform darwin/amd64` are run separately; each produces a `.app` bundle.
-- DMG packaging uses `hdiutil create -format UDZO`.
-- The app is **not code-signed or notarized** in the open-source CI build. Users may need to right-click -> Open on first launch.
-- `Info.plist` (`build/darwin/Info.plist`) declares `NSAppleEventsUsageDescription` and `NSAccessibilityUsageDescription` for the permissions Clipcat requires.
+- `wails3 task darwin:package ARCH=arm64|amd64 VERSION=x.y.z` builds the binary, assembles the `.app`, stamps `CFBundleVersion`/`CFBundleShortVersionString` and ad-hoc signs the bundle.
+- DMG packaging stages `Clipcat.app` next to an `/Applications` symlink, then uses `hdiutil create -format UDZO`.
+- The app is **ad-hoc signed but not notarized** in the open-source CI build. Gatekeeper still prompts on first launch; users must go through **System Settings -> Privacy & Security -> Open Anyway**.
+- `Info.plist` (`build/darwin/Info.plist`) declares `NSAppleEventsUsageDescription`. It is required: Clipcat drives `osascript`/System Events for focus tracking and for raising an already-running instance, and macOS terminates an app that sends Apple Events without this key.

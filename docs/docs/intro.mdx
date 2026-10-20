@@ -54,9 +54,9 @@ Or right-click the `.exe` -> **Properties** -> check **Unblock** -> **Apply**.
 <a id="macos--gatekeeper"></a>
 ### macOS - Gatekeeper
 
-Right-click the `.dmg` -> **Open** -> click **Open** in the dialog.
+Drag **Clipcat** from the `.dmg` into your **Applications** folder, then launch it from there. Running it straight out of the mounted disk image breaks "Start on login" and loses permissions when the image is ejected.
 
-Alternatively, go to **System Settings -> Privacy & Security** and click **Open Anyway** after the first blocked attempt.
+If Gatekeeper blocks the first launch, go to **System Settings -> Privacy & Security** and click **Open Anyway** (macOS 15 removed the right-click -> **Open** shortcut).
 
 :::tip[Accessibility permission required on macOS]
 Clipcat needs **Accessibility** permission to simulate paste (`Cmd+V`). Grant it under **System Settings -> Privacy & Security -> Accessibility**.
@@ -90,6 +90,8 @@ sudo apt install -f
 ```
 
 The `.deb` installs Clipcat as `/usr/local/bin/clipcat`. It also tells your package manager that Clipcat needs `libgtk-4-1` and `libwebkitgtk-6.0-4`, so those get installed for you.
+
+It adds **Clipcat** to your application menu (with its icon), so after installing you can open it like any other app - search for "Clipcat" in your launcher, no terminal needed. If the entry does not show up until you log out, run `update-desktop-database /usr/share/applications` once.
 
 Install `xdotool` for window focus and paste simulation:
 

@@ -1,176 +1,40 @@
 <p align="center">
-  <img src="./build/windows/icon.ico" alt="icon" width="90">
+  <img src="./build/windows/icon.ico" alt="Clipcat" width="90">
 </p>
-<div align="center">
-<h1>Clipcat</h1>
-</div>
 
-A stylish clipboard manager that automatically saves everything you copy - text and images - so you can find it, reuse it, and manage it.
+<h1 align="center">Clipcat</h1>
 
-<img width="1917" height="1026" alt="image" src="https://github.com/user-attachments/assets/b836545a-0bdd-496f-b3da-f722199357e4" />
+<p align="center">Clipboard history for Windows, macOS, and Linux - text and images, saved automatically.</p>
 
-## Documentation
-
-Full documentation, feature guides, and keyboard shortcuts are available at:
-**[getclipcat.com](https://getclipcat.com/)**
+![Clipcat](./docs/static/img/clipcat-demo.gif)
 
 ## Download
 
-![Clipcat Banner](https://img.shields.io/badge/Made%20with-Wails-00ADD8?style=for-the-badge&logo=go)
-![License](https://img.shields.io/badge/license-MIT-blue?style=for-the-badge)
-
-**Click your platform to download the latest version:**
-
-[![Windows](https://img.shields.io/github/v/release/d3uceY/Clipcat?style=for-the-badge&logo=windows&label=Windows&color=0078D4&logoColor=white)](https://github.com/d3uceY/Clipcat/releases/latest/download/Clipcat-windows-amd64-installer.exe) - ⚠️ SmartScreen will block it · [how to fix](#first-run-notes)<br>
-[![macOS Apple Silicon](https://img.shields.io/github/v/release/d3uceY/Clipcat?style=for-the-badge&logo=apple&label=macOS%20ARM64&color=000000)](https://github.com/d3uceY/Clipcat/releases/latest/download/Clipcat-macos-arm64.dmg) - ⚠️ Gatekeeper will block it · [how to fix](#first-run-notes)<br>
-[![macOS Intel](https://img.shields.io/github/v/release/d3uceY/Clipcat?style=for-the-badge&logo=apple&label=macOS%20AMD64&color=000000)](https://github.com/d3uceY/Clipcat/releases/latest/download/Clipcat-macos-amd64.dmg) - ⚠️ Gatekeeper will block it · [how to fix](#first-run-notes)<br>
+[![Windows](https://img.shields.io/github/v/release/d3uceY/Clipcat?style=for-the-badge&logo=windows&label=Windows&color=0078D4&logoColor=white)](https://github.com/d3uceY/Clipcat/releases/latest/download/Clipcat-windows-amd64-installer.exe)<br>
+[![macOS Apple Silicon](https://img.shields.io/github/v/release/d3uceY/Clipcat?style=for-the-badge&logo=apple&label=macOS%20ARM64&color=000000)](https://github.com/d3uceY/Clipcat/releases/latest/download/Clipcat-macos-arm64.dmg)<br>
+[![macOS Intel](https://img.shields.io/github/v/release/d3uceY/Clipcat?style=for-the-badge&logo=apple&label=macOS%20AMD64&color=000000)](https://github.com/d3uceY/Clipcat/releases/latest/download/Clipcat-macos-amd64.dmg)<br>
 [![Linux x86-64](https://img.shields.io/github/v/release/d3uceY/Clipcat?style=for-the-badge&logo=linux&label=Linux%20x86__64&color=FCC624&logoColor=black)](https://github.com/d3uceY/Clipcat/releases/latest/download/Clipcat-linux-amd64)
 
-> Windows 10/11 · macOS 12+ · Linux x86-64 (X11) - all badges link directly to the latest release · **app is not code-signed, [see first-run notes below](#first-run-notes)**
->
-> On Windows you can also grab the portable `Clipcat-windows-amd64.exe` from the [latest release](https://github.com/d3uceY/Clipcat/releases/latest) if you would rather not install anything.
+Windows 10/11 · macOS 12+ · Linux x86-64 (X11). No build is code-signed.
 
-![clipcat (1)](https://github.com/user-attachments/assets/ca28ae42-2a9d-42c3-9a47-183808d59cf6)
+## Install
 
-### First-Run Notes
+| Platform | Steps |
+| --- | --- |
+| **Windows** | Run the installer. SmartScreen → **More info** → **Run anyway**. Portable `.exe` is on the release page. |
+| **macOS** | Drag Clipcat into **Applications**, then launch it. Gatekeeper → **System Settings → Privacy & Security → Open Anyway**. Grant **Accessibility** so paste works. |
+| **Linux** | `sudo dpkg -i Clipcat-linux-amd64.deb` - adds Clipcat to your app menu. Bare binary: install `libgtk-4-1 libwebkitgtk-6.0-4 xdotool` (Wayland: add `wl-clipboard`). |
 
-Clipcat is not code-signed, so each platform may warn you on first launch. The app is safe and fully open source - you can read every line of code here.
+## Docs
 
-**Windows - SmartScreen**
+Features, shortcuts, settings, LAN sync and privacy: **[getclipcat.com](https://getclipcat.com/docs/intro)**
 
-1. Click **More info**
-2. Click **Run anyway**
+## Built with
 
-Or right-click the `.exe` -> **Properties** -> check **Unblock** -> **Apply**.
-
-**macOS - Gatekeeper**
-
-Right-click the `.dmg` -> **Open** -> click **Open** again in the dialog. Alternatively, go to System Settings -> Privacy & Security and click **Open Anyway** after the first blocked attempt.
-
-Clipcat also requires **Accessibility** permission to simulate paste (Cmd+V). Grant it under System Settings -> Privacy & Security -> Accessibility.
-
-**Linux**
-
-Make the binary executable before running:
-
-```bash
-chmod +x Clipcat-linux-amd64
-./Clipcat-linux-amd64
-```
-
-If you're running the standalone binary, install these two libraries first - without them Clipcat won't open:
-
-```bash
-sudo apt install libgtk-4-1 libwebkitgtk-6.0-4
-```
-
-(Package names may look slightly different outside Debian/Ubuntu - search your distro's package manager for `gtk4` and `webkitgtk-6.0`.) The `.deb` package below installs these for you automatically.
-
-Requires `xdotool` at runtime for window focus and paste simulation:
-
-```bash
-sudo apt install xdotool
-```
-
-Clipcat bundles its own clipboard monitoring - XFixes extension on X11 (event-driven) and wl-clipboard on Wayland (polling).
-
-If you're on **Wayland** (e.g. COSMIC, GNOME on Wayland), also install:
-```bash
-sudo apt install wl-clipboard
-```
-
-## Features
-
-- **Automatic Capture** - Saves everything you copy (text and images) the moment it hits your clipboard, with no setup needed
-
-- **Pin Important Clips** - Keep your most-used clips at the top, protected from being pushed out when the storage limit is reached
-- **Fast Search** - Filter everything instantly with `Ctrl+F`
-- **Command Palette** - Press `Ctrl+K` or `Ctrl+Shift+P` to open a searchable list of quick actions, so you can toggle features without reaching for the mouse
-- <img width="1911" height="1016" alt="image" src="https://github.com/user-attachments/assets/41338104-c3a3-4c1d-9db6-42dd7901f35f" />
-
-- **Paste Into Any Window** - Click the paste button on any clip and it fires directly into whatever window you were using before opening Clipcat. No manual Ctrl+V needed
-- **Quick Paste Mode** - Hide Clipcat to the tray, press `Ctrl+Shift+V` from anywhere to summon it, pick a clip, and it pastes straight in - then vanishes. Enabling Quick Paste also automatically turns on Mini Clip mode
-- **Edit Clips** - Fix typos or update content in any saved clip without re-copying
-- **Manual Clip Creation** - Add clips directly from the app, optionally pinned from the start
-- <img width="1917" height="1017" alt="image" src="https://github.com/user-attachments/assets/311f03f6-5e77-4a29-b3cd-73e6b85be890" />
-
-- **Privacy Mode** - Instantly blur all clip content for screen sharing or shoulder-surfing situations; toggle with `Alt+H`
-- <img width="1918" height="1017" alt="image" src="https://github.com/user-attachments/assets/7989e737-d9b9-4b1d-a008-9fd2ad3fd079" />
-
-- **Blocked Apps** - Add any app's process name to a blocklist so its clipboard activity is never captured. Clipcat ships with common password managers pre-blocked (1Password, Bitwarden, LastPass, KeePass/KeePassXC, Dashlane, NordPass, Enpass, RoboForm). Any default can be removed from Settings - Privacy -> Blocked Apps if you'd prefer Clipcat to capture from that app
-- **Pause Capture** - Temporarily stop recording clipboard changes without closing the app
-- **Bulk Delete** - Clear all clips, only pinned, or only unpinned in one click - always with a confirmation prompt
-- **Mini Clip Mode** - Compact window that stays out of your way and stays always on top; toggle with `Alt+M`. State persists between sessions. Enables Always on Top automatically.
-- **Quick Paste Toolbar Button** - A Quick Paste button lives in the toolbar next to Search and Sensitive, so you can toggle it in one click from any mode.
-- **Smart Position** - When Quick Paste summons the window, it pops up right next to your cursor so you never have to hunt for it. Always stays fully on-screen, even on multi-monitor setups. Toggle in Settings -> Window (on by default)
-- **System Tray** - Lives in your tray. Click the icon once to show or hide Clipcat, or right-click it for Quick Paste, Pause Capture, and Quit
-- **LAN Sync** - Sync your clipboard to other devices on the same local network with end-to-end encryption; configure in Settings -> Network
-- **Startup Support** - Optionally launch Clipcat on system startup
-- **Clickable Links** - URLs in clips are automatically detected and open in your browser with a click
-- <img width="1912" height="1011" alt="image" src="https://github.com/user-attachments/assets/531f4334-b857-437c-99e5-5907c495fb48" />
-
-- **Relative Timestamps** - Clips show live-updating times like "2 minutes ago" or "yesterday"
-- **Sound Effects** - Plays a short sound for each action; toggle with `Alt+S`
-- **Configurable Storage Limit** - Choose how many clips to keep (100-500); pinned clips are always preserved
-- **Labels** - Tag any clip with a custom label to categorize and organize your history
-- **Label Filters** - Filter your clipboard history by label with one click using the filter bar above your clips
-- <img width="1918" height="1012" alt="image" src="https://github.com/user-attachments/assets/5cacae71-6e17-4062-9a2a-725ee3307ab7" />
-
-- **Auto-hide Sensitive Clips** - Automatically detects and hides clips that look like passwords, API keys, tokens, JWTs, private keys, and other credentials, using pattern matching and entropy analysis. A **Sensitive** button appears in the toolbar while anything is hidden, and the shield button on a card marks that clip safe. Toggle this on or off in Settings
-
-- **Unique Paper Aesthetic** - Hand-drawn notebook-style UI with GSAP animations and a paper curtain reveal on launch
-
-## Keyboard Shortcuts
-
-| Shortcut              | Action                                            |
-| --------------------- | ------------------------------------------------- |
-| `Ctrl + Shift + V`    | Summon Clipcat from any application (system-wide) |
-| `⌘ + Shift + V`       | Summon Clipcat on macOS                           |
-| `Ctrl + F`            | Focus the search bar (opens the bar in Mini Clip mode) |
-| `Ctrl + K`            | Open the command palette                          |
-| `↓` / `↑`             | Move through clips (Mini Clip / Quick Paste)      |
-| `Enter`               | Paste the selected clip (Mini Clip / Quick Paste) |
-| `Esc`                 | Close the search bar, or clear the selection      |
-| `Alt + M`             | Toggle Mini Clip mode                             |
-| `Alt + H`             | Toggle Privacy Mode                               |
-| `Alt + S`             | Toggle sound effects                              |
-
-On macOS the search shortcut is `Ctrl + F` rather than `⌘ + F`. The command palette accepts either, so `⌘ + K` works too.
-
-## Your Clips Are Stored Here
-
-| Platform | Path                                                 |
-| -------- | ---------------------------------------------------- |
-| Windows  | `%APPDATA%\clipussy\db\gyatt.db`                     |
-| macOS    | `~/Library/Application Support/clipussy/db/gyatt.db` |
-| Linux    | `~/.config/clipussy/db/gyatt.db`                     |
-
-It's a local SQLite file - no cloud, no account, no tracking.
-
-## Built With
-
-**Backend:** Go · Wails v3 · SQLite · Win32 API (Windows) · Carbon/CGEvents (macOS) · X11 (Linux)
-
-**Frontend:** React 19 · TypeScript · Tailwind CSS · shadcn/ui · GSAP
+Go · Wails v3 · SQLite · React 19 · TypeScript · Tailwind CSS
 
 ## Contributing
 
-Have an idea or found a bug? Contributions are welcome.
+See [CONTRIBUTING.md](./CONTRIBUTING.md). Bug reports go to [issues](https://github.com/d3uceY/Clipcat/issues).
 
-See **[CONTRIBUTING.md](./CONTRIBUTING.md)** for how to set up the project locally, the code structure, and how to submit a PR.
-
-## Author
-
-**Onyekwelu Jesse** ([@d3uceY](https://github.com/d3uceY))
-
-## License
-
-MIT
-
-## Acknowledgments
-
-[Wails](https://wails.io/) and all the open-source libraries that made this possible.
-
----
-
-Made with love by d3uceY
+MIT © [Onyekwelu Jesse](https://github.com/d3uceY)

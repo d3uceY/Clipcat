@@ -15,6 +15,8 @@
 [![macOS Intel](https://img.shields.io/github/v/release/d3uceY/Clipcat?style=for-the-badge&logo=apple&label=macOS%20AMD64&color=000000)](https://github.com/d3uceY/Clipcat/releases/latest/download/Clipcat-macos-amd64.dmg)<br>
 [![Linux x86-64](https://img.shields.io/github/v/release/d3uceY/Clipcat?style=for-the-badge&logo=linux&label=Linux%20x86__64&color=FCC624&logoColor=black)](https://github.com/d3uceY/Clipcat/releases/latest/download/Clipcat-linux-amd64)
 
+[![Downloads](https://img.shields.io/github/downloads/d3uceY/Clipcat/total?style=for-the-badge&logo=github&label=Downloads&color=2ea44f&logoColor=white)](https://github.com/d3uceY/Clipcat/releases)
+
 Windows 10/11 · macOS 12+ · Linux x86-64 (X11). No build is code-signed.
 
 ## Install

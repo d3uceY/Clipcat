@@ -38,7 +38,7 @@ frontend/bindings/    Generated Go→TS bindings - do not edit
 
 - **Capture** - Per-OS listener (Win32 message window; `golang.design/x/clipboard` on macOS and Linux) saves text and images after a 150 ms debounce. Blocked processes are filtered before saving.
 - **Paste** - A tracker remembers the last non-Clipcat window, focuses it, then sends the platform's paste keystroke (`keybd_event`, CGEvents, `xdotool`).
-- **Storage** - SQLite with AES-256-GCM at rest and HMAC-SHA256 for dedupe. The storage limit prunes oldest first and never touches pinned clips.
+- **Storage** - SQLite. Text clips are sealed with AES-256-GCM under a key kept in the OS keychain (`backend/store/crypt.go`); dedupe uses a keyed HMAC-SHA256 of the plaintext; the full-text index lives in memory only (`backend/store/index.go`). The storage limit prunes oldest first and never touches pinned clips.
 - **UI** - The backend emits `clip:*` events; `ClipContext` updates React from them.
 
 ## Releases

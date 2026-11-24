@@ -57,31 +57,20 @@ func TestBuildMatchExpression(t *testing.T) {
 // against the same pure-Go sqlite driver the app uses, so a broken index or
 // match expression fails the build, not a user session.
 func TestSearchClipsIntegration(t *testing.T) {
-	if err := InitDB(":memory:"); err != nil {
-		t.Fatalf("InitDB: %v", err)
+	initTestStore(t)
+
+	fox, _, _, err := AddManualClip("the quick brown fox", false)
+	if err != nil {
+		t.Fatalf("AddManualClip: %v", err)
 	}
-	defer DB.Close()
-
-	// Full startup migration path - the same schema and FTS rebuild the app runs.
-	RunMigrations()
-
-	insert := func(content string) {
-		t.Helper()
-		res, err := DB.Exec(`INSERT INTO clips (content, content_hash, type, pinned, encrypted, created_at) VALUES (?, ?, 'text', 0, 0, datetime('now'))`, content, hashContent([]byte(content)))
-		if err != nil {
-			t.Fatalf("insert: %v", err)
-		}
-		id, _ := res.LastInsertId()
-		indexTextClip(int(id), content)
+	if _, _, _, err := AddManualClip("a lazy dog sleeps", false); err != nil {
+		t.Fatalf("AddManualClip: %v", err)
 	}
 
-	insert("the quick brown fox")
-	insert("a lazy dog sleeps")
-
-	// Re-run the startup backfill with rows present - exercises the real
-	// rebuild path (collect-then-insert) against the single connection.
-	if err := initSearchIndex(); err != nil {
-		t.Fatalf("initSearchIndex rebuild: %v", err)
+	// Re-run the startup rebuild with rows present - exercises the real
+	// decrypt-then-index path against the stored ciphertext.
+	if err := RebuildIndex(); err != nil {
+		t.Fatalf("RebuildIndex: %v", err)
 	}
 
 	got, err := SearchClips("fox")
@@ -102,11 +91,7 @@ func TestSearchClipsIntegration(t *testing.T) {
 	}
 
 	// Removing the clip from the index keeps search consistent.
-	var id int
-	if err := DB.QueryRow(`SELECT id FROM clips WHERE content = 'the quick brown fox'`).Scan(&id); err != nil {
-		t.Fatalf("lookup id: %v", err)
-	}
-	removeClipFromIndex(id)
+	removeClipFromIndex(clipRowID(t, fox.ID))
 	if got, err := SearchClips("fox"); err != nil || len(got) != 0 {
 		t.Fatalf("SearchClips(fox) after removal = %d results (err %v), want 0", len(got), err)
 	}

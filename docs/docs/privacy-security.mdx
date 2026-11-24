@@ -20,7 +20,19 @@ Every clip is stored in a **SQLite database** on your device. There is no accoun
 | macOS | `~/Library/Application Support/clipussy/db/gyatt.db` |
 | Linux | `~/.config/clipussy/db/gyatt.db` |
 
-You own the file. You can open it, move it, back it up, or delete it at any time.
+You own the file. You can open it, move it, back it up, or delete it at any time - clip text is stored as ciphertext, so a database viewer shows nothing readable.
+
+### Encryption at rest
+
+Text clips are encrypted with **AES-256-GCM** under a random per-install key. The key lives in your operating system's keychain - Windows Credential Manager, macOS Keychain, or the Secret Service on Linux - under the `Clipcat` / `database-key` entry. It is never written to the database, so a copy of `gyatt.db` on its own does not reveal what you copied.
+
+The full-text search index is built in memory at launch from the decrypted clips, so searching never writes a plaintext copy of them back to disk.
+
+What is not encrypted: image clips and their thumbnails, and the metadata around each clip - pinned, hidden, label, timestamp, and source. That metadata is what the list is ordered and pruned by, and it still shows that a clip exists and roughly how big it is.
+
+What this protects against: a stolen laptop, a backup that leaves the machine, or a database file copied off the disk. It does not protect against code already running as your user, which can ask the same keychain for the same key.
+
+If the key is missing, Clipcat stops at startup instead of generating a new one, because a new key would leave every existing clip unreadable. That also means the database file alone is not enough to restore your clips on a new machine.
 
 ### The one network request
 
@@ -108,4 +120,6 @@ Key files to review:
 
 - `backend/lib/clipboard/` - clipboard listener per platform
 - `backend/lib/secretscan/` - sensitive content detection rules
+- `backend/store/crypt.go` - key storage, sealing, and duplicate hashing
+- `backend/store/index.go` - the in-memory search index
 - `backend/store/` - database reads and writes

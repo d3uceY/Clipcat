@@ -8,6 +8,7 @@ import (
 	"image"
 	"image/jpeg"
 	"image/png"
+	"sync/atomic"
 
 	"Clipcat/backend/lib/secretscan"
 
@@ -47,7 +48,7 @@ func TrimContent(s string) string {
 // buildClip assembles a Clip from a clips row's scanned columns: trims text
 // previews and normalizes/encodes image thumbnails. Shared by GetClips and
 // getClipByRowID so both paths build clips identically.
-func buildClip(rowID int, content sql.NullString, image, thumbnail []byte, clipType string, pinned bool, createdAt, label string, hidden bool, source string) Clip {
+func buildClip(rowID int, content sql.NullString, image, thumbnail []byte, clipType string, pinned bool, createdAt, label string, hidden bool, source string, encVersion int) Clip {
 	clip := Clip{
 		ID:        fmt.Sprintf("clip_%03d", rowID),
 		Type:      clipType,
@@ -58,9 +59,16 @@ func buildClip(rowID int, content sql.NullString, image, thumbnail []byte, clipT
 		Source:    source,
 	}
 
-	if clipType == "text" && content.Valid {
-		preview := TrimContent(content.String)
-		clip.Content = &preview
+	if clipType == "text" && content.Valid && content.String != "" {
+		text, err := decodeClipText(content.String, encVersion)
+		if err != nil {
+			// One unreadable clip must not break the whole list, and a wrong
+			// key must not print one line per clip per refresh.
+			logDecodeFailure(rowID, err)
+		} else {
+			preview := TrimContent(text)
+			clip.Content = &preview
+		}
 	}
 
 	if clipType == "image" {
@@ -82,58 +90,89 @@ func buildClip(rowID int, content sql.NullString, image, thumbnail []byte, clipT
 	return clip
 }
 
+// decodeFailureLogs caps how many decrypt errors reach stdout.
+var decodeFailureLogs atomic.Int64
+
+func logDecodeFailure(rowID int, err error) {
+	if decodeFailureLogs.Add(1) <= 3 {
+		fmt.Printf("clip %d: cannot decrypt content: %v\n", rowID, err)
+	}
+}
+
 // clipColumns is the column list every Clip scan expects, in scanClip order.
-const clipColumns = `id, content, image, thumbnail, type, pinned, created_at, label, hidden, source`
+//
+// The image column is only materialized when a row has no thumbnail. Without
+// that CASE, every list load pulls each full-size screenshot into Go memory
+// (tens of MB on a normal history) only to throw it away and send the
+// thumbnail to the frontend.
+const clipColumns = `id, content,
+	CASE WHEN thumbnail IS NOT NULL AND length(thumbnail) > 0 THEN NULL ELSE image END AS image,
+	thumbnail, type, pinned, created_at, label, hidden, source, enc_version`
 
 // scanClip builds a Clip from one clips row (either a *sql.Rows or a *sql.Row).
 // Shared by GetClips and getClipByRowID so both paths assemble clips identically.
 func scanClip(row interface{ Scan(...any) error }) (Clip, error) {
 	var (
-		id        int
-		content   sql.NullString
-		image     []byte
-		thumbnail []byte
-		clipType  string
-		pinned    bool
-		createdAt string
-		label     string
-		hidden    bool
-		source    string
+		id         int
+		content    sql.NullString
+		image      []byte
+		thumbnail  []byte
+		clipType   string
+		pinned     bool
+		createdAt  string
+		label      string
+		hidden     bool
+		source     string
+		encVersion int
 	)
-	if err := row.Scan(&id, &content, &image, &thumbnail, &clipType, &pinned, &createdAt, &label, &hidden, &source); err != nil {
+	if err := row.Scan(&id, &content, &image, &thumbnail, &clipType, &pinned, &createdAt, &label, &hidden, &source, &encVersion); err != nil {
 		return Clip{}, err
 	}
-	return buildClip(id, content, image, thumbnail, clipType, pinned, createdAt, label, hidden, source), nil
+	return buildClip(id, content, image, thumbnail, clipType, pinned, createdAt, label, hidden, source, encVersion), nil
 }
 
-// insertTextClip inserts a text clip, adds it to the search index, and returns
-// it.  source is "local" or "network"; hidden and label are the already-decided
-// values - secret scanning and duplicate state restoration happen in the caller.
-func insertTextClip(content, clipType, source string, pinned bool, hidden int, label string) (*Clip, error) {
-	query := `INSERT INTO clips (content, content_hash, type, pinned, encrypted, hidden, label, source, created_at)
-		VALUES (?, ?, ?, ?, 0, ?, ?, ?, datetime('now'))`
-	result, err := DB.Exec(query, content, hashContent([]byte(content)), clipType, pinned, hidden, label, source)
+// insertTextClip seals and inserts a text clip and returns it with its row id.
+// source is "local" or "network"; hidden and label are the already-decided
+// values - secret scanning and duplicate state restoration happen in the
+// caller. The search index is updated by the caller after it commits.
+func insertTextClip(q querier, content, clipType, source string, pinned bool, hidden int, label string) (*Clip, int64, error) {
+	sealed, err := sealValue(content, aadClipContent)
 	if err != nil {
-		return nil, fmt.Errorf("failed to insert clip: %v", err)
+		return nil, 0, fmt.Errorf("failed to encrypt clip: %v", err)
+	}
+
+	query := `INSERT INTO clips (content, content_hash, type, pinned, enc_version, hidden, label, source, created_at)
+		VALUES (?, ?, ?, ?, 1, ?, ?, ?, datetime('now'))`
+	result, err := q.Exec(query, sealed, hmacContent(content), clipType, pinned, hidden, label, source)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to insert clip: %v", err)
 	}
 
 	insertID, err := result.LastInsertId()
 	if err != nil {
-		return nil, fmt.Errorf("failed to get insert ID: %v", err)
+		return nil, 0, fmt.Errorf("failed to get insert ID: %v", err)
 	}
-	indexTextClip(int(insertID), content)
 
-	clip, _ := getClipByRowID(insertID)
-	return clip, nil
+	clip, err := getClipByRowID(q, insertID)
+	if err != nil {
+		return nil, insertID, err
+	}
+	return clip, insertID, nil
 }
 
 func GetStorageLimit() (int, error) {
+	return getStorageLimit(DB)
+}
+
+// getStorageLimit is GetStorageLimit bound to a querier so pruning can run
+// inside the caller's transaction.
+func getStorageLimit(q querier) (int, error) {
 	query := `SELECT limit_count FROM clip_storage_limit WHERE id = 0`
 	var limit int
-	err := DB.QueryRow(query).Scan(&limit)
+	err := q.QueryRow(query).Scan(&limit)
 	if err != nil {
 		insertQuery := `INSERT OR IGNORE INTO clip_storage_limit (id, limit_count) VALUES (0, 100)`
-		_, insertErr := DB.Exec(insertQuery)
+		_, insertErr := q.Exec(insertQuery)
 		if insertErr != nil {
 			return 100, fmt.Errorf("failed to initialize storage limit: %v", insertErr)
 		}
@@ -175,13 +214,16 @@ func GetClips() ([]Clip, error) {
 		}
 		clips = append(clips, clip)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
 
 	return clips, nil
 }
 
 // getClipByRowID fetches a single clip by its database row ID.
-func getClipByRowID(id int64) (*Clip, error) {
-	clip, err := scanClip(DB.QueryRow(
+func getClipByRowID(q querier, id int64) (*Clip, error) {
+	clip, err := scanClip(q.QueryRow(
 		`SELECT `+clipColumns+` FROM clips WHERE id = ?`, id,
 	))
 	if err != nil {
@@ -190,12 +232,12 @@ func getClipByRowID(id int64) (*Clip, error) {
 	return &clip, nil
 }
 
-// findExistingClipID returns the row ID of a duplicate text clip, or 0 if none exists.
-func findExistingClipID(content string) (int64, error) {
-	hash := hashContent([]byte(content))
-	query := `SELECT id FROM clips WHERE content_hash = ? OR (encrypted = 0 AND content = ?) LIMIT 1`
+// findExistingClipID returns the row ID of a duplicate text clip, or 0 if none
+// exists. The keyed hash is the only comparison: the stored text is ciphertext.
+func findExistingClipID(q querier, content string) (int64, error) {
+	query := `SELECT id FROM clips WHERE content_hash = ? AND type = 'text' LIMIT 1`
 	var id int64
-	err := DB.QueryRow(query, hash, content).Scan(&id)
+	err := q.QueryRow(query, hmacContent(content)).Scan(&id)
 	if err == sql.ErrNoRows {
 		return 0, nil
 	}
@@ -206,11 +248,10 @@ func findExistingClipID(content string) (int64, error) {
 }
 
 // findExistingImageClipID returns the row ID of a duplicate image clip, or 0 if none exists.
-func findExistingImageClipID(image []byte) (int64, error) {
-	hash := hashContent(image)
-	query := `SELECT id FROM clips WHERE content_hash = ? OR (encrypted = 0 AND image = ?) LIMIT 1`
+func findExistingImageClipID(q querier, image []byte) (int64, error) {
+	query := `SELECT id FROM clips WHERE content_hash = ? AND type = 'image' LIMIT 1`
 	var id int64
-	err := DB.QueryRow(query, hash, image).Scan(&id)
+	err := q.QueryRow(query, sha256Hex(image)).Scan(&id)
 	if err == sql.ErrNoRows {
 		return 0, nil
 	}
@@ -221,7 +262,17 @@ func findExistingImageClipID(image []byte) (int64, error) {
 }
 
 func AddClip(content string, clipType string) (*Clip, []int, int, bool, error) {
-	existingID, err := findExistingClipID(content)
+	// Read the setting before starting the transaction: a single-connection
+	// SQLite database cannot answer queries while a transaction holds it.
+	autoHide, _ := GetAutoHideSensitive()
+
+	tx, err := DB.Begin()
+	if err != nil {
+		return nil, nil, 0, false, fmt.Errorf("failed to start clip transaction: %v", err)
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	existingID, err := findExistingClipID(tx, content)
 	if err != nil {
 		return nil, nil, 0, false, fmt.Errorf("failed to check for duplicate: %v", err)
 	}
@@ -231,20 +282,40 @@ func AddClip(content string, clipType string) (*Clip, []int, int, bool, error) {
 	var oldLabel string
 	if existingID > 0 {
 		// Read the existing clip's states before deleting so we can restore them.
-		_ = DB.QueryRow(`SELECT pinned, hidden, label FROM clips WHERE id = ?`, existingID).
+		_ = tx.QueryRow(`SELECT pinned, hidden, label FROM clips WHERE id = ?`, existingID).
 			Scan(&oldPinned, &oldHidden, &oldLabel)
-		_ = DeleteClip(int(existingID))
+		_, _ = deleteClipRow(tx, int(existingID))
 		deletedID = int(existingID)
 	}
 
-	// Scan for secrets: notify always, auto-hide only when the setting is on.
+	// Scan for secrets: hide when the setting is on. The notification is sent
+	// after the commit so a slow OS call cannot hold the only DB connection.
 	hidden := oldHidden
 	autolabel := oldLabel
+	sensitive := false
 	if scanResult := secretscan.Scan(content); scanResult.IsSecret {
+		sensitive = true
 		autolabel = scanResult.Label // Use the generic rule label (e.g. "Payment Key", "Cloud Access Key")
-		if autoHide, _ := GetAutoHideSensitive(); autoHide {
+		if autoHide {
 			hidden = 1 // auto-hide overrides any previous visible state
 		}
+	}
+
+	clip, insertID, err := insertTextClip(tx, content, clipType, "local", oldPinned, hidden, autolabel)
+	if err != nil {
+		return nil, nil, deletedID, false, err
+	}
+
+	prunedIDs, err := pruneExcessClips(tx)
+	if err != nil {
+		return nil, nil, deletedID, false, fmt.Errorf("failed to delete old clips: %v", err)
+	}
+
+	if err := tx.Commit(); err != nil {
+		return nil, nil, 0, false, fmt.Errorf("failed to commit clip: %v", err)
+	}
+
+	if sensitive {
 		if AppNotif != nil {
 			_ = AppNotif.SendNotification(notifications.NotificationOptions{
 				ID:    fmt.Sprintf("clipcat-sensitive-%d", len(content)),
@@ -257,21 +328,27 @@ func AddClip(content string, clipType string) (*Clip, []int, int, bool, error) {
 		}
 	}
 
-	clip, err := insertTextClip(content, clipType, "local", oldPinned, hidden, autolabel)
-	if err != nil {
-		return nil, nil, deletedID, false, err
+	// Index writes follow the commit: the index is rebuilt from the database on
+	// every launch, so a crash here only costs a stale hit until restart.
+	if deletedID > 0 {
+		removeClipFromIndex(deletedID)
 	}
-
-	prunedIDs, err := pruneExcessClips()
-	if err != nil {
-		return nil, nil, deletedID, false, fmt.Errorf("failed to delete old clips: %v", err)
+	indexTextClip(int(insertID), content)
+	for _, id := range prunedIDs {
+		removeClipFromIndex(id)
 	}
 
 	return clip, prunedIDs, deletedID, true, nil
 }
 
 func AddManualClip(content string, pinned bool) (*Clip, []int, bool, error) {
-	existingID, err := findExistingClipID(content)
+	tx, err := DB.Begin()
+	if err != nil {
+		return nil, nil, false, fmt.Errorf("failed to start clip transaction: %v", err)
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	existingID, err := findExistingClipID(tx, content)
 	if err != nil {
 		return nil, nil, false, fmt.Errorf("failed to check for duplicate: %v", err)
 	}
@@ -280,21 +357,36 @@ func AddManualClip(content string, pinned bool) (*Clip, []int, bool, error) {
 	}
 
 	// Manual clips are intentionally added by the user - do not auto-hide them.
-	clip, err := insertTextClip(content, "text", "local", pinned, 0, "")
+	clip, insertID, err := insertTextClip(tx, content, "text", "local", pinned, 0, "")
 	if err != nil {
 		return nil, nil, false, err
 	}
 
-	prunedIDs, err := pruneExcessClips()
+	prunedIDs, err := pruneExcessClips(tx)
 	if err != nil {
 		return nil, nil, false, fmt.Errorf("failed to delete old clips: %v", err)
+	}
+
+	if err := tx.Commit(); err != nil {
+		return nil, nil, false, fmt.Errorf("failed to commit clip: %v", err)
+	}
+
+	indexTextClip(int(insertID), content)
+	for _, id := range prunedIDs {
+		removeClipFromIndex(id)
 	}
 
 	return clip, prunedIDs, true, nil
 }
 
 func AddImageClip(img []byte) (*Clip, []int, int, bool, error) {
-	existingID, err := findExistingImageClipID(img)
+	tx, err := DB.Begin()
+	if err != nil {
+		return nil, nil, 0, false, fmt.Errorf("failed to start clip transaction: %v", err)
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	existingID, err := findExistingImageClipID(tx, img)
 	if err != nil {
 		return nil, nil, 0, false, fmt.Errorf("failed to check for duplicate image: %v", err)
 	}
@@ -303,13 +395,11 @@ func AddImageClip(img []byte) (*Clip, []int, int, bool, error) {
 	var oldImageHidden int
 	if existingID > 0 {
 		// Read the existing clip's states before deleting so we can restore them.
-		_ = DB.QueryRow(`SELECT pinned, hidden FROM clips WHERE id = ?`, existingID).
+		_ = tx.QueryRow(`SELECT pinned, hidden FROM clips WHERE id = ?`, existingID).
 			Scan(&oldImagePinned, &oldImageHidden)
-		_ = DeleteClip(int(existingID))
+		_, _ = deleteClipRow(tx, int(existingID))
 		deletedID = int(existingID)
 	}
-
-	hash := hashContent(img)
 
 	// Generate a small thumbnail so GetClips never transmits full images.
 	thumb, err := generateThumbnail(img)
@@ -317,8 +407,8 @@ func AddImageClip(img []byte) (*Clip, []int, int, bool, error) {
 		thumb = nil
 	}
 
-	query := `INSERT INTO clips (image, thumbnail, content_hash, type, pinned, encrypted, hidden, created_at) VALUES (?, ?, ?, ?, ?, 0, ?, datetime('now'))`
-	result, err := DB.Exec(query, img, thumb, hash, "image", oldImagePinned, oldImageHidden)
+	query := `INSERT INTO clips (image, thumbnail, content_hash, type, pinned, enc_version, hidden, created_at) VALUES (?, ?, ?, ?, ?, 0, ?, datetime('now'))`
+	result, err := tx.Exec(query, img, thumb, sha256Hex(img), "image", oldImagePinned, oldImageHidden)
 	if err != nil {
 		return nil, nil, deletedID, false, fmt.Errorf("failed to insert image clip: %v", err)
 	}
@@ -328,12 +418,24 @@ func AddImageClip(img []byte) (*Clip, []int, int, bool, error) {
 		return nil, nil, deletedID, false, fmt.Errorf("failed to get insert ID: %v", err)
 	}
 
-	prunedIDs, err := pruneExcessClips()
+	prunedIDs, err := pruneExcessClips(tx)
 	if err != nil {
 		return nil, nil, deletedID, false, fmt.Errorf("failed to delete old clips: %v", err)
 	}
 
-	clip, _ := getClipByRowID(insertID)
+	clip, err := getClipByRowID(tx, insertID)
+	if err != nil {
+		return nil, nil, deletedID, false, err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return nil, nil, 0, false, fmt.Errorf("failed to commit clip: %v", err)
+	}
+
+	for _, id := range prunedIDs {
+		removeClipFromIndex(id)
+	}
+
 	return clip, prunedIDs, deletedID, true, nil
 }
 
@@ -383,14 +485,14 @@ func normalizeImageToPNG(img []byte) ([]byte, error) {
 
 // pruneExcessClips removes the oldest clips when the table exceeds the
 // storage limit. Returns the IDs of any deleted clips.
-func pruneExcessClips() ([]int, error) {
-	limit, err := GetStorageLimit()
+func pruneExcessClips(q querier) ([]int, error) {
+	limit, err := getStorageLimit(q)
 	if err != nil {
 		return nil, err
 	}
 
 	var count int
-	if err := DB.QueryRow(`SELECT COUNT(*) FROM clips`).Scan(&count); err != nil {
+	if err := q.QueryRow(`SELECT COUNT(*) FROM clips`).Scan(&count); err != nil {
 		return nil, fmt.Errorf("prune: count: %w", err)
 	}
 	if count <= limit {
@@ -398,9 +500,9 @@ func pruneExcessClips() ([]int, error) {
 	}
 
 	// RETURNING reports exactly which rows went, so the ids never come from a
-	// second SELECT that could disagree with the DELETE. The cursor is drained
-	// and closed before the index cleanup runs (single DB connection).
-	rows, err := DB.Query(`
+	// second SELECT that could disagree with the DELETE. The caller drops them
+	// from the search index after the transaction commits.
+	rows, err := q.Query(`
 		DELETE FROM clips
 		WHERE id IN (
 			SELECT id FROM clips
@@ -426,9 +528,6 @@ func pruneExcessClips() ([]int, error) {
 		return nil, fmt.Errorf("prune: delete: %w", err)
 	}
 
-	for _, id := range prunedIDs {
-		removeClipFromIndex(id)
-	}
 	return prunedIDs, nil
 }
 
@@ -460,25 +559,29 @@ func GetClipImage(clipID int) (string, error) {
 // uses it to copy, edit, or view a clip whose list preview was truncated.
 func GetClipContent(clipID int) (string, error) {
 	var (
-		content  sql.NullString
-		clipType string
+		content    sql.NullString
+		clipType   string
+		encVersion int
 	)
 	err := DB.QueryRow(
-		`SELECT content, type FROM clips WHERE id = ?`, clipID,
-	).Scan(&content, &clipType)
+		`SELECT content, type, enc_version FROM clips WHERE id = ?`, clipID,
+	).Scan(&content, &clipType, &encVersion)
 	if err != nil {
 		return "", err
 	}
 	if clipType != "text" || !content.Valid {
 		return "", fmt.Errorf("clip %d has no text content", clipID)
 	}
-	return content.String, nil
+	return decodeClipText(content.String, encVersion)
 }
 
 func UpdateClipContent(clipID int, newContent string) error {
-	hash := hashContent([]byte(newContent))
-	query := `UPDATE clips SET content = ?, content_hash = ?, encrypted = 0 WHERE id = ?`
-	result, err := DB.Exec(query, newContent, hash, clipID)
+	sealed, err := sealValue(newContent, aadClipContent)
+	if err != nil {
+		return fmt.Errorf("failed to encrypt clip content: %v", err)
+	}
+	query := `UPDATE clips SET content = ?, content_hash = ?, enc_version = 1 WHERE id = ?`
+	result, err := DB.Exec(query, sealed, hmacContent(newContent), clipID)
 	if err != nil {
 		return fmt.Errorf("failed to update clip content: %v", err)
 	}
@@ -492,7 +595,11 @@ func UpdateClipContent(clipID int, newContent string) error {
 		return fmt.Errorf("clip with id %d not found", clipID)
 	}
 
-	indexTextClip(clipID, newContent)
+	if newContent == "" {
+		removeClipFromIndex(clipID)
+	} else {
+		indexTextClip(clipID, newContent)
+	}
 	return nil
 }
 
@@ -521,15 +628,9 @@ func TogglePinClip(clipID int) (bool, error) {
 }
 
 func DeleteClip(clipID int) error {
-	query := `DELETE FROM clips WHERE id = ?`
-	result, err := DB.Exec(query, clipID)
+	rowsAffected, err := deleteClipRow(DB, clipID)
 	if err != nil {
-		return fmt.Errorf("failed to delete clip: %v", err)
-	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to get rows affected: %v", err)
+		return err
 	}
 
 	if rowsAffected == 0 {
@@ -540,12 +641,26 @@ func DeleteClip(clipID int) error {
 	return nil
 }
 
+// deleteClipRow deletes one clips row on any querier and reports how many rows
+// it removed. Callers own the search index update.
+func deleteClipRow(q querier, clipID int) (int64, error) {
+	result, err := q.Exec(`DELETE FROM clips WHERE id = ?`, clipID)
+	if err != nil {
+		return 0, fmt.Errorf("failed to delete clip: %v", err)
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return 0, fmt.Errorf("failed to get rows affected: %v", err)
+	}
+	return rowsAffected, nil
+}
+
 func DeleteAllClips() error {
 	_, err := DB.Exec(`DELETE FROM clips`)
 	if err != nil {
 		return fmt.Errorf("failed to delete all clips: %v", err)
 	}
-	pruneOrphanedIndexRows()
+	rebuildIndexAfterBulkDelete()
 	DB.Exec(`VACUUM`)
 	return nil
 }
@@ -555,7 +670,7 @@ func DeletePinnedClips() error {
 	if err != nil {
 		return fmt.Errorf("failed to delete pinned clips: %v", err)
 	}
-	pruneOrphanedIndexRows()
+	rebuildIndexAfterBulkDelete()
 	DB.Exec(`VACUUM`)
 	return nil
 }
@@ -565,9 +680,17 @@ func DeleteUnpinnedClips() error {
 	if err != nil {
 		return fmt.Errorf("failed to delete unpinned clips: %v", err)
 	}
-	pruneOrphanedIndexRows()
+	rebuildIndexAfterBulkDelete()
 	DB.Exec(`VACUUM`)
 	return nil
+}
+
+// rebuildIndexAfterBulkDelete re-syncs the index with the clips table after a
+// delete whose row ids were never collected.
+func rebuildIndexAfterBulkDelete() {
+	if err := RebuildIndex(); err != nil {
+		fmt.Printf("search index rebuild: %v\n", err)
+	}
 }
 
 // RenameClip updates the label/nickname for a clip identified by its row ID.
@@ -609,19 +732,22 @@ func HideClip(clipID int) error {
 func AddNetworkClip(content string, clipType string, img []byte) (*Clip, error) {
 	switch clipType {
 	case "text":
-		return insertTextClip(content, clipType, "network", false, 0, "")
+		clip, insertID, err := insertTextClip(DB, content, clipType, "network", false, 0, "")
+		if err != nil {
+			return nil, err
+		}
+		indexTextClip(int(insertID), content)
+		return clip, nil
 
 	case "image":
-		hash := hashContent(img)
-
 		// Generate a thumbnail.
 		thumb, err := generateThumbnail(img)
 		if err != nil {
 			thumb = nil
 		}
 
-		query := `INSERT INTO clips (image, thumbnail, content_hash, type, pinned, encrypted, source, created_at) VALUES (?, ?, ?, ?, 0, 0, 'network', datetime('now'))`
-		result, err := DB.Exec(query, img, thumb, hash, clipType)
+		query := `INSERT INTO clips (image, thumbnail, content_hash, type, pinned, enc_version, source, created_at) VALUES (?, ?, ?, ?, 0, 0, 'network', datetime('now'))`
+		result, err := DB.Exec(query, img, thumb, sha256Hex(img), clipType)
 		if err != nil {
 			return nil, fmt.Errorf("failed to insert network image clip: %v", err)
 		}
@@ -631,7 +757,7 @@ func AddNetworkClip(content string, clipType string, img []byte) (*Clip, error) 
 			return nil, fmt.Errorf("failed to get insert ID: %v", err)
 		}
 
-		clip, err := getClipByRowID(insertID)
+		clip, err := getClipByRowID(DB, insertID)
 		if err != nil {
 			return nil, err
 		}

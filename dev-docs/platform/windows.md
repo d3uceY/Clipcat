@@ -17,8 +17,8 @@ main.go
 
   └─ wails.Run(...)                  // launch_other.go (no-op relaunch on Windows)
        └─ app.startup()              // app.go
-            ├─ store.InitDB / migrations
-            ├─ store.InitEncryption
+            ├─ store.InitDB
+            ├─ store.RunMigrations        // schema, keychain key, legacy cleanup, in-memory index
             ├─ clipboard.SetIgnoredProcesses
             ├─ clipboard.SetOurProcessID(os.Getpid())
             ├─ clipboard.StartFocusTracker

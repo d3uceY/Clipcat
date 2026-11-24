@@ -22,8 +22,8 @@ main.go
 
   └─ wails.Run(...)
        └─ app.startup()              // app.go
-            ├─ store.InitDB / migrations
-            ├─ store.InitEncryption
+            ├─ store.InitDB
+            ├─ store.RunMigrations        // schema, keychain key, legacy cleanup, in-memory index
             ├─ clipboard.SetIgnoredProcesses
             ├─ clipboard.SetOurProcessID(os.Getpid())   // detects own bundle ID
             ├─ clipboard.StartFocusTracker

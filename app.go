@@ -65,19 +65,30 @@ func (a *App) ServiceStartup(ctx context.Context, options application.ServiceOpt
 
 	// initialize clipboard
 	if err := gclip.Init(); err != nil {
-		panic(err)
+		return fmt.Errorf("clipboard init: %w", err)
 	}
 
 	appDir, err := getAppDataDir()
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("app data dir: %w", err)
 	}
 
 	if err := store.InitDB(filepath.Join(appDir, "gyatt.db")); err != nil {
-		panic(err)
+		return fmt.Errorf("open database: %w", err)
 	}
 
-	store.RunMigrations()
+	// Schema, storage key and the in-memory search index. A key failure here
+	// means the stored clips cannot be decrypted, so startup stops rather than
+	// running against a database it would write unreadable rows into.
+	if err := store.RunMigrations(appDir); err != nil {
+		return fmt.Errorf("storage init: %w", err)
+	}
+
+	// Nothing else closes these; release both handles when the app quits.
+	a.app.OnShutdown(func() {
+		store.CloseIndex()
+		store.CloseDB()
+	})
 
 	// Enable launch-on-startup by default on first run.
 	if store.ClaimStartupDefault() {

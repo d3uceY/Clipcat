@@ -6,6 +6,7 @@ require (
 	github.com/grandcat/zeroconf v1.0.0
 	github.com/lxn/win v0.0.0-20210218163916-a377121e959e
 	github.com/wailsapp/wails/v3 v3.0.0-alpha2.117
+	github.com/zalando/go-keyring v0.2.6
 	golang.design/x/clipboard v0.7.1
 	golang.org/x/crypto v0.51.0
 	golang.org/x/image v0.40.0
@@ -13,10 +14,12 @@ require (
 )
 
 require (
+	al.essio.dev/pkg/shellescape v1.6.0 // indirect
 	git.sr.ht/~jackmordaunt/go-toast/v2 v2.0.3 // indirect
 	github.com/adrg/xdg v0.5.3 // indirect
 	github.com/cenkalti/backoff v2.2.1+incompatible // indirect
 	github.com/coder/websocket v1.8.14 // indirect
+	github.com/danieljoos/wincred v1.2.3 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
 	github.com/godbus/dbus/v5 v5.2.2 // indirect

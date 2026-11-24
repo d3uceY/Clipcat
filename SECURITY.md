@@ -46,11 +46,13 @@ chance to ship before writing about it publicly.
 These are deliberate and already known. They are not vulnerabilities, and
 reports about them will be closed as such.
 
-- **The clip database is not encrypted at rest.** Clips are stored as plaintext
-  SQLite in your user profile (see
-  [Privacy & Security](https://getclipcat.com/docs/privacy-security)). Protection is
-  whatever your OS file permissions and disk encryption give you. Anything that
-  requires reading files as your user, or as an admin, is out of scope.
+- **Only text clip bodies are encrypted at rest.** Text is sealed with
+  AES-256-GCM under a key held in the OS keychain; image clips, thumbnails, and
+  clip metadata (pinned, hidden, label, timestamps, source) stay in plaintext
+  SQLite (see
+  [Privacy & Security](https://getclipcat.com/docs/privacy-security)). A process
+  running as your user can read the same keychain entry, so this protects a
+  stolen disk or backup, not a compromised session.
 - **LAN sync trusts the passphrase.** Anyone on the same network who knows it can
   read and inject clips. The PBKDF2 key derivation uses a static salt, so the
   same passphrase yields the same key on every install and a weak passphrase is

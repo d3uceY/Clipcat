@@ -23,13 +23,14 @@ A second batch of backend/runtime optimizations was added to keep clipboard oper
 9. [`useMemo` for Link Parsing](#9-usememo-for-link-parsing)
 10. [`React.memo` with Content-Aware Comparator](#10-reactmemo-with-content-aware-comparator)
 11. [Fix: Observer Disabled on Invisible Cards](#11-fix-observer-disabled-on-invisible-cards)
-12. [Test Utility: `SeedTestClips`](#12-test-utility-seedtestclips)
+12. [`SeedTestClips` (removed)](#12-seedtestclips-removed)
 13. [Prune Only When Over the Limit](#13-prune-only-when-over-the-limit)
 14. [Thumbnailed Image Lists + Full Image On Demand](#14-thumbnailed-image-lists--full-image-on-demand)
-15. [Cached AES Cipher Block](#15-cached-aes-cipher-block)
+15. [Cached AEAD Cipher](#15-cached-aead-cipher)
 16. [Single SQLite Connection](#16-single-sqlite-connection)
 17. [Lazy Sound Loading](#17-lazy-sound-loading)
 18. [Reused GSAP Timeline](#18-reused-gsap-timeline)
+19. [In-Memory Full-Text Index](#19-in-memory-full-text-index)
 
 ---
 
@@ -489,42 +490,20 @@ if (!isVisible) {
 - Placeholder cells hold their correct size without any JavaScript running on them
 
 ---
+## 12. `SeedTestClips` (removed)
 
-## 12. Test Utility: `SeedTestClips`
-
-**Files:**
-
-- [backend/store/clips.go](../backend/store/clips.go) - function definition
-- [app.go](../app.go) - commented-out call site
-
-### Purpose
-
-A Go function for inserting large batches of test clips to reproduce and measure performance problems. Uses a SQL transaction for bulk insert performance.
+A `SeedTestClips(n int)` helper used to bulk-insert synthetic clips for performance
+testing by writing rows directly:
 
 ```go
-// clips.go
-func SeedTestClips(n int) error {
-    // 6 content patterns: short text, medium text, long text, code, URL, multiline
-    tx, _ := DB.Begin()
-    stmt, _ := tx.Prepare(`INSERT INTO clips (content, content_hash, type, pinned, encrypted, created_at)
-        VALUES (?, ?, 'text', 0, 1, datetime('now', ?))`)
-    for i := 0; i < n; i++ {
-        content := fmt.Sprintf(samples[i%len(samples)], i+1)
-        enc, _ := encryptText(content)
-        hash := hashContent([]byte(content))
-        offset := fmt.Sprintf("-%d seconds", i)
-        stmt.Exec(enc, hash, offset)
-    }
-    return tx.Commit()
-}
+stmt.Exec(`INSERT INTO clips (content, content_hash, type, pinned, encrypted, created_at) ...`, enc, hash, offset)
 ```
 
-```go
-// app.go - startup, keep COMMENTED OUT for production builds
-// SeedTestClips(500) // PERF TEST: uncomment to insert 500 test clips on startup
-```
-
-> **Warning:** Do not uncomment `SeedTestClips` in production builds. It inserts directly into the live database on every app startup.
+That write path no longer exists. Clip text is sealed before it reaches the table, the
+duplicate key is an HMAC rather than a plain hash, and the search index lives in memory
+instead of a `clips_fts` mirror table. A raw insert would produce rows the app cannot
+read, so the helper was removed instead of ported. Bulk-load tests should loop over
+`AddManualClip`.
 
 ---
 
@@ -584,7 +563,7 @@ func pruneExcessClips() error {
 
 ### Problem
 
-`GetClips()` used to return full image payloads for every image clip. With 100 copied images, the app had to decrypt and base64-encode every full-size image, push that data over the Wails bridge, and keep it alive in React/browser memory.
+`GetClips()` used to return full image payloads for every image clip. With 100 copied images, the app had to base64-encode every full-size image, push that data over the Wails bridge, and keep it alive in React/browser memory.
 
 ### Fix
 
@@ -595,9 +574,6 @@ The serving path also normalizes images to PNG so the frontend can keep using a 
 ```go
 // Insert path
 thumb, err := generateThumbnail(img)
-if len(thumb) > 0 {
-    encThumb, _ = encryptData(thumb)
-}
 
 // List path
 if normalized, err := normalizeImageToPNG(thumbBytes); err == nil {
@@ -618,36 +594,40 @@ if normalized, err := normalizeImageToPNG(image); err == nil {
 
 ---
 
-## 15. Cached AES Cipher Block
+## 15. Cached AEAD Cipher
 
-**File:** [backend/store/encrypt.go](../backend/store/encrypt.go)
+**File:** [backend/store/crypt.go](../backend/store/crypt.go)
 
 ### Problem
 
-`aes.NewCipher(encKey)` was being called on every encrypt/decrypt operation. That repeatedly rebuilds the AES key schedule even though the key never changes during the process lifetime.
+Building an AES cipher and a GCM wrapper around it on every seal/unseal rebuilds the AES key schedule on every clipboard write, even though the key never changes during the process lifetime.
 
 ### Fix
 
-The AES block is created once during `InitEncryption()` and cached in a package-level `encBlock` variable. `encryptData()` and `decryptData()` now build a `cipher.GCM` from that cached block instead of recreating the AES block every time.
+The content key is derived once at startup (HKDF-SHA256 from the master key) and the ready `cipher.AEAD` is kept in a package-level variable. `sealValue` and `openValue` reuse it for every clip.
 
 ```go
-var encBlock cipher.Block
+var contentAEAD cipher.AEAD
 
-func InitEncryption() error {
-    key, err := getOrCreateEncryptionKey()
+func (k *masterKey) apply() error {
+    contentKey, err := hkdf.Key(sha256.New, k.raw, nil, "clipcat clip content v1", 32)
     if err != nil {
         return err
     }
-    encKey = key
-    encBlock, err = aes.NewCipher(encKey)
+    block, err := aes.NewCipher(contentKey)
+    if err != nil {
+        return err
+    }
+    contentAEAD, err = cipher.NewGCM(block)
     return err
 }
 ```
 
 ### Impact
 
-- Lowers per-clip CPU overhead for encrypt/decrypt operations
-- Helps bulk operations like image inserts and migration passes scale more cleanly
+- One key derivation per launch, then hardware-accelerated AES-GCM per clip
+- Sealing a typical clipboard string costs microseconds, so the write path stays cheap
+- The dedupe HMAC key is derived the same way, from the same master key
 
 ---
 
@@ -740,7 +720,29 @@ const handleSettingsClick = () => {
 
 ---
 
-## Summary Table
+## 19. In-Memory Full-Text Index
+
+**File:** [backend/store/index.go](../backend/store/index.go), [backend/store/search.go](../backend/store/search.go)
+
+### Problem
+
+Search used an FTS5 table named `clips_fts` inside `gyatt.db`, kept in sync by triggers-free application code. Once clip text is encrypted at rest, that table is a second, plaintext copy of every clip in the same file - so it had to go.
+
+### Fix
+
+The index now lives in a `:memory:` SQLite database with FTS5 enabled, opened at startup and rebuilt by decrypting the stored rows. One pinned connection owns it for the process lifetime (a shared-cache memory database vanishes when its last connection closes). Search runs `MATCH` against it, then fetches and decrypts the matching rows.
+
+```go
+// clipcat_index_N is a private, in-memory database - never a file.
+dsn := fmt.Sprintf("file:clipcat_index_%d?mode=memory&cache=shared", indexRuns)
+```
+
+### Impact
+
+- No plaintext index in the database file, and no FTS write amplification on disk
+- Search stays instant: the index is a few thousand short rows, built in milliseconds at launch
+- Writes no longer pay for a second B-tree update inside the main database
+- Cost: startup decrypts the stored text once per launch (that is already done for the list previews)
 
 | #   | Optimization                                   | File(s)                                       | Problem Solved                              |
 | --- | ---------------------------------------------- | --------------------------------------------- | ------------------------------------------- |
@@ -755,10 +757,11 @@ const handleSettingsClick = () => {
 | 9   | `useMemo` for `insertLinks`                    | `clip-card.tsx`                               | Regex re-runs on every render               |
 | 10  | `React.memo` with comparator                   | `clip-card.tsx`                               | All cards re-render on any state change     |
 | 11  | Observer disabled on invisible cards           | `use-card-row-span.ts`, `clip-card.tsx`       | Scroll jitter / layout jump                 |
-| 12  | `SeedTestClips` test utility                   | `clips.go`, `app.go`                          | Testing tool only                           |
+| 12  | `SeedTestClips` removed                        | `backend/store/clips.go`                      | Raw inserts bypass the sealing path         |
 | 13  | Prune only when over the limit                 | `backend/store/clips.go`                      | Avoid sort/delete work on every insert      |
 | 14  | Thumbnailed image lists + full image on demand | `backend/store/clips.go`, `clip-card.tsx`     | Large image payloads in list view           |
-| 15  | Cached AES cipher block                        | `backend/store/encrypt.go`                    | Rebuilding AES state on every crypto op     |
+| 15  | Cached AEAD cipher                             | `backend/store/crypt.go`                      | Rebuilding AES state on every crypto op     |
 | 16  | Single SQLite connection                       | `backend/store/db.go`                         | Extra connection overhead / SQLite churn    |
 | 17  | Lazy sound loading                             | `frontend/src/helpers/playSound.ts`           | Eager sound decode + startup memory         |
 | 18  | Reused GSAP timeline                           | `frontend/src/components/window-controls.tsx` | Repeated timeline allocation                |
+| 19  | In-memory full-text index                      | `backend/store/index.go`                      | Plaintext search mirror inside the DB file  |

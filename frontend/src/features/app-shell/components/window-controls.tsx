@@ -8,6 +8,7 @@ import { GetPlatform } from "../../../../bindings/Clipcat/app";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import type { UpdateInfo } from "@/features/settings/components/about-dialog"
 import SettingsPanel from "@/features/settings/components/settings-panel"
+import { closeTour } from "@/utils/onboarding"
 
 interface WindowControlsProps {
     updateAvailable?: UpdateInfo | null;
@@ -58,6 +59,7 @@ export default function WindowControls({ updateAvailable, onCheckUpdate }: Windo
         const tl = tlRef.current;
         tl.clear();
         if (!dialogOpen) {
+            closeTour();
             setDialogOpen(true);
             tl.to(settingBtnRef.current, {
                 y: 10, rotation: -2, duration: 0.3, ease: "power2.out",

@@ -1,13 +1,17 @@
-import { driver } from "driver.js"
+import { driver, type Driver } from "driver.js"
 import "driver.js/dist/driver.css"
 
 const STORAGE_KEY = "clipcat_tour_done"
+
+let activeTour: Driver | null = null
 
 export function hasSeenTour(): boolean {
     return localStorage.getItem(STORAGE_KEY) === "true"
 }
 
 export function startTour() {
+    if (activeTour?.isActive()) return
+
     const tour = driver({
         showProgress: true,
         animate: true,
@@ -18,6 +22,7 @@ export function startTour() {
         doneBtnText: "Got it!",
         onDestroyed: () => {
             localStorage.setItem(STORAGE_KEY, "true")
+            if (activeTour === tour) activeTour = null
         },
         steps: [
             {
@@ -75,5 +80,17 @@ export function startTour() {
         ],
     })
 
+    activeTour = tour
     tour.drive()
+}
+
+/**
+ * Ends the tour immediately. The tour's overlay paints above the app, so a
+ * panel opened while it runs (the settings panel, for one) would render
+ * behind the dimmed overlay and look like the button did nothing.
+ */
+export function closeTour() {
+    if (!activeTour?.isActive()) return
+    activeTour.destroy()
+    activeTour = null
 }

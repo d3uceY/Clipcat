@@ -9,13 +9,33 @@ function isStable(version: string) {
     return !version.endsWith("-dev") && !version.endsWith("-beta") && !version.endsWith("-alpha")
 }
 
+function parseVersion(version: string): number[] {
+    return version
+        .replace(/^v/i, "")
+        .split("-")[0]
+        .split(".")
+        .map(part => parseInt(part, 10) || 0)
+}
+
+function isNewer(candidate: string, current: string): boolean {
+    const a = parseVersion(candidate)
+    const b = parseVersion(current)
+    const len = Math.max(a.length, b.length)
+    for (let i = 0; i < len; i++) {
+        const x = a[i] ?? 0
+        const y = b[i] ?? 0
+        if (x !== y) return x > y
+    }
+    return false
+}
+
 async function fetchLatest(version: string): Promise<UpdateInfo | null> {
     try {
         const response = await fetch(GITHUB_API)
         if (!response.ok) return null
         const data = await response.json()
         const latest = data.tag_name
-        if (latest !== version && isStable(version)) {
+        if (isStable(latest) && isNewer(latest, version)) {
             return { version: latest, releaseUrl: data.html_url, releaseDate: data.published_at }
         }
         return null
